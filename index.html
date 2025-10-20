@@ -173,7 +173,6 @@
         const samplesTableTitle = document.getElementById('samples-table-title');
         const showAllBtn = document.getElementById('show-all-btn');
         
-        // Elementos da ferramenta de e-mail
         const sellerEmailSelect = document.getElementById('seller-email-select');
         const copyEmailBtn = document.getElementById('copy-email-btn');
         const sendEmailBtn = document.getElementById('send-email-btn');
@@ -304,7 +303,7 @@
             
             let initialLoad = true;
             dataListenerUnsubscribe = onSnapshot(q, async (snapshot) => {
-                if (snapshot.empty) {
+                if (snapshot.empty && !initialLoad) {
                     return;
                 }
                 const allSamples = snapshot.docs.flatMap(doc => doc.data().amostras || []);
@@ -374,9 +373,9 @@
 
         function listenForActiveSession() {
             const activeSessionRef = doc(db, "configuracoes", "sessaoAtiva");
-            onSnapshot(activeSessionRef, (docSnap) => {
+            onSnapshot(activeSessionRef, async (docSnap) => {
                 const activeSessionId = docSnap.exists() ? docSnap.data().current : null;
-
+                
                 if (activeSessionId) {
                     if (activeSessionId !== currentSessionId) {
                         infoMessage.textContent = `Sessão ativa encontrada: ${activeSessionId}. A carregar...`;
@@ -384,7 +383,10 @@
                         listenForDataUpdates(activeSessionId);
                     }
                 } else {
-                    resetToInitialState();
+                    const docCheck = await getDoc(activeSessionRef);
+                    if (!docCheck.exists() || (docCheck.exists() && docCheck.data().current === null)) {
+                         resetToInitialState();
+                    }
                 }
             }, (error) => {
                 infoMessage.textContent = "Erro ao verificar sessão ativa.";
@@ -622,7 +624,6 @@
             emailPreview.textContent = 'Selecione um vendedor para gerar o e-mail.';
             copyEmailBtn.disabled = true;
             sendEmailBtn.classList.add('disabled-link');
-            sendEmailBtn.removeAttribute('href');
         }
 
         sellerEmailSelect.addEventListener('change', () => {
@@ -638,20 +639,27 @@
             const seller = sellerEmailData.find(s => s.name === selectedSellerName);
             if (!seller || !currentSessionId) return;
 
-            const linkVendedor = new URL('telavendedor.html', window.location.href).href;
+            const linkVendedor = 'https://thamirisbezerra-coder.github.io/Tela-do-Vendedor/';
 
             const subject = `Acesso ao Painel de Feedback de Amostras - Doremus`;
             const body = `Olá, ${seller.name}!\n\n` +
                 `Chegou o seu painel para dar feedback nas amostras pendentes. Sua colaboração é muito importante para nós.\n\n` +
+                `IMPORTANTE: O prazo para todas as respostas é até o dia 10/11.\n\n` +
                 `-----------------------------------------\n` +
-                `DADOS DE ACESSO\n` +
+                `SEUS DADOS DE ACESSO\n` +
                 `-----------------------------------------\n` +
-                `1. Acesse o link: ${linkVendedor}\n\n` +
-                `2. Insira os seguintes dados:\n` +
+                `   - Link do Painel: ${linkVendedor}\n` +
                 `   - ID da Sessão: ${currentSessionId}\n` +
                 `   - Seu Nome de Vendedor: ${seller.name}\n` +
                 `   - Código de Acesso: ${seller.code}\n\n` +
-                `IMPORTANTE: O campo "Seu Nome de Vendedor" deve ser preenchido exatamente como está aqui para funcionar.\n\n` +
+                `COMO ACEDER:\n` +
+                `Basta aceder ao link acima e inserir os seus dados. É importante que o nome do vendedor seja idêntico ao que está neste e-mail.\n\n` +
+                `DICA: Após o primeiro acesso, a plataforma irá lembrar-se de si. Não precisará de inserir os dados novamente.\n\n` +
+                `-----------------------------------------\n` +
+                `COMO FUNCIONA\n` +
+                `-----------------------------------------\n` +
+                `- As suas atualizações são guardadas automaticamente em tempo real.\n` +
+                `- Ao terminar de responder a todas as amostras de um pedido, lembre-se de clicar em "Sinalizar Gestor" para me notificar.\n\n` +
                 `Qualquer dúvida, estou à disposição.\n\n` +
                 `Atenciosamente,\n` +
                 `Thamiris Bezerra`;
@@ -679,16 +687,19 @@
             setTimeout(() => { copyEmailBtn.textContent = originalText; }, 2000);
         });
 
-
-        signInAnonymously(auth)
-            .then(listenForActiveSession)
-            .catch(error => { 
+        (async () => {
+             try {
+                await signInAnonymously(auth);
+                listenForActiveSession();
+            } catch (error) {
                 infoMessage.textContent = "Não foi possível conectar ao serviço."; 
                 console.error("Firebase Auth Error:", error);
-            });
+            }
+        })();
     </script>
 </body>
 </html>
+
 
 
 
