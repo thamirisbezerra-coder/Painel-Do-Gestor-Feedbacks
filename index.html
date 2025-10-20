@@ -135,8 +135,9 @@
 
         const PENDING_STATUSES = ['EM ANÁLISE', 'AMOSTRA SEM FEEDBACK', 'SEM RETORNO DO CLIENTE', 'AMOSTRA NÃO TESTADA', 'PENDENTE'];
         const SEGMENTS = ['CÁRNEOS', 'EXPORTACAO', 'FOOD SERVICE', 'LACTEOS', 'NUTRACEUTICOS', 'NUTRICAO ANIMAL', 'PANIFICACAO', 'SMB', 'SORVETES', 'SUPPLY/FIS'];
-        const REJECTED_FEEDBACKS = ['PRODUTO DESCONTINUADO', 'FORA DO PERFIL DO CLIENTE', 'FRACA / ESTOURANDO / COM CHUVEIRO', 'QUANTIDADE INSUFICIENTE'];
-        const APPROVED_FEEDBACKS = ['APROVADO COM PEDIDO', 'APROVADO SEM PEDIDO'];
+        
+        const APPROVED_FEEDBACKS = ['A - COM PEDIDO', 'A - APROVADA SEM PEDIDO'];
+        const REJECTED_FEEDBACKS = ['R - APRESENTAÇÃO PRÓ ATIVA', 'R - CALIBRE', 'R - EXTRAVIADA', 'R - FORA DA ESPECIFICAÇÃO DO CLIENTE', 'R - FORA DO PERFIL DO CLIENTE', 'R - FRACA / ESTOURANDO / COM CHUVEIRO', 'R - PRODUTO DESCONTINUADO', 'R - QUANTIDADE INSUFICIENTE', 'R - REPRESENTAÇÃO / DISTRIBUIDOR', 'R - SEM RETORNO DO CLIENTE', 'R - EXPORTACAO'];
 
 
         const processBtn = document.getElementById('process-btn');
@@ -376,7 +377,7 @@
                     if (activeSessionId !== currentSessionId) {
                         infoMessage.textContent = `Sessão ativa encontrada: ${activeSessionId}. A carregar...`;
                         inputSection.classList.add('hidden');
-                        allNotifications = []; // Reset notifications for new session
+                        allNotifications = []; 
                         areAllNotificationsVisible = false;
                         listenForDataUpdates(activeSessionId);
                     }
@@ -751,6 +752,8 @@
     </script>
 </body>
 </html>
+
+
 
 
 
