@@ -414,23 +414,36 @@
         function renderCharts(samples) {
             let pending = 0, resolved = 0, approved = 0, rejected = 0;
             const feedbackCounts = {};
+            
             samples.forEach(s => {
                 if (s.isPending) { 
                     pending++; 
                 } else {
                     resolved++;
-                    if (s.feedback) {
+                    if (s.feedback && s.feedback.trim() !== '') {
                         const feedbackKey = s.feedback.trim();
-                        feedbackCounts[s.feedback] = (feedbackCounts[s.feedback] || 0) + 1;
-                        if (feedbackKey.startsWith('R -')) {
-                            rejected++;
-                        } else if (feedbackKey.startsWith('A -')) {
+                        feedbackCounts[feedbackKey] = (feedbackCounts[feedbackKey] || 0) + 1;
+                        
+                        // Robust check for approved/rejected, handling prefixes and legacy data
+                        const normalizedFeedback = feedbackKey.replace(/^(A - |R - )/, '').trim();
+                        
+                        if (['COM PEDIDO', 'APROVADA SEM PEDIDO'].includes(normalizedFeedback)) {
                             approved++;
+                        } else if ([
+                            'APRESENTAÇÃO PRÓ ATIVA', 'CALIBRE', 'EXTRAVIADA', 
+                            'FORA DA ESPECIFICAÇÃO DO CLIENTE', 'FORA DO PERFIL DO CLIENTE', 
+                            'FRACA / ESTOURANDO / COM CHUVEIRO', 'PRODUTO DESCONTINUADO', 
+                            'QUANTIDADE INSUFICIENTE', 'REPRESENTAÇÃO / DISTRIBUIDOR', 
+                            'SEM RETORNO DO CLIENTE', 'EXPORTACAO'
+                        ].includes(normalizedFeedback)) {
+                            rejected++;
                         }
                     }
                 }
             });
+
             renderChart('session-status-chart', 'doughnut', { labels: ['Pendentes', 'Resolvidos'], datasets: [{ data: [pending, resolved], backgroundColor: ['#facc15', '#3b82f6'] }] });
+            
             const feedbackLabels = Object.keys(feedbackCounts);
             const feedbackData = Object.values(feedbackCounts);
             if(feedbackLabels.length > 0) {
@@ -438,6 +451,7 @@
             } else {
                  renderChart('feedback-analysis-chart', 'bar', { labels: ['Aguardando Respostas'], datasets: [{ data: [1], backgroundColor: ['#e5e7eb'] }] }, { indexAxis: 'y', plugins: { legend: { display: false } } });
             }
+
             if (approved === 0 && rejected === 0) {
                 renderChart('rejection-rate-chart', 'doughnut', { labels: ['Aguardando Respostas'], datasets: [{ data: [1], backgroundColor: ['#e5e7eb'] }] });
             } else {
@@ -750,7 +764,7 @@
                 const segment = sellerSegmentsCache[sample.sellerName];
                 if (segment && !sample.isPending && sample.feedback) {
                     if (!samplesBySegment[segment]) samplesBySegment[segment] = {};
-                    const feedback = sample.feedback;
+                    const feedback = sample.feedback.trim();
                     samplesBySegment[segment][feedback] = (samplesBySegment[segment][feedback] || 0) + 1;
                 }
             });
@@ -780,6 +794,8 @@
     </script>
 </body>
 </html>
+
+
 
 
 
