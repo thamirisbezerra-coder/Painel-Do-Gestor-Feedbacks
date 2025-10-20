@@ -135,6 +135,9 @@
 
         const PENDING_STATUSES = ['EM ANÁLISE', 'AMOSTRA SEM FEEDBACK', 'SEM RETORNO DO CLIENTE', 'AMOSTRA NÃO TESTADA', 'PENDENTE'];
         const SEGMENTS = ['CÁRNEOS', 'EXPORTACAO', 'FOOD SERVICE', 'LACTEOS', 'NUTRACEUTICOS', 'NUTRICAO ANIMAL', 'PANIFICACAO', 'SMB', 'SORVETES', 'SUPPLY/FIS'];
+        const REJECTED_FEEDBACKS = ['PRODUTO DESCONTINUADO', 'FORA DO PERFIL DO CLIENTE', 'FRACA / ESTOURANDO / COM CHUVEIRO', 'QUANTIDADE INSUFICIENTE'];
+        const APPROVED_FEEDBACKS = ['APROVADO COM PEDIDO', 'APROVADO SEM PEDIDO'];
+
 
         const processBtn = document.getElementById('process-btn');
         const dataInput = document.getElementById('data-input');
@@ -165,6 +168,9 @@
         let previousSamplesState = [];
         let sellerSegmentsCache = {};
         
+        let allNotifications = [];
+        let areAllNotificationsVisible = false;
+
         const normalizeText = (text = '') => text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim();
         const sanitizeForFirebaseId = (text) => normalizeText(text).replace(/\//g, "-");
         
@@ -312,8 +318,12 @@
                 if(!initialLoad) {
                     const newFinalizedOrders = findNewFinalizedOrders(allCurrentSamples, previousSamplesState);
                     for (const [sellerName, orders] of Object.entries(newFinalizedOrders)) {
-                         showNotification(`<strong>${sellerName}</strong> sinalizou o(s) pedido(s): <strong>${orders.join(', ')}</strong>.`, 'purple');
+                         const message = `<strong>${sellerName}</strong> sinalizou o(s) pedido(s): <strong>${orders.join(', ')}</strong>.`;
+                         if (!allNotifications.find(n => n.message === message)) {
+                            allNotifications.unshift({ message, color: 'purple' });
+                         }
                     }
+                    updateNotificationDisplay();
                 }
                 previousSamplesState = JSON.parse(JSON.stringify(allCurrentSamples));
                 initialLoad = false;
@@ -344,6 +354,8 @@
             currentSessionId = null;
             allCurrentSamples = [];
             previousSamplesState = [];
+            allNotifications = [];
+            areAllNotificationsVisible = false;
             sellerSegmentsCache = {};
             dashboard.classList.add('hidden');
             inputSection.classList.remove('hidden');
@@ -352,6 +364,7 @@
             infoMessage.textContent = 'Conectado. Nenhuma sessão ativa. Cole os dados para iniciar.';
             processBtn.disabled = false;
             processBtn.textContent = 'Gerar Painel e Acessos';
+            updateNotificationDisplay();
         }
 
         function listenForActiveSession() {
@@ -363,6 +376,8 @@
                     if (activeSessionId !== currentSessionId) {
                         infoMessage.textContent = `Sessão ativa encontrada: ${activeSessionId}. A carregar...`;
                         inputSection.classList.add('hidden');
+                        allNotifications = []; // Reset notifications for new session
+                        areAllNotificationsVisible = false;
                         listenForDataUpdates(activeSessionId);
                     }
                 } else {
@@ -386,11 +401,11 @@
                 } else {
                     resolved++;
                     if (s.feedback) {
-                        const feedbackKey = s.feedback || 'N/A';
+                        const feedbackKey = s.feedback;
                         feedbackCounts[feedbackKey] = (feedbackCounts[feedbackKey] || 0) + 1;
-                        if (['PRODUTO DESCONTINUADO', 'FORA DO PERFIL DO CLIENTE', 'FRACA / ESTOURANDO / COM CHUVEIRO', 'QUANTIDADE INSUFICIENTE'].includes(feedbackKey)) {
+                        if (REJECTED_FEEDBACKS.includes(feedbackKey)) {
                             rejected++;
-                        } else if (['APROVADO COM PEDIDO', 'APROVADO SEM PEDIDO'].includes(feedbackKey)) {
+                        } else if (APPROVED_FEEDBACKS.includes(feedbackKey)) {
                             approved++;
                         }
                     }
@@ -423,10 +438,12 @@
              samples.forEach(s => {
                 if (!sellers[s.sellerName]) sellers[s.sellerName] = { samples: [], totalPending: 0, finalized: 0, total: 0, systemStatus: 'pending' };
                 sellers[s.sellerName].samples.push(s);
-                 // Determine overall system status for the seller
-                if (s.systemStatus === 'baixado') {
-                    sellers[s.sellerName].systemStatus = 'baixado';
-                }
+                 let isBaixado = true;
+                 sellers[s.sellerName].samples.forEach(sample => {
+                     if (sample.systemStatus !== 'baixado') isBaixado = false;
+                 });
+                 if (isBaixado) sellers[s.sellerName].systemStatus = 'baixado';
+
             });
             
             sellerDocs.forEach(doc => {
@@ -455,8 +472,8 @@
 
                 let statusHTML = `<span class="text-xs text-gray-500">${isFinalized ? 'Finalizado' : `${totalPending} pendente(s)`}</span>`;
                 if (isFinalized && seller.systemStatus === 'pending') {
-                    statusHTML += `
-                        <label class="flex items-center space-x-2 cursor-pointer text-sm ml-auto">
+                    statusHTML = `
+                        <label class="flex items-center space-x-2 cursor-pointer text-sm">
                             <input type="checkbox" class="system-check-btn rounded" data-seller-name="${sellerName}">
                             <span>Dar Baixa</span>
                         </label>`;
@@ -476,13 +493,37 @@
                     </div>
                     <p class="text-sm text-gray-600 font-semibold">${segment}</p>
                     <div class="mt-4 flex items-center justify-between">
-                         ${statusHTML}
+                         <div>${statusHTML}</div>
+                         <div class="flex items-center space-x-2">
+                            <span class="text-sm font-semibold text-gray-700">${seller.accessCode ? seller.accessCode : 'A gerar...'}</span>
+                            <button class="copy-code-btn bg-gray-200 text-gray-700 text-xs font-semibold py-1 px-2 rounded" data-code="${seller.accessCode}" ${!seller.accessCode ? 'disabled' : ''}>Copiar</button>
+                         </div>
                     </div>`;
                 
                 card.addEventListener('click', (e) => { if(!e.target.closest('button') && !e.target.closest('label')) filterSamplesTable(sellerName); });
                 sellersListContainer.appendChild(card);
             });
             
+            document.querySelectorAll('.copy-code-btn').forEach(btn => {
+                btn.onclick = (e) => {
+                    e.stopPropagation();
+                    const textToCopy = e.currentTarget.dataset.code;
+                    if (!textToCopy) return;
+
+                    const textarea = document.createElement('textarea');
+                    textarea.value = textToCopy;
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textarea);
+
+                    const button = e.currentTarget;
+                    const originalText = button.textContent;
+                    button.textContent = 'Copiado!';
+                    setTimeout(() => { button.textContent = 'Copiar'; }, 2000);
+                };
+            });
+
             document.querySelectorAll('.system-check-btn').forEach(checkbox => {
                 checkbox.addEventListener('change', async (e) => {
                     if (e.target.checked) {
@@ -582,20 +623,49 @@
             }
         }
 
-        function showNotification(message, color) {
-            const placeholder = notificationsList.querySelector('.placeholder-notification');
-            if(placeholder) placeholder.remove();
+        function updateNotificationDisplay() {
+            notificationsList.innerHTML = '';
+            if (allNotifications.length === 0) {
+                notificationsList.innerHTML = '<p class="text-gray-500 placeholder-notification">Nenhuma notificação nova.</p>';
+                return;
+            }
 
-            const card = document.createElement('div');
-            card.className = `notification-card bg-white p-3 rounded-lg shadow-sm border-l-4 border-${color}-500 flex justify-between items-center`;
-            card.innerHTML = `<p class="text-sm">${message}</p><button class="text-gray-400 hover:text-gray-600">&times;</button>`;
-            card.querySelector('button').onclick = () => {
-                card.remove();
-                if (notificationsList.children.length === 0) {
-                    notificationsList.innerHTML = '<p class="text-gray-500 placeholder-notification">Nenhuma notificação nova.</p>';
-                }
-            };
-            notificationsList.prepend(card);
+            const notificationsToDisplay = areAllNotificationsVisible ? allNotifications : allNotifications.slice(0, 3);
+            
+            notificationsToDisplay.forEach(notification => {
+                const card = document.createElement('div');
+                card.className = `notification-card bg-white p-3 rounded-lg shadow-sm border-l-4 border-${notification.color}-500 flex justify-between items-center`;
+                card.innerHTML = `<p class="text-sm">${notification.message}</p><button class="text-gray-400 hover:text-gray-600">&times;</button>`;
+                card.querySelector('button').onclick = (e) => {
+                    e.stopPropagation();
+                    const index = allNotifications.findIndex(n => n.message === notification.message);
+                    if (index > -1) {
+                        allNotifications.splice(index, 1);
+                    }
+                    updateNotificationDisplay();
+                };
+                notificationsList.appendChild(card);
+            });
+
+            if (allNotifications.length > 3 && !areAllNotificationsVisible) {
+                const showMoreCard = document.createElement('div');
+                showMoreCard.className = 'notification-card bg-gray-100 p-3 rounded-lg text-center cursor-pointer hover:bg-gray-200';
+                showMoreCard.innerHTML = `<p class="text-sm font-semibold text-gray-700">+${allNotifications.length - 3} mais</p>`;
+                showMoreCard.onclick = () => {
+                    areAllNotificationsVisible = true;
+                    updateNotificationDisplay();
+                };
+                notificationsList.appendChild(showMoreCard);
+            } else if (areAllNotificationsVisible && allNotifications.length > 3) {
+                 const showLessCard = document.createElement('div');
+                showLessCard.className = 'notification-card bg-gray-100 p-3 rounded-lg text-center cursor-pointer hover:bg-gray-200';
+                showLessCard.innerHTML = `<p class="text-sm font-semibold text-gray-700">Mostrar menos</p>`;
+                showLessCard.onclick = () => {
+                    areAllNotificationsVisible = false;
+                    updateNotificationDisplay();
+                };
+                notificationsList.appendChild(showLessCard);
+            }
         }
 
         function findNewFinalizedOrders(currentSamples, previousSamples) {
@@ -681,6 +751,8 @@
     </script>
 </body>
 </html>
+
+
 
 
 
