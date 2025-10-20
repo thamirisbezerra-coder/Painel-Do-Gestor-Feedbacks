@@ -420,8 +420,8 @@
                 } else {
                     resolved++;
                     if (s.feedback) {
-                        const feedbackKey = s.feedback;
-                        feedbackCounts[feedbackKey] = (feedbackCounts[feedbackKey] || 0) + 1;
+                        const feedbackKey = s.feedback.trim();
+                        feedbackCounts[s.feedback] = (feedbackCounts[s.feedback] || 0) + 1;
                         if (feedbackKey.startsWith('R -')) {
                             rejected++;
                         } else if (feedbackKey.startsWith('A -')) {
@@ -780,6 +780,8 @@
     </script>
 </body>
 </html>
+
+
 
 
 
