@@ -106,7 +106,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, onSnapshot, doc, writeBatch, setDoc, getDoc, collectionGroup, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, doc, writeBatch, setDoc, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
         const firebaseConfig = {
@@ -146,7 +146,7 @@
         const samplesTableTitle = document.getElementById('samples-table-title');
         const showAllBtn = document.getElementById('show-all-btn');
         
-        let unsubscribe = null;
+        let dataListenerUnsubscribe = null;
         let currentSessionId = null;
         let chartInstances = {};
         let currentSellerForSegment = null;
@@ -158,10 +158,14 @@
         
         processBtn.addEventListener('click', () => {
             const data = dataInput.value.trim();
-            if (data) parseAndDisplayLocally(data);
+            if (data) parseAndCreateNewSession(data);
         });
         
-        newSessionBtn.addEventListener('click', () => window.location.reload());
+        newSessionBtn.addEventListener('click', async () => {
+            const activeSessionRef = doc(db, "configuracoes", "sessaoAtiva");
+            await setDoc(activeSessionRef, { current: null });
+        });
+
         cancelModalBtn.addEventListener('click', () => segmentModal.classList.add('hidden'));
         showAllBtn.addEventListener('click', () => filterSamplesTable(null));
         
@@ -182,7 +186,7 @@
             setTimeout(() => infoMessage.textContent = '', 3000);
         });
         
-        function parseAndDisplayLocally(data) {
+        function parseAndCreateNewSession(data) {
             infoMessage.textContent = "A processar...";
             processBtn.disabled = true;
 
@@ -221,19 +225,15 @@
                     const sessionId = `sessao_${Date.now()}`;
                     allCurrentSamples = allSamplesData;
                     
-                    infoMessage.textContent = "Painel gerado. A guardar na nuvem...";
                     inputSection.classList.add('hidden');
-                    newSessionContainer.classList.remove('hidden');
-                    sessionIdText.innerHTML = `ID da Sessão: <strong>${sessionId}</strong>`;
+                    infoMessage.textContent = "Painel gerado. A guardar na nuvem...";
                     
-                    processAndDisplayDashboard(allSamplesData, sessionId);
-                    saveDataInBackgroundAndListen(allSamplesData, sessionId);
+                    saveDataAndUpdateActiveSession(allSamplesData, sessionId);
                 }
             });
         }
 
-        async function saveDataInBackgroundAndListen(samples, sessionId) {
-            currentSessionId = sessionId;
+        async function saveDataAndUpdateActiveSession(samples, sessionId) {
             const sellersData = samples.reduce((acc, sample) => {
                 if (!acc[sample.sellerName]) {
                     acc[sample.sellerName] = { amostras: [], originalName: sample.sellerName, accessCode: null };
@@ -241,11 +241,6 @@
                 acc[sample.sellerName].amostras.push(sample);
                 return acc;
             }, {});
-
-            await loadAllSellerSegments(Object.keys(sellersData));
-            processAndDisplayDashboard(allCurrentSamples, currentSessionId);
-
-            listenForUpdates(sessionId);
 
             const sellersArray = Object.entries(sellersData);
             const batchSize = 5;
@@ -260,18 +255,21 @@
                     batch.set(docRef, data);
                 });
                 await batch.commit();
-                await new Promise(resolve => setTimeout(resolve, 1000)); // Pausa para evitar exceder a quota
+                await new Promise(resolve => setTimeout(resolve, 1000));
             }
             
-            infoMessage.textContent = "Guardado com sucesso! Sincronização em tempo real ativa.";
+            infoMessage.textContent = "Guardado com sucesso! A definir como sessão ativa para todos...";
+            const activeSessionRef = doc(db, "configuracoes", "sessaoAtiva");
+            await setDoc(activeSessionRef, { current: sessionId });
         }
 
-        function listenForUpdates(sessionId) {
+        function listenForDataUpdates(sessionId) {
+            currentSessionId = sessionId;
             const q = collection(db, "sessoes", sessionId, "vendedores");
-            if(unsubscribe) unsubscribe();
+            if(dataListenerUnsubscribe) dataListenerUnsubscribe();
             
             let initialLoad = true;
-            unsubscribe = onSnapshot(q, async (snapshot) => {
+            dataListenerUnsubscribe = onSnapshot(q, async (snapshot) => {
                 const allSamples = snapshot.docs.flatMap(doc => doc.data().amostras || []);
                 allCurrentSamples = allSamples;
                 
@@ -306,6 +304,9 @@
         
         function processAndDisplayDashboard(samples, sessionId, sellerDocs = []) {
             dashboard.classList.remove('hidden');
+            sessionIdText.innerHTML = `ID da Sessão: <strong>${sessionId}</strong>`;
+            newSessionContainer.classList.remove('hidden');
+
             renderCharts(samples);
             renderSegmentCharts(samples);
             renderSellersList(samples, sessionId, sellerDocs);
@@ -317,6 +318,40 @@
             } else {
                 filterSamplesTable(null);
             }
+        }
+        
+        function resetToInitialState() {
+            if(dataListenerUnsubscribe) dataListenerUnsubscribe();
+            currentSessionId = null;
+            allCurrentSamples = [];
+            sellerSegmentsCache = {};
+            dashboard.classList.add('hidden');
+            inputSection.classList.remove('hidden');
+            newSessionContainer.classList.add('hidden');
+            sessionIdText.textContent = 'Nenhuma sessão iniciada';
+            infoMessage.textContent = 'Conectado. Nenhuma sessão ativa. Cole os dados para iniciar.';
+            processBtn.disabled = false;
+            processBtn.textContent = 'Gerar Painel e Acessos';
+        }
+
+        function listenForActiveSession() {
+            const activeSessionRef = doc(db, "configuracoes", "sessaoAtiva");
+            onSnapshot(activeSessionRef, (docSnap) => {
+                const activeSessionId = docSnap.exists() ? docSnap.data().current : null;
+
+                if (activeSessionId) {
+                    if (activeSessionId !== currentSessionId) {
+                        infoMessage.textContent = `Sessão ativa encontrada: ${activeSessionId}. A carregar...`;
+                        inputSection.classList.add('hidden');
+                        listenForDataUpdates(activeSessionId);
+                    }
+                } else {
+                    resetToInitialState();
+                }
+            }, (error) => {
+                infoMessage.textContent = "Erro ao verificar sessão ativa.";
+                console.error("Active session listener error:", error);
+            });
         }
 
         function renderCharts(samples) {
@@ -529,13 +564,14 @@
         }
 
         signInAnonymously(auth)
-            .then(() => {
-                processBtn.disabled = false;
-                processBtn.textContent = 'Gerar Painel e Acessos';
-                infoMessage.textContent = 'Conectado. Pronto para receber os dados.';
-            })
-            .catch(error => { infoMessage.textContent = "Não foi possível conectar ao serviço."; });
+            .then(listenForActiveSession)
+            .catch(error => { 
+                infoMessage.textContent = "Não foi possível conectar ao serviço."; 
+                console.error("Firebase Auth Error:", error);
+            });
     </script>
 </body>
 </html>
+
+
 
