@@ -43,7 +43,10 @@
 
         <div id="dashboard" class="hidden">
             <section id="notifications-section" class="mb-8 max-w-4xl mx-auto">
-                 <h2 class="text-2xl font-bold text-gray-900 mb-4">Notificações</h2>
+                 <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-2xl font-bold text-gray-900">Notificações</h2>
+                    <button id="history-btn" class="bg-gray-200 text-gray-700 text-sm font-semibold py-1 px-3 rounded-lg hover:bg-gray-300">Histórico</button>
+                 </div>
                  <div id="notifications-list" class="space-y-3"><p class="text-gray-500 placeholder-notification">Nenhuma notificação nova.</p></div>
             </section>
             
@@ -113,6 +116,18 @@
         </div>
     </div>
 
+    <div id="history-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl p-6">
+            <h3 class="text-2xl font-bold mb-4">Histórico de Notificações</h3>
+            <div id="history-list" class="space-y-3 max-h-96 overflow-y-auto border-t border-b py-4">
+                 <p class="text-gray-500">Nenhum histórico para mostrar.</p>
+            </div>
+            <div class="mt-8 flex justify-end">
+                <button id="close-history-btn" class="bg-blue-600 text-white font-bold py-2 px-5 rounded-lg">Fechar</button>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -135,10 +150,6 @@
 
         const PENDING_STATUSES = ['EM ANÁLISE', 'AMOSTRA SEM FEEDBACK', 'SEM RETORNO DO CLIENTE', 'AMOSTRA NÃO TESTADA', 'PENDENTE'];
         const SEGMENTS = ['CÁRNEOS', 'EXPORTACAO', 'FOOD SERVICE', 'LACTEOS', 'NUTRACEUTICOS', 'NUTRICAO ANIMAL', 'PANIFICACAO', 'SMB', 'SORVETES', 'SUPPLY/FIS'];
-        
-        const APPROVED_FEEDBACKS = ['A - COM PEDIDO', 'A - APROVADA SEM PEDIDO'];
-        const REJECTED_FEEDBACKS = ['R - APRESENTAÇÃO PRÓ ATIVA', 'R - CALIBRE', 'R - EXTRAVIADA', 'R - FORA DA ESPECIFICAÇÃO DO CLIENTE', 'R - FORA DO PERFIL DO CLIENTE', 'R - FRACA / ESTOURANDO / COM CHUVEIRO', 'R - PRODUTO DESCONTINUADO', 'R - QUANTIDADE INSUFICIENTE', 'R - REPRESENTAÇÃO / DISTRIBUIDOR', 'R - SEM RETORNO DO CLIENTE', 'R - EXPORTACAO'];
-
 
         const processBtn = document.getElementById('process-btn');
         const dataInput = document.getElementById('data-input');
@@ -161,6 +172,11 @@
         const showAllBtn = document.getElementById('show-all-btn');
         const sellerSearchInput = document.getElementById('seller-search-input');
         
+        const historyBtn = document.getElementById('history-btn');
+        const historyModal = document.getElementById('history-modal');
+        const closeHistoryBtn = document.getElementById('close-history-btn');
+        const historyList = document.getElementById('history-list');
+
         let dataListenerUnsubscribe = null;
         let currentSessionId = null;
         let chartInstances = {};
@@ -187,7 +203,9 @@
 
         cancelModalBtn.addEventListener('click', () => segmentModal.classList.add('hidden'));
         showAllBtn.addEventListener('click', () => filterSamplesTable(null));
-        
+        historyBtn.addEventListener('click', () => renderNotificationHistory());
+        closeHistoryBtn.addEventListener('click', () => historyModal.classList.add('hidden'));
+
         confirmSegmentBtn.addEventListener('click', async () => {
             if (!currentSellerForSegment) return;
             const newSegment = segmentSelect.value;
@@ -245,7 +263,7 @@
                              qtde: String(row['Qtde.'] || ''), notaFiscal: String(row['Nota Fiscal'] || ''),
                              emissaoNF: String(row['Emissão NF'] || ''), originalStatus: String(row['Status'] || ''),
                              feedback: '', observation: '', finalizedByVendor: false,
-                             systemStatus: 'pending' // Novo campo
+                             systemStatus: 'pending'
                          };
                     }).filter(Boolean);
                     
@@ -321,7 +339,7 @@
                     for (const [sellerName, orders] of Object.entries(newFinalizedOrders)) {
                          const message = `<strong>${sellerName}</strong> sinalizou o(s) pedido(s): <strong>${orders.join(', ')}</strong>.`;
                          if (!allNotifications.find(n => n.message === message)) {
-                            allNotifications.unshift({ message, color: 'purple' });
+                            allNotifications.unshift({ message, color: 'purple', timestamp: new Date() });
                          }
                     }
                     updateNotificationDisplay();
@@ -404,9 +422,9 @@
                     if (s.feedback) {
                         const feedbackKey = s.feedback;
                         feedbackCounts[feedbackKey] = (feedbackCounts[feedbackKey] || 0) + 1;
-                        if (REJECTED_FEEDBACKS.includes(feedbackKey)) {
+                        if (feedbackKey.startsWith('R -')) {
                             rejected++;
-                        } else if (APPROVED_FEEDBACKS.includes(feedbackKey)) {
+                        } else if (feedbackKey.startsWith('A -')) {
                             approved++;
                         }
                     }
@@ -636,15 +654,7 @@
             notificationsToDisplay.forEach(notification => {
                 const card = document.createElement('div');
                 card.className = `notification-card bg-white p-3 rounded-lg shadow-sm border-l-4 border-${notification.color}-500 flex justify-between items-center`;
-                card.innerHTML = `<p class="text-sm">${notification.message}</p><button class="text-gray-400 hover:text-gray-600">&times;</button>`;
-                card.querySelector('button').onclick = (e) => {
-                    e.stopPropagation();
-                    const index = allNotifications.findIndex(n => n.message === notification.message);
-                    if (index > -1) {
-                        allNotifications.splice(index, 1);
-                    }
-                    updateNotificationDisplay();
-                };
+                card.innerHTML = `<p class="text-sm">${notification.message}</p>`;
                 notificationsList.appendChild(card);
             });
 
@@ -667,6 +677,24 @@
                 };
                 notificationsList.appendChild(showLessCard);
             }
+        }
+        
+        function renderNotificationHistory() {
+            historyList.innerHTML = '';
+            if (allNotifications.length === 0) {
+                historyList.innerHTML = '<p class="text-gray-500">Nenhum histórico para mostrar.</p>';
+            } else {
+                allNotifications.forEach(notification => {
+                    const item = document.createElement('div');
+                    item.className = 'p-3 border-b';
+                    item.innerHTML = `
+                        <p class="text-sm text-gray-800">${notification.message}</p>
+                        <p class="text-xs text-gray-500 mt-1">${notification.timestamp.toLocaleString('pt-BR')}</p>
+                    `;
+                    historyList.appendChild(item);
+                });
+            }
+            historyModal.classList.remove('hidden');
         }
 
         function findNewFinalizedOrders(currentSamples, previousSamples) {
@@ -752,7 +780,6 @@
     </script>
 </body>
 </html>
-
 
 
 
