@@ -12,7 +12,6 @@
         .seller-card { cursor: pointer; }
         .notification-card { animation: slideIn 0.5s ease-out; }
         @keyframes slideIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
-        #email-preview { white-space: pre-wrap; }
     </style>
 </head>
 <body class="text-gray-800">
@@ -45,7 +44,7 @@
         <div id="dashboard" class="hidden">
             <section id="notifications-section" class="mb-8 max-w-4xl mx-auto">
                  <h2 class="text-2xl font-bold text-gray-900 mb-4">Notificações</h2>
-                 <div id="notifications-list" class="space-y-3"><p class="text-gray-500">Nenhuma notificação nova.</p></div>
+                 <div id="notifications-list" class="space-y-3"><p class="text-gray-500 placeholder-notification">Nenhuma notificação nova.</p></div>
             </section>
             
             <section class="mb-8 grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -54,31 +53,19 @@
                 <div class="bg-white p-6 rounded-2xl shadow-sm border"><h3 class="font-bold text-lg mb-2 text-center">Índice de Reprovação</h3><div style="height: 200px;"><canvas id="rejection-rate-chart"></canvas></div></div>
             </section>
 
-             <section id="team-tracking-section" class="mb-10">
-                <h2 class="text-2xl font-bold text-gray-900 mb-4">Acompanhamento da Equipe</h2>
-                <div id="sellers-list" class="bg-white p-4 rounded-2xl shadow-sm border grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+             <section id="team-tracking-section" class="mb-10 bg-white p-6 rounded-2xl shadow-sm border">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-2xl font-bold text-gray-900">Acompanhamento da Equipe</h2>
+                    <input id="seller-search-input" type="text" placeholder="Procurar vendedor..." class="border-gray-300 rounded-lg shadow-sm text-sm">
+                </div>
+                <div id="sellers-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 </div>
             </section>
-            
-            <section id="communication-section" class="mb-10 bg-white p-6 rounded-2xl shadow-sm border">
-                <h2 class="text-2xl font-bold text-gray-900 mb-4">Comunicar Vendedores</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label for="seller-email-select" class="block text-sm font-medium text-gray-700 mb-2">1. Selecione o Vendedor</label>
-                        <select id="seller-email-select" class="w-full border-gray-300 rounded-lg">
-                            <option value="">-- Escolha um vendedor --</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">2. Copie as Instruções</label>
-                        <button id="copy-email-btn" class="w-full bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50" disabled>Copiar Instruções de E-mail</button>
-                    </div>
-                </div>
-                <div class="mt-6 border-t pt-4">
-                    <h3 class="font-semibold text-gray-800 mb-2">Pré-visualização do E-mail:</h3>
-                    <div id="email-preview-container" class="bg-gray-50 p-4 rounded-lg border h-64 overflow-y-auto">
-                        <p id="email-preview" class="text-sm text-gray-600">Selecione um vendedor para gerar o e-mail.</p>
-                    </div>
+
+            <section id="observations-feed-section" class="mb-10">
+                <h2 class="text-2xl font-bold text-gray-900 mb-4">Feed de Observações dos Vendedores</h2>
+                <div id="observations-feed-list" class="space-y-4 max-h-96 overflow-y-auto bg-white p-4 rounded-2xl shadow-sm border">
+                    <p class="text-gray-500 placeholder-observation">Nenhuma observação de vendedor encontrada.</p>
                 </div>
             </section>
 
@@ -129,7 +116,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, onSnapshot, doc, writeBatch, setDoc, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, doc, writeBatch, setDoc, getDoc, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
         const firebaseConfig = {
@@ -148,10 +135,6 @@
 
         const PENDING_STATUSES = ['EM ANÁLISE', 'AMOSTRA SEM FEEDBACK', 'SEM RETORNO DO CLIENTE', 'AMOSTRA NÃO TESTADA', 'PENDENTE'];
         const SEGMENTS = ['CÁRNEOS', 'EXPORTACAO', 'FOOD SERVICE', 'LACTEOS', 'NUTRACEUTICOS', 'NUTRICAO ANIMAL', 'PANIFICACAO', 'SMB', 'SORVETES', 'SUPPLY/FIS'];
-        
-        const sellerEmailMap = new Map([
-            ["ALEXSANDER DE ANDRADE", "comercial.comandra@gmail.com"],["ALINE BARROS", "aline.barros@doremus.com.br"],["ALISSON FERNANDES", "alisson.fernandes@doremus.com.br"],["ANA FLAVIA AMAMOTO", "ana.amamoto@doremus.com.br"],["ANA MOTA", "ana.mota@doremus.com.br"],["ANDRE FELIX", "andrefelixx.repre@gmail.com"],["ANDREIA TINTI", "andreia.tinti@doremus.com.br"],["ANDRÉ BRESSANIN", "andrebressanin@gmail.com"],["ANTENOR ADRIANO", "aadriano100@gmail.com"],["BRUNO VERONEZ", "bruno.veronez@doremus.com.br"],["CAMILA BENTO", "camila.bento@doremus.com.br"],["CRISTIANE OLIVEIRA", "cristiane.oliveira@doremus.com.br"],["CRISTIANO RAMOS", "cristiano.ramos@doremus.com.br"],["DANIELA MARCHEZIN", "danielamarchezin@gmail.com"],["DANILO ARAUJO", "danilo.doremus@gmail.com"],["DANILO TREMOCOLDI", "danilo.tremocoldi@doremus.com.br"],["DELMAR PAES", "delmarpaes@yahoo.com.br"],["DIEGO FIORIO", "diegofiorio.vendas@gmail.com"],["DIRETO - FISCAL", ""],["DIRETO- MACALE", "igor.crovato@doremus.com.br"],["DIRETO-DANTE", "dantefurtado@uol.com.br"],["DOUGLAS SILVA", "dgsrepres@gmail.com"],["ELINIVAL SANTOS", "eli.farias@doremus.com.br"],["EUCLEBIO SOUZA", "cleberdesouza14@gmail.com"],["FABRICIO NOGUEIRA", "fabricio.nogueira@doremus.com.br"],["FABRICIO OLIVEIRA DE CARVALHO", "fabricio.carvalho@doremus.com.br"],["FABRICIO PAES - VAGA", "fabricio.paes@doremus.com.br"],["FELIPE LOHAN", "felipe.uchoa@doremus.com.br"],["FELIPE LOPES BARBOSA", "felipe.barbosa@doremus.com.br"],["FERNANDA BEATRIZ", "fernanda.santos@doremus.com.br"],["FLAVIO BORTOLINI", "flavio.bortolini@doremus.com.br"],["FRANCISCO ALVES FERREIRA", "francisco.ferreira1972@hotmail.com"],["GABRIEL PAZIANOTO", "pazianoto.rpz@gmail.com"],["GEORGIA ARAUJO", "georgia.araujo@doremus.com.br"],["GILBERTO JUNIOR", "gilberto.fontoura@doremus.com.br"],["GUILHERME ANTONIO", "guilherme.dangelo@doremus.com.br"],["GUSTAVO BONFIM", "gustavo.bonfim@doremus.com.br"],["GUSTAVO MAIA", "gustavo.maia@doremus.com.br"],["IGOR CROVATO", "igor.crovato@doremus.com.br"],["JACKSON DE ALMEIDA FREITAS", "jackson.freitas@doremus.com.br"],["JOAO SCHITTKOWSKI", "joao@doremus.com.br"],["JOSEF TELFSER", "joseftelfser64@gmail.com"],["JULIANA LAGUNA", "juliana.laguna@doremus.com.br"],["JURACI TALASCA", "juraci.talasca@doremus.com.br"],["KARLA ALMEIDA", "karla.almeida@doremus.com.br"],["KLEBER CAMPOS DE ARAUJO", "kleber_albatrozconsult@hotmail.com.br"],["LEANDRO FENALTI", "leandro.leal@doremus.com.br"],["LEANDRO GASPARINI", "leandro.gasparini@doremus.com.br"],["LEILA RODRIGUES", "leila.rodrigues@doremus.com.br"],["LEONARDO GARCIA", "leonardo.garcia@doremus.com.br"],["LEONARDO SODRE", "leonardo.sodre@doremus.com.br"],["LUCIMARIO BEZERRA DA SILVA", "lucimariobezerra@hotmail.com"],["LUIS ADRIANO", "luis.prestes@doremus.com.br"],["LUIS FELIPE CASSA", "vendas@cassa.com.br"],["LUIS SCARPIN", "luis.scarpin@doremus.com.br"],["LUIZ FELIPE", "luizfelipejca@gmail.com"],["MARCELO COSTA", "marcelo.costa@doremus.com.br"],["MARCELO DE SOUSA REIS", "marsousareis@hotmail.com"],["MARCO ANTONIO", "vendas.marcoantonio@hotmail.com"],["MARINA POSSEBON", "marina.possebon@doremus.com.br"],["MARIO GUERRERO", "mario.guerrero@doremus.com.br"],["MARISTELA THOMAZINI", "maristela.thomazini@doremus.com.br"],["MARITZA TEIXEIRA", "maritza.teixeira@doremus.com.br"],["MARTIN SCHWARZ", "martin.doremus@gmail.com"],["MELINA MUFFO RUZZI", "melina.ruzzi@doremus.com.br"],["MORLEY RAMALHO", "morley.ramalho@doremus.com.br"],["NATA ZAFENATE", "zafenate77@yahoo.com.br"],["PATRICIA ALVES PINATTI", "patricia.pinatti@doremus.com.br"],["PATRICIA CORREIA", "patricia.correia@doremus.com.br"],["PAULO BARRETO", "prpbarreto@hotmail.com"],["PEDRO DE OLIVEIRA SILVA", "glaubergama2021@gmail.com"],["PEDRO LESSA", "ltmartins.repre@gmail.com"],["RENATO VASCONCELOS", "renato.vasconcelos@doremus.com.br"],["RICARDO BUKALIL", "ricardobukalil@icloud.com"],["SAULO NÁCLE PEREIRA", "saulovendasabc@hotmail.com"],["SERGIO VIEIRA", "sr.vieira.representacoes@outlook.com"],["SIDNEI RODRIGUES", "sidnei.rodrigues@doremus.com.br"],["TATIANE LOURENCO", "tatiane.lourenco@doremus.com.br"],["THAYS MAIA", "thays.maia@doremus.com.br"],["TULIO FERREIRA", "tulioferreira1982@gmail.com"],["VICTOR ROSSI", "victor.rossi@doremus.com.br"],["VINICIUS REGINATO", "vinicius.reginato@doremus.com.br"],["VINICIUS SILVA", "vinicius.silva@doremus.com.br"],["WASHINGTON DIAS", "washington.dias@doremus.com.br"],["WILSON LUCENA", "wilsonwsrepresentacoes@hotmail.com"]
-        ]);
 
         const processBtn = document.getElementById('process-btn');
         const dataInput = document.getElementById('data-input');
@@ -172,18 +155,15 @@
         const fullSamplesTbody = document.getElementById('full-samples-tbody');
         const samplesTableTitle = document.getElementById('samples-table-title');
         const showAllBtn = document.getElementById('show-all-btn');
-        
-        const sellerEmailSelect = document.getElementById('seller-email-select');
-        const copyEmailBtn = document.getElementById('copy-email-btn');
-        const emailPreview = document.getElementById('email-preview');
+        const sellerSearchInput = document.getElementById('seller-search-input');
         
         let dataListenerUnsubscribe = null;
         let currentSessionId = null;
         let chartInstances = {};
         let currentSellerForSegment = null;
         let allCurrentSamples = [];
+        let previousSamplesState = [];
         let sellerSegmentsCache = {};
-        let sellerEmailData = [];
         
         const normalizeText = (text = '') => text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim();
         const sanitizeForFirebaseId = (text) => normalizeText(text).replace(/\//g, "-");
@@ -217,6 +197,19 @@
             
             setTimeout(() => infoMessage.textContent = '', 3000);
         });
+
+        sellerSearchInput.addEventListener('input', () => {
+            const searchTerm = normalizeText(sellerSearchInput.value);
+            const sellerCards = sellersListContainer.querySelectorAll('.seller-card');
+            sellerCards.forEach(card => {
+                const sellerName = normalizeText(card.dataset.sellerName);
+                if (sellerName.includes(searchTerm)) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
         
         function parseAndCreateNewSession(data) {
             infoMessage.textContent = "A processar...";
@@ -244,7 +237,8 @@
                              produto: String(row['Produto'] || ''), descricao: String(row['Descrição'] || ''),
                              qtde: String(row['Qtde.'] || ''), notaFiscal: String(row['Nota Fiscal'] || ''),
                              emissaoNF: String(row['Emissão NF'] || ''), originalStatus: String(row['Status'] || ''),
-                             feedback: '', observation: '', finalizedByVendor: false
+                             feedback: '', observation: '', finalizedByVendor: false,
+                             systemStatus: 'pending' // Novo campo
                          };
                     }).filter(Boolean);
                     
@@ -316,23 +310,12 @@
                 processAndDisplayDashboard(allSamples, sessionId, sellerDocs);
 
                 if(!initialLoad) {
-                     snapshot.docChanges().forEach((change) => {
-                        if (change.type === "modified") {
-                            const newData = change.doc.data();
-                            const newSamples = newData.amostras || [];
-                            const originalName = newData.originalName;
-                            
-                            const signalizedOrders = new Set();
-                            newSamples.forEach(sample => {
-                                if(sample.finalizedByVendor) signalizedOrders.add(sample.pedido);
-                            });
-
-                            if(signalizedOrders.size > 0){
-                                showNotification(`<strong>${originalName}</strong> finalizou e sinalizou o(s) pedido(s): <strong>${[...signalizedOrders].join(', ')}</strong>.`, 'purple');
-                            }
-                        }
-                    });
+                    const newFinalizedOrders = findNewFinalizedOrders(allCurrentSamples, previousSamplesState);
+                    for (const [sellerName, orders] of Object.entries(newFinalizedOrders)) {
+                         showNotification(`<strong>${sellerName}</strong> sinalizou o(s) pedido(s): <strong>${orders.join(', ')}</strong>.`, 'purple');
+                    }
                 }
+                previousSamplesState = JSON.parse(JSON.stringify(allCurrentSamples));
                 initialLoad = false;
             });
         }
@@ -345,8 +328,8 @@
             renderCharts(samples);
             renderSegmentCharts(samples);
             renderSellersList(samples, sessionId, sellerDocs);
+            renderObservationsFeed(samples);
             renderFullSamplesTable(samples);
-            populateEmailTool(sellerDocs);
             
             const currentFilteredSeller = samplesTableTitle.dataset.filteredSeller;
             if(currentFilteredSeller) {
@@ -360,6 +343,7 @@
             if(dataListenerUnsubscribe) dataListenerUnsubscribe();
             currentSessionId = null;
             allCurrentSamples = [];
+            previousSamplesState = [];
             sellerSegmentsCache = {};
             dashboard.classList.add('hidden');
             inputSection.classList.remove('hidden');
@@ -406,7 +390,7 @@
                         feedbackCounts[feedbackKey] = (feedbackCounts[feedbackKey] || 0) + 1;
                         if (['PRODUTO DESCONTINUADO', 'FORA DO PERFIL DO CLIENTE', 'FRACA / ESTOURANDO / COM CHUVEIRO', 'QUANTIDADE INSUFICIENTE'].includes(feedbackKey)) {
                             rejected++;
-                        } else {
+                        } else if (['APROVADO COM PEDIDO', 'APROVADO SEM PEDIDO'].includes(feedbackKey)) {
                             approved++;
                         }
                     }
@@ -437,8 +421,12 @@
             sellersListContainer.innerHTML = '';
             const sellers = {};
              samples.forEach(s => {
-                if (!sellers[s.sellerName]) sellers[s.sellerName] = { samples: [], totalPending: 0, finalized: 0, total: 0 };
+                if (!sellers[s.sellerName]) sellers[s.sellerName] = { samples: [], totalPending: 0, finalized: 0, total: 0, systemStatus: 'pending' };
                 sellers[s.sellerName].samples.push(s);
+                 // Determine overall system status for the seller
+                if (s.systemStatus === 'baixado') {
+                    sellers[s.sellerName].systemStatus = 'baixado';
+                }
             });
             
             sellerDocs.forEach(doc => {
@@ -452,19 +440,35 @@
                 const totalPending = seller.samples.filter(s => s.isPending).length;
                 const isFinalized = totalPending === 0;
 
+                let statusColor = 'yellow';
+                if (isFinalized && seller.systemStatus === 'pending') {
+                    statusColor = 'green';
+                } else if (seller.systemStatus === 'baixado') {
+                    statusColor = 'purple';
+                }
+
                 const card = document.createElement('div');
-                card.className = `seller-card p-4 rounded-lg shadow bg-white border-l-4 ${isFinalized ? 'border-green-500' : 'border-yellow-500'}`;
+                card.className = `seller-card p-4 rounded-lg shadow bg-white border-l-4 border-${statusColor}-500`;
                 card.dataset.sellerName = sellerName;
                 
                 const segment = sellerSegmentsCache[sellerName] || 'Sem Segmento';
+
+                let statusHTML = `<span class="text-xs text-gray-500">${isFinalized ? 'Finalizado' : `${totalPending} pendente(s)`}</span>`;
+                if (isFinalized && seller.systemStatus === 'pending') {
+                    statusHTML += `
+                        <label class="flex items-center space-x-2 cursor-pointer text-sm ml-auto">
+                            <input type="checkbox" class="system-check-btn rounded" data-seller-name="${sellerName}">
+                            <span>Dar Baixa</span>
+                        </label>`;
+                } else if (seller.systemStatus === 'baixado') {
+                    statusHTML = `<span class="text-sm font-semibold text-purple-600">✓ Baixado em Sistema</span>`;
+                }
+
 
                 card.innerHTML = `
                     <div class="flex justify-between items-start mb-2">
                         <div class="font-bold text-lg flex items-center">
                            ${sellerName}
-                           <button class="copy-name-btn text-gray-400 hover:text-gray-600 ml-2" data-name="${sellerName}">
-                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM5 11a1 1 0 100 2h4a1 1 0 100-2H5z"></path></svg>
-                           </button>
                         </div>
                         <button class="config-seller-btn text-gray-400 hover:text-gray-600" data-seller-name="${sellerName}">
                             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M5 4a1 1 0 00-2 0v2.28a1 1 0 00.9 1.42A7.48 7.48 0 0110 8a7.48 7.48 0 015.1 2.7.999.999 0 00.9-1.42V4a1 1 0 10-2 0v1.588A5.502 5.502 0 0010 5.03 5.502 5.502 0 005 5.588V4zM10 12a2 2 0 100 4 2 2 0 000-4z"></path></svg>
@@ -472,36 +476,37 @@
                     </div>
                     <p class="text-sm text-gray-600 font-semibold">${segment}</p>
                     <div class="mt-4 flex items-center justify-between">
-                         <span class="text-xs text-gray-500">${isFinalized ? 'Finalizado' : `${totalPending} pendente(s)`}</span>
-                         <div class="flex items-center space-x-2">
-                            <span class="text-sm font-semibold text-gray-700">${seller.accessCode ? seller.accessCode : 'A gerar...'}</span>
-                            <button class="copy-code-btn bg-gray-200 text-gray-700 text-xs font-semibold py-1 px-2 rounded" data-code="${seller.accessCode}" ${!seller.accessCode ? 'disabled' : ''}>Copiar</button>
-                         </div>
+                         ${statusHTML}
                     </div>`;
                 
-                card.addEventListener('click', (e) => { if(!e.target.closest('button')) filterSamplesTable(sellerName); });
+                card.addEventListener('click', (e) => { if(!e.target.closest('button') && !e.target.closest('label')) filterSamplesTable(sellerName); });
                 sellersListContainer.appendChild(card);
             });
-
-            document.querySelectorAll('.copy-code-btn, .copy-name-btn').forEach(btn => {
-                btn.onclick = (e) => {
-                    e.stopPropagation();
-                    const textToCopy = e.currentTarget.dataset.code || e.currentTarget.dataset.name;
-                    if (!textToCopy) return;
-
-                    const textarea = document.createElement('textarea');
-                    textarea.value = textToCopy;
-                    document.body.appendChild(textarea);
-                    textarea.select();
-                    document.execCommand('copy');
-                    document.body.removeChild(textarea);
-
-                    const button = e.currentTarget;
-                    const originalText = button.textContent;
-                    button.textContent = 'Copiado!';
-                    setTimeout(() => { button.textContent = originalText || 'Copiar'; }, 2000);
-                };
+            
+            document.querySelectorAll('.system-check-btn').forEach(checkbox => {
+                checkbox.addEventListener('change', async (e) => {
+                    if (e.target.checked) {
+                        e.target.disabled = true;
+                        const sellerName = e.target.dataset.sellerName;
+                        const sellerId = sanitizeForFirebaseId(sellerName);
+                        const docRef = doc(db, "sessoes", currentSessionId, "vendedores", sellerId);
+                        
+                        try {
+                            const sellerDocSnap = await getDoc(docRef);
+                            if (sellerDocSnap.exists()) {
+                                const sellerData = sellerDocSnap.data();
+                                const updatedSamples = sellerData.amostras.map(s => ({ ...s, systemStatus: 'baixado' }));
+                                await updateDoc(docRef, { amostras: updatedSamples });
+                            }
+                        } catch (error) {
+                            console.error("Error updating system status:", error);
+                            e.target.checked = false; 
+                            e.target.disabled = false;
+                        }
+                    }
+                });
             });
+
              document.querySelectorAll('.config-seller-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
@@ -521,10 +526,45 @@
                 row.className = 'border-b';
                 row.dataset.sellerName = sample.sellerName;
                 row.innerHTML = `
-                    <td class="px-4 py-2 font-medium">${sample.sellerName}</td> <td class="px-4 py-2">${sample.pedido}</td>
-                    <td class="px-4 py-2">${sample.razaoSocial}</td> <td class="px-4 py-2">${sample.produto}</td>
-                    <td class="px-4 py-2">${sample.originalStatus}</td> <td class="px-4 py-2">${feedbackDisplay}</td>`;
+                    <td class="px-4 py-2 font-medium">${sample.sellerName}</td>
+                    <td class="px-4 py-2">${sample.pedido}</td>
+                    <td class="px-4 py-2">${sample.razaoSocial}</td>
+                    <td class="px-4 py-2">${sample.produto}</td>
+                    <td class="px-4 py-2">${sample.originalStatus}</td>
+                    <td class="px-4 py-2">${feedbackDisplay}</td>`;
                 fullSamplesTbody.appendChild(row);
+            });
+        }
+        
+        function renderObservationsFeed(samples) {
+            const feedContainer = document.getElementById('observations-feed-list');
+            const placeholder = feedContainer.querySelector('.placeholder-observation');
+            
+            const samplesWithObservations = samples.filter(s => s.observation && s.observation.trim() !== '');
+
+            samplesWithObservations.sort((a, b) => (b.lastUpdate?.toMillis() || 0) - (a.lastUpdate?.toMillis() || 0));
+
+
+            if (samplesWithObservations.length === 0) {
+                feedContainer.innerHTML = '<p class="text-gray-500 placeholder-observation">Nenhuma observação de vendedor encontrada.</p>';
+                return;
+            }
+
+            feedContainer.innerHTML = ''; 
+
+            samplesWithObservations.forEach(sample => {
+                const card = document.createElement('div');
+                card.className = 'p-4 rounded-lg border bg-gray-50';
+                card.innerHTML = `
+                    <div class="mb-2">
+                        <p class="font-bold text-gray-800">${sample.produto} - ${sample.descricao}</p>
+                    </div>
+                    <p class="text-gray-700 mb-3">"${sample.observation}"</p>
+                    <div class="text-right text-xs text-gray-500">
+                        <span>- ${sample.sellerName} (Pedido: ${sample.pedido})</span>
+                    </div>
+                `;
+                feedContainer.appendChild(card);
             });
         }
 
@@ -543,12 +583,39 @@
         }
 
         function showNotification(message, color) {
-            if(notificationsList.querySelector('p')) notificationsList.innerHTML = '';
+            const placeholder = notificationsList.querySelector('.placeholder-notification');
+            if(placeholder) placeholder.remove();
+
             const card = document.createElement('div');
             card.className = `notification-card bg-white p-3 rounded-lg shadow-sm border-l-4 border-${color}-500 flex justify-between items-center`;
             card.innerHTML = `<p class="text-sm">${message}</p><button class="text-gray-400 hover:text-gray-600">&times;</button>`;
-            card.querySelector('button').onclick = () => card.remove();
+            card.querySelector('button').onclick = () => {
+                card.remove();
+                if (notificationsList.children.length === 0) {
+                    notificationsList.innerHTML = '<p class="text-gray-500 placeholder-notification">Nenhuma notificação nova.</p>';
+                }
+            };
             notificationsList.prepend(card);
+        }
+
+        function findNewFinalizedOrders(currentSamples, previousSamples) {
+            const newlyFinalized = {};
+            const previousFinalizedIds = new Set(previousSamples.filter(s => s.finalizedByVendor).map(s => s.id));
+
+            currentSamples.forEach(currentSample => {
+                if (currentSample.finalizedByVendor && !previousFinalizedIds.has(currentSample.id)) {
+                    if (!newlyFinalized[currentSample.sellerName]) {
+                        newlyFinalized[currentSample.sellerName] = new Set();
+                    }
+                    newlyFinalized[currentSample.sellerName].add(currentSample.pedido);
+                }
+            });
+            
+            for (const seller in newlyFinalized) {
+                newlyFinalized[seller] = Array.from(newlyFinalized[seller]);
+            }
+
+            return newlyFinalized;
         }
         
         async function openSegmentModal(sellerName) {
@@ -602,88 +669,6 @@
             });
         }
         
-        function populateEmailTool(sellerDocs) {
-            sellerEmailData = sellerDocs
-                .map(doc => ({
-                    name: doc.originalName,
-                    code: doc.accessCode
-                }))
-                .sort((a, b) => a.name.localeCompare(b.name));
-
-            sellerEmailSelect.innerHTML = '<option value="">-- Escolha um vendedor --</option>';
-            sellerEmailData.forEach(seller => {
-                if (seller.name && seller.code) {
-                    const option = document.createElement('option');
-                    option.value = seller.name;
-                    option.textContent = seller.name;
-                    sellerEmailSelect.appendChild(option);
-                }
-            });
-            
-            emailPreview.textContent = 'Selecione um vendedor para gerar o e-mail.';
-            copyEmailBtn.disabled = true;
-        }
-
-        sellerEmailSelect.addEventListener('change', () => {
-            const selectedSellerName = sellerEmailSelect.value;
-            if (!selectedSellerName) {
-                emailPreview.textContent = 'Selecione um vendedor para gerar o e-mail.';
-                copyEmailBtn.disabled = true;
-                return;
-            }
-
-            const seller = sellerEmailData.find(s => s.name === selectedSellerName);
-            if (!seller || !currentSessionId) return;
-            
-            const normalizedSellerName = normalizeText(seller.name);
-            const email = sellerEmailMap.get(normalizedSellerName) || '';
-
-            const linkVendedor = 'https://thamirisbezerra-coder.github.io/Tela-do-Vendedor/';
-
-            const subject = `Acesso ao Painel de Feedback de Amostras - Doremus`;
-            const body = `Olá, ${seller.name}!\n\n` +
-                `Chegou o seu painel para dar feedback nas amostras pendentes. Sua colaboração é muito importante para nós.\n\n` +
-                `IMPORTANTE: O prazo para todas as respostas é até o dia 10/11.\n\n` +
-                `-----------------------------------------\n` +
-                `SEUS DADOS DE ACESSO\n` +
-                `-----------------------------------------\n` +
-                `   - Link do Painel: ${linkVendedor}\n` +
-                `   - ID da Sessão: ${currentSessionId}\n` +
-                `   - Seu Nome de Vendedor: ${seller.name}\n` +
-                `   - Código de Acesso: ${seller.code}\n\n` +
-                `COMO ACEDER:\n` +
-                `Basta aceder ao link acima e inserir os seus dados. É importante que o nome do vendedor seja idêntico ao que está neste e-mail.\n\n` +
-                `DICA: Após o primeiro acesso, a plataforma irá lembrar-se de si. Não precisará de inserir os dados novamente.\n\n` +
-                `-----------------------------------------\n` +
-                `COMO FUNCIONA\n` +
-                `-----------------------------------------\n` +
-                `- As suas atualizações são guardadas automaticamente em tempo real.\n` +
-                `- Ao terminar de responder a todas as amostras de um pedido, lembre-se de clicar em "Sinalizar Gestor" para me notificar.\n\n` +
-                `Qualquer dúvida, estou à disposição.\n\n` +
-                `Atenciosamente,\n` +
-                `Thamiris Bezerra`;
-
-            emailPreview.textContent = body;
-
-            copyEmailBtn.disabled = false;
-        });
-
-        copyEmailBtn.addEventListener('click', () => {
-            if (copyEmailBtn.disabled) return;
-            
-            const textToCopy = emailPreview.textContent;
-            const textarea = document.createElement('textarea');
-            textarea.value = textToCopy;
-            document.body.appendChild(textarea);
-            textarea.select();
-            document.execCommand('copy');
-            document.body.removeChild(textarea);
-
-            const originalText = copyEmailBtn.textContent;
-            copyEmailBtn.textContent = 'Copiado!';
-            setTimeout(() => { copyEmailBtn.textContent = originalText; }, 2000);
-        });
-
         (async () => {
              try {
                 await signInAnonymously(auth);
@@ -696,6 +681,9 @@
     </script>
 </body>
 </html>
+
+
+
 
 
 
