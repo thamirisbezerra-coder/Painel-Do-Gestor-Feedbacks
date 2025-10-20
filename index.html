@@ -153,6 +153,95 @@
         const PENDING_STATUSES = ['EM ANÁLISE', 'AMOSTRA SEM FEEDBACK', 'SEM RETORNO DO CLIENTE', 'AMOSTRA NÃO TESTADA', 'PENDENTE'];
         const SEGMENTS = ['CÁRNEOS', 'EXPORTACAO', 'FOOD SERVICE', 'LACTEOS', 'NUTRACEUTICOS', 'NUTRICAO ANIMAL', 'PANIFICACAO', 'SMB', 'SORVETES', 'SUPPLY/FIS'];
         
+        // Mapa de e-mails dos vendedores
+        const sellerEmailMap = new Map([
+            ["ALEXSANDER DE ANDRADE", "comercial.comandra@gmail.com"],
+            ["ALINE BARROS", "aline.barros@doremus.com.br"],
+            ["ALISSON FERNANDES", "alisson.fernandes@doremus.com.br"],
+            ["ANA FLAVIA AMAMOTO", "ana.amamoto@doremus.com.br"],
+            ["ANA MOTA", "ana.mota@doremus.com.br"],
+            ["ANDRE FELIX", "andrefelixx.repre@gmail.com"],
+            ["ANDREIA TINTI", "andreia.tinti@doremus.com.br"],
+            ["ANDRÉ BRESSANIN", "andrebressanin@gmail.com"],
+            ["ANTENOR ADRIANO", "aadriano100@gmail.com"],
+            ["BRUNO VERONEZ", "bruno.veronez@doremus.com.br"],
+            ["CAMILA BENTO", "camila.bento@doremus.com.br"],
+            ["CRISTIANE OLIVEIRA", "cristiane.oliveira@doremus.com.br"],
+            ["CRISTIANO RAMOS", "cristiano.ramos@doremus.com.br"],
+            ["DANIELA MARCHEZIN", "danielamarchezin@gmail.com"],
+            ["DANILO ARAUJO", "danilo.doremus@gmail.com"],
+            ["DANILO TREMOCOLDI", "danilo.tremocoldi@doremus.com.br"],
+            ["DELMAR PAES", "delmarpaes@yahoo.com.br"],
+            ["DIEGO FIORIO", "diegofiorio.vendas@gmail.com"],
+            ["DIRETO - FISCAL", ""],
+            ["DIRETO- MACALE", "igor.crovato@doremus.com.br"],
+            ["DIRETO-DANTE", "dantefurtado@uol.com.br"],
+            ["DOUGLAS SILVA", "dgsrepres@gmail.com"],
+            ["ELINIVAL SANTOS", "eli.farias@doremus.com.br"],
+            ["EUCLEBIO SOUZA", "cleberdesouza14@gmail.com"],
+            ["FABRICIO NOGUEIRA", "fabricio.nogueira@doremus.com.br"],
+            ["FABRICIO OLIVEIRA DE CARVALHO", "fabricio.carvalho@doremus.com.br"],
+            ["FABRICIO PAES - VAGA", "fabricio.paes@doremus.com.br"],
+            ["FELIPE LOHAN", "felipe.uchoa@doremus.com.br"],
+            ["FELIPE LOPES BARBOSA", "felipe.barbosa@doremus.com.br"],
+            ["FERNANDA BEATRIZ", "fernanda.santos@doremus.com.br"],
+            ["FLAVIO BORTOLINI", "flavio.bortolini@doremus.com.br"],
+            ["FRANCISCO ALVES FERREIRA", "francisco.ferreira1972@hotmail.com"],
+            ["GABRIEL PAZIANOTO", "pazianoto.rpz@gmail.com"],
+            ["GEORGIA ARAUJO", "georgia.araujo@doremus.com.br"],
+            ["GILBERTO JUNIOR", "gilberto.fontoura@doremus.com.br"],
+            ["GUILHERME ANTONIO", "guilherme.dangelo@doremus.com.br"],
+            ["GUSTAVO BONFIM", "gustavo.bonfim@doremus.com.br"],
+            ["GUSTAVO MAIA", "gustavo.maia@doremus.com.br"],
+            ["IGOR CROVATO", "igor.crovato@doremus.com.br"],
+            ["JACKSON DE ALMEIDA FREITAS", "jackson.freitas@doremus.com.br"],
+            ["JOAO SCHITTKOWSKI", "joao@doremus.com.br"],
+            ["JOSEF TELFSER", "joseftelfser64@gmail.com"],
+            ["JULIANA LAGUNA", "juliana.laguna@doremus.com.br"],
+            ["JURACI TALASCA", "juraci.talasca@doremus.com.br"],
+            ["KARLA ALMEIDA", "karla.almeida@doremus.com.br"],
+            ["KLEBER CAMPOS DE ARAUJO", "kleber_albatrozconsult@hotmail.com.br"],
+            ["LEANDRO FENALTI", "leandro.leal@doremus.com.br"],
+            ["LEANDRO GASPARINI", "leandro.gasparini@doremus.com.br"],
+            ["LEILA RODRIGUES", "leila.rodrigues@doremus.com.br"],
+            ["LEONARDO GARCIA", "leonardo.garcia@doremus.com.br"],
+            ["LEONARDO SODRE", "leonardo.sodre@doremus.com.br"],
+            ["LUCIMARIO BEZERRA DA SILVA", "lucimariobezerra@hotmail.com"],
+            ["LUIS ADRIANO", "luis.prestes@doremus.com.br"],
+            ["LUIS FELIPE CASSA", "vendas@cassa.com.br"],
+            ["LUIS SCARPIN", "luis.scarpin@doremus.com.br"],
+            ["LUIZ FELIPE", "luizfelipejca@gmail.com"],
+            ["MARCELO COSTA", "marcelo.costa@doremus.com.br"],
+            ["MARCELO DE SOUSA REIS", "marsousareis@hotmail.com"],
+            ["MARCO ANTONIO", "vendas.marcoantonio@hotmail.com"],
+            ["MARINA POSSEBON", "marina.possebon@doremus.com.br"],
+            ["MARIO GUERRERO", "mario.guerrero@doremus.com.br"],
+            ["MARISTELA THOMAZINI", "maristela.thomazini@doremus.com.br"],
+            ["MARITZA TEIXEIRA", "maritza.teixeira@doremus.com.br"],
+            ["MARTIN SCHWARZ", "martin.doremus@gmail.com"],
+            ["MELINA MUFFO RUZZI", "melina.ruzzi@doremus.com.br"],
+            ["MORLEY RAMALHO", "morley.ramalho@doremus.com.br"],
+            ["NATA ZAFENATE", "zafenate77@yahoo.com.br"],
+            ["PATRICIA ALVES PINATTI", "patricia.pinatti@doremus.com.br"],
+            ["PATRICIA CORREIA", "patricia.correia@doremus.com.br"],
+            ["PAULO BARRETO", "prpbarreto@hotmail.com"],
+            ["PEDRO DE OLIVEIRA SILVA", "glaubergama2021@gmail.com"],
+            ["PEDRO LESSA", "ltmartins.repre@gmail.com"],
+            ["RENATO VASCONCELOS", "renato.vasconcelos@doremus.com.br"],
+            ["RICARDO BUKALIL", "ricardobukalil@icloud.com"],
+            ["SAULO NÁCLE PEREIRA", "saulovendasabc@hotmail.com"],
+            ["SERGIO VIEIRA", "sr.vieira.representacoes@outlook.com"],
+            ["SIDNEI RODRIGUES", "sidnei.rodrigues@doremus.com.br"],
+            ["TATIANE LOURENCO", "tatiane.lourenco@doremus.com.br"],
+            ["THAYS MAIA", "thays.maia@doremus.com.br"],
+            ["TULIO FERREIRA", "tulioferreira1982@gmail.com"],
+            ["VICTOR ROSSI", "victor.rossi@doremus.com.br"],
+            ["VINICIUS REGINATO", "vinicius.reginato@doremus.com.br"],
+            ["VINICIUS SILVA", "vinicius.silva@doremus.com.br"],
+            ["WASHINGTON DIAS", "washington.dias@doremus.com.br"],
+            ["WILSON LUCENA", "wilsonwsrepresentacoes@hotmail.com"]
+        ]);
+
         const processBtn = document.getElementById('process-btn');
         const dataInput = document.getElementById('data-input');
         const infoMessage = document.getElementById('info-message');
@@ -638,6 +727,9 @@
 
             const seller = sellerEmailData.find(s => s.name === selectedSellerName);
             if (!seller || !currentSessionId) return;
+            
+            const normalizedSellerName = normalizeText(seller.name);
+            const email = sellerEmailMap.get(normalizedSellerName) || '';
 
             const linkVendedor = 'https://thamirisbezerra-coder.github.io/Tela-do-Vendedor/';
 
@@ -668,7 +760,7 @@
 
             copyEmailBtn.disabled = false;
             sendEmailBtn.classList.remove('disabled-link');
-            sendEmailBtn.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            sendEmailBtn.href = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
         });
 
         copyEmailBtn.addEventListener('click', () => {
@@ -699,6 +791,8 @@
     </script>
 </body>
 </html>
+
+
 
 
 
