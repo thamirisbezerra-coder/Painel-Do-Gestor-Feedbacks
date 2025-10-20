@@ -53,7 +53,7 @@
             <section class="mb-8 grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div class="bg-white p-6 rounded-2xl shadow-sm border"><h3 class="font-bold text-lg mb-2 text-center">Status da Sessão</h3><div style="height: 200px;"><canvas id="session-status-chart"></canvas></div></div>
                 <div class="bg-white p-6 rounded-2xl shadow-sm border"><h3 class="font-bold text-lg mb-2 text-center">Análise de Respostas</h3><div style="height: 200px;"><canvas id="feedback-analysis-chart"></canvas></div></div>
-                <div class="bg-white p-6 rounded-2xl shadow-sm border"><h3 class="font-bold text-lg mb-2 text-center">Índice de Reprovação</h3><div style="height: 200px;"><canvas id="rejection-rate-chart"></canvas></div></div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border"><h3 class="font-bold text-lg mb-2 text-center" id="rejection-chart-title">Distribuição de Feedbacks</h3><div style="height: 200px;"><canvas id="rejection-rate-chart"></canvas></div></div>
             </section>
 
              <section id="team-tracking-section" class="mb-10 bg-white p-6 rounded-2xl shadow-sm border">
@@ -412,9 +412,13 @@
         }
 
         function renderCharts(samples) {
-            let pending = 0, resolved = 0, approved = 0, rejected = 0;
+            let pending = 0, resolved = 0, approved = 0, rejected = 0, events = 0;
             const feedbackCounts = {};
             
+            const APPROVED_WITHOUT_PREFIX = ['APROVADO COM PEDIDO', 'APROVADO SEM PEDIDO'];
+            const REJECTED_WITHOUT_PREFIX = ['APRESENTAÇÃO PRÓ ATIVA', 'CALIBRE', 'EXTRAVIADA', 'FORA DA ESPECIFICAÇÃO DO CLIENTE', 'FORA DO PERFIL DO CLIENTE', 'FRACA / ESTOURANDO / COM CHUVEIRO', 'PRODUTO DESCONTINUADO', 'QUANTIDADE INSUFICIENTE', 'REPRESENTAÇÃO / DISTRIBUIDOR', 'SEM RETORNO DO CLIENTE', 'EXPORTACAO'];
+            const EVENTS_WITHOUT_PREFIX = ['INNOVATION / EVENTOS', 'EVENTO'];
+
             samples.forEach(s => {
                 if (s.isPending) { 
                     pending++; 
@@ -424,19 +428,14 @@
                         const feedbackKey = s.feedback.trim();
                         feedbackCounts[feedbackKey] = (feedbackCounts[feedbackKey] || 0) + 1;
                         
-                        // Robust check for approved/rejected, handling prefixes and legacy data
-                        const normalizedFeedback = feedbackKey.replace(/^(A - |R - )/, '').trim();
-                        
-                        if (['COM PEDIDO', 'APROVADA SEM PEDIDO'].includes(normalizedFeedback)) {
+                        const normalizedFeedback = feedbackKey.replace(/^(A - |R - |E - |P - )/, '').trim();
+
+                        if (feedbackKey.startsWith('A -') || APPROVED_WITHOUT_PREFIX.includes(feedbackKey) || APPROVED_WITHOUT_PREFIX.includes(normalizedFeedback)) {
                             approved++;
-                        } else if ([
-                            'APRESENTAÇÃO PRÓ ATIVA', 'CALIBRE', 'EXTRAVIADA', 
-                            'FORA DA ESPECIFICAÇÃO DO CLIENTE', 'FORA DO PERFIL DO CLIENTE', 
-                            'FRACA / ESTOURANDO / COM CHUVEIRO', 'PRODUTO DESCONTINUADO', 
-                            'QUANTIDADE INSUFICIENTE', 'REPRESENTAÇÃO / DISTRIBUIDOR', 
-                            'SEM RETORNO DO CLIENTE', 'EXPORTACAO'
-                        ].includes(normalizedFeedback)) {
+                        } else if (feedbackKey.startsWith('R -') || REJECTED_WITHOUT_PREFIX.includes(feedbackKey) || REJECTED_WITHOUT_PREFIX.includes(normalizedFeedback)) {
                             rejected++;
+                        } else if (feedbackKey.startsWith('E -') || EVENTS_WITHOUT_PREFIX.includes(feedbackKey) || EVENTS_WITHOUT_PREFIX.includes(normalizedFeedback)) {
+                            events++;
                         }
                     }
                 }
@@ -452,10 +451,19 @@
                  renderChart('feedback-analysis-chart', 'bar', { labels: ['Aguardando Respostas'], datasets: [{ data: [1], backgroundColor: ['#e5e7eb'] }] }, { indexAxis: 'y', plugins: { legend: { display: false } } });
             }
 
-            if (approved === 0 && rejected === 0) {
+            const rejectionChartTitle = document.getElementById('rejection-chart-title');
+            rejectionChartTitle.textContent = 'Distribuição de Feedbacks';
+
+            if (approved === 0 && rejected === 0 && events === 0) {
                 renderChart('rejection-rate-chart', 'doughnut', { labels: ['Aguardando Respostas'], datasets: [{ data: [1], backgroundColor: ['#e5e7eb'] }] });
             } else {
-                renderChart('rejection-rate-chart', 'doughnut', { labels: ['Aprovadas', 'Reprovadas'], datasets: [{ data: [approved, rejected], backgroundColor: ['#34d399', '#f87171'] }] });
+                renderChart('rejection-rate-chart', 'doughnut', { 
+                    labels: ['Aprovadas', 'Reprovadas', 'Eventos'], 
+                    datasets: [{ 
+                        data: [approved, rejected, events], 
+                        backgroundColor: ['#34d399', '#f87171', '#a78bfa'] 
+                    }] 
+                });
             }
         }
 
@@ -794,8 +802,6 @@
     </script>
 </body>
 </html>
-
-
 
 
 
