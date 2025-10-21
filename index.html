@@ -390,10 +390,31 @@
                 allCurrentSamples = allSamples;
 
                 if (!isInitialDataLoad) {
-                    const sellerNames = [...new Set(allSamples.map(s => s.sellerName))];
                     const batch = writeBatch(db);
                     let notificationAdded = false;
 
+                    // 1. Check for individual new feedbacks
+                    const newFeedbacks = allSamples.filter(currentSample => {
+                        const prevSample = previousSamples.find(p => p.id === currentSample.id);
+                        return prevSample && (!prevSample.feedback || prevSample.feedback.trim() === '') && (currentSample.feedback && currentSample.feedback.trim() !== '');
+                    });
+
+                    if (newFeedbacks.length > 0) {
+                        newFeedbacks.forEach(sample => {
+                            const message = `<strong>${sample.sellerName}</strong> deu feedback para o pedido <strong>${sample.pedido}</strong>: "${sample.feedback}"`;
+                            const notifId = sanitizeForFirebaseId(`notif-${sample.id}-${Date.now()}`);
+                            const notifRef = doc(db, "sessoes", currentSessionId, "notificacoes", notifId);
+                            batch.set(notifRef, {
+                                message,
+                                color: 'blue',
+                                timestamp: serverTimestamp()
+                            });
+                            notificationAdded = true;
+                        });
+                    }
+
+                    // 2. Check for sellers who just finished ALL their samples
+                    const sellerNames = [...new Set(allSamples.map(s => s.sellerName))];
                     sellerNames.forEach(sellerName => {
                         const previousSellerSamples = previousSamples.filter(s => s.sellerName === sellerName);
                         const currentSellerSamples = allSamples.filter(s => s.sellerName === sellerName);
