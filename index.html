@@ -390,23 +390,33 @@
                 allCurrentSamples = allSamples;
 
                 if (!isInitialDataLoad) {
-                    const newFeedbacks = allSamples.filter(currentSample => {
-                        const prevSample = previousSamples.find(p => p.id === currentSample.id);
-                        return prevSample && (!prevSample.feedback || prevSample.feedback.trim() === '') && (currentSample.feedback && currentSample.feedback.trim() !== '');
+                    const sellerNames = [...new Set(allSamples.map(s => s.sellerName))];
+                    const batch = writeBatch(db);
+                    let notificationAdded = false;
+
+                    sellerNames.forEach(sellerName => {
+                        const previousSellerSamples = previousSamples.filter(s => s.sellerName === sellerName);
+                        const currentSellerSamples = allSamples.filter(s => s.sellerName === sellerName);
+
+                        if (previousSellerSamples.length > 0) {
+                            const wasPendingBefore = previousSellerSamples.some(s => s.isPending);
+                            const isAllFinalizedNow = currentSellerSamples.length > 0 && currentSellerSamples.every(s => !s.isPending);
+                            
+                            if (wasPendingBefore && isAllFinalizedNow) {
+                                const message = `<strong>${sellerName}</strong> finalizou TODAS as suas amostras.`;
+                                const notifId = sanitizeForFirebaseId(`finished-${sellerName}-${Date.now()}`);
+                                const notifRef = doc(db, "sessoes", currentSessionId, "notificacoes", notifId);
+                                batch.set(notifRef, {
+                                    message,
+                                    color: 'green',
+                                    timestamp: serverTimestamp()
+                                });
+                                notificationAdded = true;
+                            }
+                        }
                     });
 
-                    if (newFeedbacks.length > 0) {
-                        const batch = writeBatch(db);
-                        newFeedbacks.forEach(sample => {
-                            const message = `<strong>${sample.sellerName}</strong> deu feedback para o pedido <strong>${sample.pedido}</strong>: "${sample.feedback}"`;
-                            const notifId = sanitizeForFirebaseId(`notif-${sample.id}-${Date.now()}`);
-                            const notifRef = doc(db, "sessoes", currentSessionId, "notificacoes", notifId);
-                            batch.set(notifRef, {
-                                message,
-                                color: 'blue',
-                                timestamp: serverTimestamp()
-                            });
-                        });
+                    if (notificationAdded) {
                         await batch.commit();
                     }
                 }
@@ -500,7 +510,7 @@
                         if (change.type === "added") {
                             const notificationData = change.doc.data();
                             const cleanMessage = notificationData.message.replace(/<[^>]*>?/gm, '');
-                            showBrowserNotification('Nova Finalização de Pedido', cleanMessage);
+                            showBrowserNotification('Feedback Recebido', cleanMessage);
                         }
                     });
                 }
@@ -675,7 +685,6 @@
                                 <input type="checkbox" class="system-check-btn rounded" data-seller-name="${sellerName}">
                                 <span>Dar Baixa</span>
                             </label>
-                            <button class="manual-notify-btn bg-blue-100 text-blue-800 text-xs p-1 rounded hover:bg-blue-200" data-seller-name="${sellerName}" title="Gerar notificação manual de que o vendedor finalizou tudo">🔔</button>
                         </div>`;
                 } else if (seller.systemStatus === 'baixado') {
                     statusHTML = `<span class="text-sm font-semibold text-purple-600">✓ Baixado em Sistema</span>`;
@@ -752,38 +761,6 @@
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     openSegmentModal(e.currentTarget.dataset.sellerName);
-                });
-            });
-            
-            document.querySelectorAll('.manual-notify-btn').forEach(btn => {
-                btn.addEventListener('click', async (e) => {
-                    e.stopPropagation();
-                    const sellerName = e.currentTarget.dataset.sellerName;
-                    if (!sellerName || !currentSessionId) return;
-
-                    e.currentTarget.disabled = true;
-                    e.currentTarget.innerHTML = '✓';
-                    e.currentTarget.classList.remove('bg-blue-100', 'hover:bg-blue-200');
-                    e.currentTarget.classList.add('bg-green-100', 'text-green-800');
-
-                    const message = `<strong>${sellerName}</strong> finalizou TODAS as suas amostras.`;
-                    const notifId = sanitizeForFirebaseId(`manual-${sellerName}-${Date.now()}`);
-                    const notifRef = doc(db, "sessoes", currentSessionId, "notificacoes", notifId);
-
-                    try {
-                        await setDoc(notifRef, { 
-                            message, 
-                            color: 'green',
-                            timestamp: serverTimestamp() 
-                        });
-                        setTimeout(() => { e.currentTarget.style.display = 'none'; }, 2000);
-                    } catch (error) {
-                        console.error("Erro ao criar notificação manual:", error);
-                        e.currentTarget.disabled = false;
-                        e.currentTarget.innerHTML = '🔔';
-                        e.currentTarget.classList.add('bg-blue-100', 'hover:bg-blue-200');
-                        e.currentTarget.classList.remove('bg-green-100', 'text-green-800');
-                    }
                 });
             });
         }
@@ -1124,11 +1101,6 @@
     </script>
 </body>
 </html>
-
-
-
-
-
 
 
 
