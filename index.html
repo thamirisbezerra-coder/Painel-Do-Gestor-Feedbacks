@@ -58,6 +58,20 @@
                 <div class="bg-white p-6 rounded-2xl shadow-sm border"><h3 class="font-bold text-lg mb-2 text-center">Análise de Respostas</h3><div style="height: 200px;"><canvas id="feedback-analysis-chart"></canvas></div></div>
                 <div class="bg-white p-6 rounded-2xl shadow-sm border"><h3 class="font-bold text-lg mb-2 text-center" id="rejection-chart-title">Distribuição de Feedbacks</h3><div style="height: 200px;"><canvas id="rejection-rate-chart"></canvas></div></div>
             </section>
+            
+            <section id="observations-feed-section" class="mb-10">
+                <div class="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
+                    <h2 class="text-2xl font-bold text-gray-900">Feed de Observações dos Vendedores</h2>
+                    <div class="flex items-center gap-2">
+                        <select id="observation-segment-filter" class="border-gray-300 rounded-lg shadow-sm text-sm">
+                        </select>
+                        <input id="observation-search-input" type="text" placeholder="Pesquisar observações..." class="border-gray-300 rounded-lg shadow-sm text-sm">
+                    </div>
+                </div>
+                <div id="observations-feed-list" class="space-y-4 max-h-96 overflow-y-auto bg-white p-4 rounded-2xl shadow-sm border">
+                    <p class="text-gray-500 placeholder-observation">Nenhuma observação de vendedor encontrada.</p>
+                </div>
+            </section>
 
              <section id="team-tracking-section" class="mb-10 bg-white p-6 rounded-2xl shadow-sm border">
                 <div class="flex justify-between items-center mb-4">
@@ -65,13 +79,6 @@
                     <input id="seller-search-input" type="text" placeholder="Procurar vendedor..." class="border-gray-300 rounded-lg shadow-sm text-sm">
                 </div>
                 <div id="sellers-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                </div>
-            </section>
-
-            <section id="observations-feed-section" class="mb-10">
-                <h2 class="text-2xl font-bold text-gray-900 mb-4">Feed de Observações dos Vendedores</h2>
-                <div id="observations-feed-list" class="space-y-4 max-h-96 overflow-y-auto bg-white p-4 rounded-2xl shadow-sm border">
-                    <p class="text-gray-500 placeholder-observation">Nenhuma observação de vendedor encontrada.</p>
                 </div>
             </section>
 
@@ -181,6 +188,8 @@
         const historyList = document.getElementById('history-list');
         const notificationsPermissionBtn = document.getElementById('notifications-permission-btn');
         const bellIcon = document.getElementById('bell-icon');
+        const observationSegmentFilter = document.getElementById('observation-segment-filter');
+        const observationSearchInput = document.getElementById('observation-search-input');
 
         let dataListenerUnsubscribe = null;
         let notificationListenerUnsubscribe = null;
@@ -243,6 +252,9 @@
                 }
             });
         });
+
+        observationSegmentFilter.addEventListener('change', () => renderObservationsFeed(allCurrentSamples));
+        observationSearchInput.addEventListener('input', () => renderObservationsFeed(allCurrentSamples));
         
         function parseAndCreateNewSession(data) {
             infoMessage.textContent = "A processar...";
@@ -670,15 +682,29 @@
         
         function renderObservationsFeed(samples) {
             const feedContainer = document.getElementById('observations-feed-list');
-            const placeholder = feedContainer.querySelector('.placeholder-observation');
+            const segmentFilter = observationSegmentFilter.value;
+            const searchTerm = normalizeText(observationSearchInput.value);
+
+            let samplesWithObservations = samples.filter(s => s.observation && s.observation.trim() !== '');
             
-            const samplesWithObservations = samples.filter(s => s.observation && s.observation.trim() !== '');
+            if (segmentFilter) {
+                samplesWithObservations = samplesWithObservations.filter(sample => sellerSegmentsCache[sample.sellerName] === segmentFilter);
+            }
+
+            if (searchTerm) {
+                samplesWithObservations = samplesWithObservations.filter(sample => 
+                    normalizeText(sample.observation).includes(searchTerm) ||
+                    normalizeText(sample.produto).includes(searchTerm) ||
+                    normalizeText(sample.descricao).includes(searchTerm) ||
+                    normalizeText(sample.sellerName).includes(searchTerm) ||
+                    normalizeText(sample.pedido).includes(searchTerm)
+                );
+            }
 
             samplesWithObservations.sort((a, b) => (b.lastUpdate?.toMillis() || 0) - (a.lastUpdate?.toMillis() || 0));
 
-
             if (samplesWithObservations.length === 0) {
-                feedContainer.innerHTML = '<p class="text-gray-500 placeholder-observation">Nenhuma observação de vendedor encontrada.</p>';
+                feedContainer.innerHTML = '<p class="text-gray-500 placeholder-observation">Nenhuma observação encontrada com os filtros atuais.</p>';
                 return;
             }
 
@@ -768,26 +794,6 @@
             }
             historyModal.classList.remove('hidden');
         }
-
-        function findNewFinalizedOrders(currentSamples, previousSamples) {
-            const newlyFinalized = {};
-            const previousFinalizedIds = new Set(previousSamples.filter(s => s.finalizedByVendor).map(s => s.id));
-
-            currentSamples.forEach(currentSample => {
-                if (currentSample.finalizedByVendor && !previousFinalizedIds.has(currentSample.id)) {
-                    if (!newlyFinalized[currentSample.sellerName]) {
-                        newlyFinalized[currentSample.sellerName] = new Set();
-                    }
-                    newlyFinalized[currentSample.sellerName].add(currentSample.pedido);
-                }
-            });
-            
-            for (const seller in newlyFinalized) {
-                newlyFinalized[seller] = Array.from(newlyFinalized[seller]);
-            }
-
-            return newlyFinalized;
-        }
         
         async function openSegmentModal(sellerName) {
             currentSellerForSegment = sellerName;
@@ -873,11 +879,22 @@
             }
         }
         
+        function populateSegmentFilter() {
+            observationSegmentFilter.innerHTML = '<option value="">Todos os Segmentos</option>';
+            SEGMENTS.forEach(segment => {
+                const option = document.createElement('option');
+                option.value = segment;
+                option.textContent = segment;
+                observationSegmentFilter.appendChild(option);
+            });
+        }
+        
         (async () => {
              try {
                 await signInAnonymously(auth);
                 listenForActiveSession();
                 setupNotificationButton();
+                populateSegmentFilter();
             } catch (error) {
                 infoMessage.textContent = "Não foi possível conectar ao serviço."; 
                 console.error("Firebase Auth Error:", error);
@@ -886,6 +903,9 @@
     </script>
 </body>
 </html>
+
+
+
 
 
 
