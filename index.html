@@ -379,18 +379,45 @@
         function listenForDataUpdates(sessionId) {
             currentSessionId = sessionId;
             const q = collection(db, "sessoes", sessionId, "vendedores");
-            if(dataListenerUnsubscribe) dataListenerUnsubscribe();
-            
+            if (dataListenerUnsubscribe) dataListenerUnsubscribe();
+
+            let isInitialDataLoad = true;
+
             dataListenerUnsubscribe = onSnapshot(q, async (snapshot) => {
+                const previousSamples = isInitialDataLoad ? [] : [...allCurrentSamples];
+
                 const allSamples = snapshot.docs.flatMap(doc => doc.data().amostras || []);
                 allCurrentSamples = allSamples;
-                
-                const sellerDocs = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
-                if(sellerDocs.length > 0) {
-                     await loadAllSellerSegments([...new Set(allSamples.map(s => s.sellerName))]);
+
+                if (!isInitialDataLoad) {
+                    const newFeedbacks = allSamples.filter(currentSample => {
+                        const prevSample = previousSamples.find(p => p.id === currentSample.id);
+                        return prevSample && (!prevSample.feedback || prevSample.feedback.trim() === '') && (currentSample.feedback && currentSample.feedback.trim() !== '');
+                    });
+
+                    if (newFeedbacks.length > 0) {
+                        const batch = writeBatch(db);
+                        newFeedbacks.forEach(sample => {
+                            const message = `<strong>${sample.sellerName}</strong> deu feedback para o pedido <strong>${sample.pedido}</strong>: "${sample.feedback}"`;
+                            const notifId = sanitizeForFirebaseId(`notif-${sample.id}-${Date.now()}`);
+                            const notifRef = doc(db, "sessoes", currentSessionId, "notificacoes", notifId);
+                            batch.set(notifRef, {
+                                message,
+                                color: 'blue',
+                                timestamp: serverTimestamp()
+                            });
+                        });
+                        await batch.commit();
+                    }
+                }
+
+                const sellerDocs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                if (sellerDocs.length > 0) {
+                    await loadAllSellerSegments([...new Set(allSamples.map(s => s.sellerName))]);
                 }
 
                 processAndDisplayDashboard(allSamples, sessionId, sellerDocs);
+                isInitialDataLoad = false;
             });
         }
         
@@ -1097,6 +1124,9 @@
     </script>
 </body>
 </html>
+
+
+
 
 
 
