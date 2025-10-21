@@ -385,7 +385,6 @@
 
             dataListenerUnsubscribe = onSnapshot(q, async (snapshot) => {
                 const previousSamples = isInitialDataLoad ? [] : [...allCurrentSamples];
-
                 const allSamples = snapshot.docs.flatMap(doc => doc.data().amostras || []);
                 allCurrentSamples = allSamples;
 
@@ -407,7 +406,8 @@
                             batch.set(notifRef, {
                                 message,
                                 color: 'blue',
-                                timestamp: serverTimestamp()
+                                timestamp: serverTimestamp(),
+                                triggerPopup: false
                             });
                             notificationAdded = true;
                         });
@@ -430,7 +430,8 @@
                                 batch.set(notifRef, {
                                     message,
                                     color: 'green',
-                                    timestamp: serverTimestamp()
+                                    timestamp: serverTimestamp(),
+                                    triggerPopup: true
                                 });
                                 notificationAdded = true;
                             }
@@ -530,8 +531,10 @@
                     snapshot.docChanges().forEach((change) => {
                         if (change.type === "added") {
                             const notificationData = change.doc.data();
-                            const cleanMessage = notificationData.message.replace(/<[^>]*>?/gm, '');
-                            showBrowserNotification('Feedback Recebido', cleanMessage);
+                            if (notificationData.triggerPopup) {
+                                const cleanMessage = notificationData.message.replace(/<[^>]*>?/gm, '');
+                                showBrowserNotification('Tarefa Finalizada', cleanMessage);
+                            }
                         }
                     });
                 }
@@ -1122,13 +1125,6 @@
     </script>
 </body>
 </html>
-
-
-
-
-
-
-
 
 
 
