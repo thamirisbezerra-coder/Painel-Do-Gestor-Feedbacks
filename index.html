@@ -401,7 +401,7 @@
 
                     if (newFeedbacks.length > 0) {
                         newFeedbacks.forEach(sample => {
-                            const message = `<strong>${sample.sellerName}</strong> deu feedback para o pedido <strong>${sample.pedido}</strong>: "${sample.feedback}"`;
+                            const message = `<strong>${sample.sellerName}</strong> - deu feedback para o produto <strong>${sample.produto}</strong> - ${sample.feedback} (pedido ${sample.pedido})`;
                             const notifId = sanitizeForFirebaseId(`notif-${sample.id}-${Date.now()}`);
                             const notifRef = doc(db, "sessoes", currentSessionId, "notificacoes", notifId);
                             batch.set(notifRef, {
@@ -1122,6 +1122,9 @@
     </script>
 </body>
 </html>
+
+
+
 
 
 
