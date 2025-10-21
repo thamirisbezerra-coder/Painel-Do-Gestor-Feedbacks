@@ -6,12 +6,14 @@
     <title>Painel de Gestão de Feedbacks</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
         .seller-card { cursor: pointer; }
         .notification-card { animation: slideIn 0.5s ease-out; }
         @keyframes slideIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        canvas { cursor: pointer; }
     </style>
 </head>
 <body class="text-gray-800">
@@ -53,19 +55,46 @@
                  <div id="notifications-list" class="space-y-3"><p class="text-gray-500 placeholder-notification">Nenhuma notificação nova.</p></div>
             </section>
             
-            <section class="mb-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="bg-white p-6 rounded-2xl shadow-sm border"><h3 class="font-bold text-lg mb-2 text-center">Status da Sessão</h3><div style="height: 200px;"><canvas id="session-status-chart"></canvas></div></div>
-                <div class="bg-white p-6 rounded-2xl shadow-sm border"><h3 class="font-bold text-lg mb-2 text-center">Análise de Respostas</h3><div style="height: 200px;"><canvas id="feedback-analysis-chart"></canvas></div></div>
-                <div class="bg-white p-6 rounded-2xl shadow-sm border"><h3 class="font-bold text-lg mb-2 text-center" id="rejection-chart-title">Distribuição de Feedbacks</h3><div style="height: 200px;"><canvas id="rejection-rate-chart"></canvas></div></div>
+            <section class="mb-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border"><h3 class="font-bold text-lg mb-2 text-center">Status da Sessão</h3><div style="height: 250px;"><canvas id="session-status-chart"></canvas></div></div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border"><h3 class="font-bold text-lg mb-2 text-center" id="rejection-chart-title">Distribuição de Feedbacks</h3><div style="height: 250px;"><canvas id="rejection-rate-chart"></canvas></div></div>
             </section>
             
+            <section id="feedback-details-section" class="mb-10">
+                <h2 class="text-2xl font-bold text-gray-900 mb-4">Tipos de Feedback</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border">
+                        <h3 class="font-bold text-lg mb-3 text-green-600">Aprovados</h3>
+                        <ul id="approved-feedback-list" class="space-y-2 text-sm"></ul>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border">
+                        <h3 class="font-bold text-lg mb-3 text-red-600">Reprovados</h3>
+                        <ul id="rejected-feedback-list" class="space-y-2 text-sm"></ul>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border">
+                        <h3 class="font-bold text-lg mb-3 text-purple-600">Eventos</h3>
+                        <ul id="events-feedback-list" class="space-y-2 text-sm"></ul>
+                    </div>
+                     <div class="bg-white p-6 rounded-2xl shadow-sm border">
+                        <h3 class="font-bold text-lg mb-3 text-yellow-600">Pendentes de Ação</h3>
+                        <ul id="pending-action-list" class="space-y-2 text-sm"></ul>
+                    </div>
+                </div>
+            </section>
+            
+            <section id="segment-charts-section" class="mb-10">
+                <h2 class="text-2xl font-bold text-gray-900 mb-4">Tipos de Resposta por Segmento</h2>
+                <div id="segment-charts-grid" class="space-y-8">
+                </div>
+            </section>
+
             <section id="observations-feed-section" class="mb-10">
-                <div class="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
+                 <div class="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
                     <h2 class="text-2xl font-bold text-gray-900">Feed de Observações dos Vendedores</h2>
                     <div class="flex items-center gap-2">
                         <select id="observation-segment-filter" class="border-gray-300 rounded-lg shadow-sm text-sm">
                         </select>
-                        <input id="observation-search-input" type="text" placeholder="Pesquisar observações..." class="border-gray-300 rounded-lg shadow-sm text-sm">
+                        <input id="observation-search-input" type="text" placeholder="Pesquisar por vendedor..." class="border-gray-300 rounded-lg shadow-sm text-sm">
                     </div>
                 </div>
                 <div id="observations-feed-list" class="space-y-4 max-h-96 overflow-y-auto bg-white p-4 rounded-2xl shadow-sm border">
@@ -79,12 +108,6 @@
                     <input id="seller-search-input" type="text" placeholder="Procurar vendedor..." class="border-gray-300 rounded-lg shadow-sm text-sm">
                 </div>
                 <div id="sellers-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                </div>
-            </section>
-
-            <section id="segment-charts-section" class="mb-10">
-                <h2 class="text-2xl font-bold text-gray-900 mb-4">Índice de Resposta por Segmento</h2>
-                <div id="segment-charts-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 </div>
             </section>
 
@@ -135,6 +158,13 @@
             <div class="mt-8 flex justify-end">
                 <button id="close-history-btn" class="bg-blue-600 text-white font-bold py-2 px-5 rounded-lg">Fechar</button>
             </div>
+        </div>
+    </div>
+
+     <div id="chart-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 hidden z-50">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-4xl h-4/5 p-6 relative">
+            <button id="close-chart-modal-btn" class="absolute top-2 right-4 text-3xl font-bold text-gray-500 hover:text-gray-800">&times;</button>
+            <canvas id="modal-chart-canvas"></canvas>
         </div>
     </div>
 
@@ -190,6 +220,11 @@
         const bellIcon = document.getElementById('bell-icon');
         const observationSegmentFilter = document.getElementById('observation-segment-filter');
         const observationSearchInput = document.getElementById('observation-search-input');
+        
+        const chartModal = document.getElementById('chart-modal');
+        const closeChartModalBtn = document.getElementById('close-chart-modal-btn');
+        const modalChartCanvas = document.getElementById('modal-chart-canvas');
+        let modalChartInstance = null;
 
         let dataListenerUnsubscribe = null;
         let notificationListenerUnsubscribe = null;
@@ -222,6 +257,7 @@
         notificationsPermissionBtn.addEventListener('click', () => {
             Notification.requestPermission().then(setupNotificationButton);
         });
+        closeChartModalBtn.addEventListener('click', () => chartModal.classList.add('hidden'));
 
         confirmSegmentBtn.addEventListener('click', async () => {
             if (!currentSellerForSegment) return;
@@ -358,6 +394,7 @@
             newSessionContainer.classList.remove('hidden');
 
             renderCharts(samples);
+            renderFeedbackDetails(samples);
             renderSegmentCharts(samples);
             renderSellersList(samples, sessionId, sellerDocs);
             renderObservationsFeed(samples);
@@ -453,10 +490,9 @@
                     resolved++;
                     if (s.feedback && s.feedback.trim() !== '') {
                         const feedbackKey = s.feedback.trim();
-                        feedbackCounts[feedbackKey] = (feedbackCounts[feedbackKey] || 0) + 1;
-                        
                         const normalizedFeedback = feedbackKey.replace(/^(A - |R - |E - |P - )/, '').trim();
-
+                        feedbackCounts[normalizedFeedback] = (feedbackCounts[normalizedFeedback] || 0) + 1;
+                        
                         if (feedbackKey.startsWith('A -') || APPROVED_WITHOUT_PREFIX.includes(feedbackKey) || APPROVED_WITHOUT_PREFIX.includes(normalizedFeedback)) {
                             approved++;
                         } else if (feedbackKey.startsWith('R -') || REJECTED_WITHOUT_PREFIX.includes(feedbackKey) || REJECTED_WITHOUT_PREFIX.includes(normalizedFeedback)) {
@@ -470,14 +506,6 @@
 
             renderChart('session-status-chart', 'doughnut', { labels: ['Pendentes', 'Resolvidos'], datasets: [{ data: [pending, resolved], backgroundColor: ['#facc15', '#3b82f6'] }] });
             
-            const feedbackLabels = Object.keys(feedbackCounts);
-            const feedbackData = Object.values(feedbackCounts);
-            if(feedbackLabels.length > 0) {
-                renderChart('feedback-analysis-chart', 'bar', { labels: feedbackLabels, datasets: [{ label: 'Quantidade', data: feedbackData, backgroundColor: '#60a5fa' }] }, { indexAxis: 'y', plugins: { legend: { display: false } } });
-            } else {
-                 renderChart('feedback-analysis-chart', 'bar', { labels: ['Aguardando Respostas'], datasets: [{ data: [1], backgroundColor: ['#e5e7eb'] }] }, { indexAxis: 'y', plugins: { legend: { display: false } } });
-            }
-
             const rejectionChartTitle = document.getElementById('rejection-chart-title');
             rejectionChartTitle.textContent = 'Distribuição de Feedbacks';
 
@@ -492,12 +520,74 @@
                     }] 
                 });
             }
+
+            const feedbackLabels = Object.keys(feedbackCounts);
+            const feedbackData = Object.values(feedbackCounts);
+            if(feedbackLabels.length > 0) {
+                renderChart('feedback-analysis-chart', 'bar', 
+                    { labels: feedbackLabels, datasets: [{ label: 'Quantidade', data: feedbackData, backgroundColor: generateColorPalette(feedbackLabels.length) }] }, 
+                    { indexAxis: 'y', layout: { padding: { left: 50 } }, scales: { x: { beginAtZero: true } }, plugins: { legend: { display: false } } }
+                );
+            } else {
+                 renderChart('feedback-analysis-chart', 'bar', { labels: ['Aguardando Respostas'], datasets: [{ data: [1], backgroundColor: ['#e5e7eb'] }] }, { indexAxis: 'y', plugins: { legend: { display: false } } });
+            }
         }
 
         function renderChart(canvasId, type, data, options = {}) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return;
+            
             if (chartInstances[canvasId]) chartInstances[canvasId].destroy();
-            const ctx = document.getElementById(canvasId).getContext('2d');
-            chartInstances[canvasId] = new Chart(ctx, { type, data, options: { responsive: true, maintainAspectRatio: false, ...options } });
+            
+            Chart.register(ChartDataLabels);
+            
+            const finalOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                ...options,
+                plugins: {
+                    legend: { display: type === 'doughnut' },
+                    datalabels: { display: false },
+                    ...options.plugins
+                }
+            };
+            
+            chartInstances[canvasId] = new Chart(ctx, { type, data, options: finalOptions });
+            
+            canvas.onclick = () => openChartModal(canvasId);
+        }
+
+        function openChartModal(canvasId) {
+            const originalChart = chartInstances[canvasId];
+            if (!originalChart) return;
+            
+            if (modalChartInstance) {
+                modalChartInstance.destroy();
+            }
+            
+            const modalCtx = modalChartCanvas.getContext('2d');
+            
+            const modalOptions = JSON.parse(JSON.stringify(originalChart.config.options)); 
+            if(originalChart.config.type === 'bar') {
+                modalOptions.plugins.datalabels = {
+                    display: true,
+                    anchor: 'end',
+                    align: 'right',
+                    color: 'black',
+                    font: { weight: 'bold' }
+                };
+            }
+            modalOptions.maintainAspectRatio = false;
+
+            modalChartInstance = new Chart(modalCtx, {
+                type: originalChart.config.type,
+                data: originalChart.config.data,
+                options: modalOptions
+            });
+            
+            chartModal.classList.remove('hidden');
         }
 
         function renderSellersList(samples, sessionId, sellerDocs) {
@@ -693,11 +783,7 @@
 
             if (searchTerm) {
                 samplesWithObservations = samplesWithObservations.filter(sample => 
-                    normalizeText(sample.observation).includes(searchTerm) ||
-                    normalizeText(sample.produto).includes(searchTerm) ||
-                    normalizeText(sample.descricao).includes(searchTerm) ||
-                    normalizeText(sample.sellerName).includes(searchTerm) ||
-                    normalizeText(sample.pedido).includes(searchTerm)
+                    normalizeText(sample.sellerName).includes(searchTerm)
                 );
             }
 
@@ -821,29 +907,110 @@
             });
         }
         
-        function renderSegmentCharts(samples) {
-            segmentChartsGrid.innerHTML = '';
-            const samplesBySegment = {};
-            samples.forEach(sample => {
-                const segment = sellerSegmentsCache[sample.sellerName];
-                if (segment && !sample.isPending && sample.feedback) {
-                    if (!samplesBySegment[segment]) samplesBySegment[segment] = {};
-                    const feedback = sample.feedback.trim();
-                    samplesBySegment[segment][feedback] = (samplesBySegment[segment][feedback] || 0) + 1;
+        function renderFeedbackDetails(samples) {
+            const approvedList = document.getElementById('approved-feedback-list');
+            const rejectedList = document.getElementById('rejected-feedback-list');
+            const eventsList = document.getElementById('events-feedback-list');
+            const pendingActionList = document.getElementById('pending-action-list');
+
+            [approvedList, rejectedList, eventsList, pendingActionList].forEach(list => {
+                if(list) list.innerHTML = '';
+            });
+
+            const feedbackCounts = {};
+            
+            const APPROVED_WITHOUT_PREFIX = ['COM PEDIDO', 'APROVADA SEM PEDIDO'];
+            const REJECTED_WITHOUT_PREFIX = ['APRESENTAÇÃO PRÓ ATIVA', 'CALIBRE', 'EXTRAVIADA', 'FORA DA ESPECIFICAÇÃO DO CLIENTE', 'FORA DO PERFIL DO CLIENTE', 'FRACA / ESTOURANDO / COM CHUVEIRO', 'PRODUTO DESCONTINUADO', 'QUANTIDADE INSUFICIENTE', 'REPRESENTAÇÃO / DISTRIBUIDOR', 'SEM RETORNO DO CLIENTE', 'EXPORTACAO'];
+            const EVENTS_WITHOUT_PREFIX = ['INNOVATION / EVENTOS', 'EVENTO'];
+            const PENDING_ACTION_PREFIX = ['AMOSTRA NÃO TESTADA', 'EM ANÁLISE', 'AMOSTRA SEM FEEDBACK'];
+
+            samples.forEach(s => {
+                if (!s.isPending && s.feedback && s.feedback.trim() !== '') {
+                    const feedbackKey = s.feedback.trim();
+                    const normalizedKey = feedbackKey.replace(/^(A - |R - |E - |P - )/, '').trim();
+                    feedbackCounts[normalizedKey] = (feedbackCounts[normalizedKey] || 0) + 1;
                 }
             });
 
+            const sortedFeedbacks = Object.keys(feedbackCounts).sort();
+
+            sortedFeedbacks.forEach(feedbackKey => {
+                const count = feedbackCounts[feedbackKey];
+                
+                const li = document.createElement('li');
+                li.className = 'flex justify-between items-center';
+                li.innerHTML = `<span>${feedbackKey}</span><span class="font-bold bg-gray-200 text-gray-700 px-2 rounded-full">${count}</span>`;
+
+                if (APPROVED_WITHOUT_PREFIX.includes(feedbackKey)) {
+                    approvedList.appendChild(li);
+                } else if (REJECTED_WITHOUT_PREFIX.includes(feedbackKey)) {
+                    rejectedList.appendChild(li);
+                } else if (EVENTS_WITHOUT_PREFIX.includes(feedbackKey)) {
+                    eventsList.appendChild(li);
+                } else if (PENDING_ACTION_PREFIX.includes(feedbackKey)) {
+                    pendingActionList.appendChild(li);
+                }
+            });
+
+            [approvedList, rejectedList, eventsList, pendingActionList].forEach(list => {
+                if (list && list.children.length === 0) list.innerHTML = '<li class="text-gray-500">Nenhuma resposta.</li>';
+            });
+        }
+        
+        function renderSegmentCharts(samples) {
+            const segmentChartsGrid = document.getElementById('segment-charts-grid');
+            segmentChartsGrid.innerHTML = '';
+            const samplesBySegment = {};
+            
+            samples.forEach(sample => {
+                const segment = sellerSegmentsCache[sample.sellerName];
+                if (segment && !sample.isPending && sample.feedback && sample.feedback.trim() !== '') {
+                    if (!samplesBySegment[segment]) {
+                        samplesBySegment[segment] = {};
+                    }
+                    const feedback = sample.feedback.trim();
+                    const normalizedFeedback = feedback.replace(/^(A - |R - |E - |P - )/, '').trim();
+                    samplesBySegment[segment][normalizedFeedback] = (samplesBySegment[segment][normalizedFeedback] || 0) + 1;
+                }
+            });
+
+            const segmentColors = generateColorPalette(Object.keys(SEGMENTS).length);
+
             Object.keys(samplesBySegment).sort().forEach(segment => {
-                const chartId = `segment-chart-${segment.replace(/\s+/g, '-')}`;
+                const chartId = `segment-chart-${segment.replace(/[\s/]+/g, '-')}`;
                 const card = document.createElement('div');
                 card.className = 'bg-white p-6 rounded-2xl shadow-sm border';
-                card.innerHTML = `<h3 class="font-bold text-lg mb-2 text-center">${segment}</h3><div style="height: 200px;"><canvas id="${chartId}"></canvas></div>`;
+                card.innerHTML = `<h3 class="font-bold text-lg mb-4 text-center">${segment}</h3><div style="height: 300px;"><canvas id="${chartId}"></canvas></div>`;
                 segmentChartsGrid.appendChild(card);
                 
                 const labels = Object.keys(samplesBySegment[segment]);
                 const data = Object.values(samplesBySegment[segment]);
-                renderChart(chartId, 'bar', { labels, datasets: [{ data, backgroundColor: '#a78bfa' }] }, { indexAxis: 'y', plugins: { legend: { display: false } } });
+                const color = segmentColors[SEGMENTS.indexOf(segment) % segmentColors.length];
+                
+                renderChart(chartId, 'bar', { 
+                    labels, 
+                    datasets: [{ data, backgroundColor: color }] 
+                }, { 
+                    indexAxis: 'y', 
+                    layout: { padding: { left: 150 } }, 
+                    scales: { x: { beginAtZero: true } }, 
+                    plugins: { 
+                        legend: { display: false }
+                    } 
+                });
             });
+        }
+        
+        function generateColorPalette(numColors) {
+            const colors = [
+                '#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#ef4444',
+                '#6366f1', '#d946ef', '#f97316', '#22c55e', '#dc2626', '#38bdf8'
+            ];
+            let palette = [];
+            for (let i = 0; i < numColors; i++) {
+                palette.push(colors[i % colors.length]);
+            }
+            return palette;
         }
 
         function setupNotificationButton() {
@@ -903,9 +1070,6 @@
     </script>
 </body>
 </html>
-
-
-
 
 
 
