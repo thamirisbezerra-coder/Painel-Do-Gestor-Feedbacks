@@ -183,7 +183,6 @@
         let chartInstances = {};
         let currentSellerForSegment = null;
         let allCurrentSamples = [];
-        let previousSamplesState = [];
         let sellerSegmentsCache = {};
         
         let allNotifications = [];
@@ -320,10 +319,7 @@
             const q = collection(db, "sessoes", sessionId, "vendedores");
             if(dataListenerUnsubscribe) dataListenerUnsubscribe();
             
-            let initialLoad = true;
             dataListenerUnsubscribe = onSnapshot(q, async (snapshot) => {
-                if (snapshot.empty && !initialLoad) return;
-
                 const allSamples = snapshot.docs.flatMap(doc => doc.data().amostras || []);
                 allCurrentSamples = allSamples;
                 
@@ -333,18 +329,6 @@
                 }
 
                 processAndDisplayDashboard(allSamples, sessionId, sellerDocs);
-
-                if(!initialLoad) {
-                    const newFinalizedOrders = findNewFinalizedOrders(allCurrentSamples, previousSamplesState);
-                    for (const [sellerName, orders] of Object.entries(newFinalizedOrders)) {
-                         const message = `<strong>${sellerName}</strong> sinalizou o(s) pedido(s): <strong>${orders.join(', ')}</strong>.`;
-                         const notifId = sanitizeForFirebaseId(`${sellerName}-${orders.join('-')}`);
-                         const notifRef = doc(db, "sessoes", sessionId, "notificacoes", notifId);
-                         await setDoc(notifRef, { message, color: 'purple', timestamp: serverTimestamp() });
-                    }
-                }
-                previousSamplesState = JSON.parse(JSON.stringify(allCurrentSamples));
-                initialLoad = false;
             });
         }
         
@@ -372,7 +356,6 @@
             if(notificationListenerUnsubscribe) notificationListenerUnsubscribe();
             currentSessionId = null;
             allCurrentSamples = [];
-            previousSamplesState = [];
             allNotifications = [];
             areAllNotificationsVisible = false;
             sellerSegmentsCache = {};
@@ -416,7 +399,7 @@
             notificationListenerUnsubscribe = onSnapshot(q, (snapshot) => {
                 allNotifications = snapshot.docs.map(doc => ({
                     ...doc.data(),
-                    timestamp: doc.data().timestamp?.toDate() // Convert Firestore Timestamp to JS Date
+                    timestamp: doc.data().timestamp?.toDate()
                 }));
                 updateNotificationDisplay();
             });
@@ -813,6 +796,7 @@
     </script>
 </body>
 </html>
+
 
 
 
