@@ -42,10 +42,10 @@
             <p id="info-message" class="text-center text-sm mt-3 h-5"></p>
         </div>
         
-        <div id="connection-section" class="text-center mb-8 flex flex-col sm:flex-row justify-center items-center gap-4 hidden">
-             <button id="new-session-btn" class="bg-white text-blue-600 font-semibold py-2 px-5 rounded-lg border border-blue-600 hover:bg-blue-50" title="Limpa a sessão guardada e permite colar dados para uma nova">Iniciar Nova Sessão</button>
+         <div id="connection-section" class="text-center mb-8 flex flex-col sm:flex-row justify-center items-center gap-4 hidden">
+             <button id="new-session-btn" class="bg-white text-blue-600 font-semibold py-2 px-5 rounded-lg border border-blue-600 hover:bg-blue-50" title="Limpa a sessão ativa globalmente e permite colar dados para uma nova">Iniciar Nova Sessão Global</button>
              <div class="flex items-center gap-2">
-                 <input type="text" id="manual-session-id" placeholder="Ou cole um ID de sessão aqui" class="border-gray-300 rounded-lg shadow-sm text-sm p-2">
+                 <input type="text" id="manual-session-id" placeholder="Ou conecte-se a uma sessão ID" class="border-gray-300 rounded-lg shadow-sm text-sm p-2">
                  <button id="connect-session-btn" class="bg-blue-600 text-white font-semibold py-2 px-5 rounded-lg hover:bg-blue-700">Conectar</button>
              </div>
         </div>
@@ -191,7 +191,7 @@
 
         const PENDING_STATUSES = ['EM ANÁLISE', 'AMOSTRA SEM FEEDBACK', 'SEM RETORNO DO CLIENTE', 'AMOSTRA NÃO TESTADA', 'PENDENTE'];
         const SEGMENTS = ['CÁRNEOS', 'EXPORTACAO', 'FOOD SERVICE', 'LACTEOS', 'NUTRACEUTICOS', 'NUTRICAO ANIMAL', 'PANIFICACAO', 'SMB', 'SORVETES', 'SUPPLY/FIS'];
-        const LAST_SESSION_KEY = 'lastConnectedSessionId'; // Key for localStorage
+        const LAST_SESSION_KEY = 'lastConnectedSessionId'; // Key for localStorage (still useful for remembering manual connections)
 
         const processBtn = document.getElementById('process-btn');
         const dataInput = document.getElementById('data-input');
@@ -260,22 +260,25 @@
         });
         
         newSessionBtn.addEventListener('click', async () => {
-            // Clear the active session in Firestore (optional, depends if you want global active session)
+            // Clear the active session in Firestore
              try {
                  const activeSessionRef = doc(db, "configuracoes", "sessaoAtiva");
                  await setDoc(activeSessionRef, { current: null });
+                 console.log("Sessão ativa global limpa.");
              } catch (error) {
-                 console.warn("Could not clear active session flag:", error);
+                 console.error("Não foi possível limpar a sessão ativa global:", error);
+                 infoMessage.textContent = "Erro ao tentar iniciar nova sessão global.";
+                 return; // Stop if clearing fails
              }
             
-            // Clear the locally stored session ID
+            // Clear any locally stored session ID (good practice)
             localStorage.removeItem(LAST_SESSION_KEY);
             
             // Reset UI to show input section
-            resetToInitialState();
+            resetToInitialState(); // Full reset to show input section
             inputSection.classList.remove('hidden');
             connectionSection.classList.add('hidden'); 
-            infoMessage.textContent = 'Cole os dados da nova sessão para iniciar.';
+            infoMessage.textContent = 'Sessão global limpa. Cole os dados da nova sessão para iniciar.';
         });
 
         connectSessionBtn.addEventListener('click', () => {
@@ -284,13 +287,13 @@
                  infoMessage.textContent = `A tentar conectar à sessão: ${manualId}...`;
                  inputSection.classList.add('hidden');
                  connectionSection.classList.add('hidden'); 
-                 // Attempt connection
+                 // Attempt connection - This will also save to localStorage if successful
                  listenForDataUpdates(manualId); 
                  listenForNotifications(manualId);
             } else {
                 infoMessage.textContent = 'ID de sessão inválido. Deve começar com "sessao_".';
                 setTimeout(() => {
-                   if (!currentSessionId) infoMessage.textContent = 'Nenhuma sessão ativa. Cole os dados ou conecte-se manualmente.';
+                   if (!currentSessionId) infoMessage.textContent = 'Nenhuma sessão ativa. Conecte-se manualmente ou inicie uma nova.';
                 }, 3000);
             }
         });
@@ -412,23 +415,23 @@
                 await new Promise(resolve => setTimeout(resolve, 1000));
             }
             
-            infoMessage.textContent = "Guardado com sucesso! A definir como sessão ativa para todos...";
-            // Set the global active session (optional)
-            // const activeSessionRef = doc(db, "configuracoes", "sessaoAtiva");
-            // await setDoc(activeSessionRef, { current: sessionId });
+            infoMessage.textContent = "Guardado com sucesso! A definir como sessão ativa global...";
+            // Set the global active session
+            const activeSessionRef = doc(db, "configuracoes", "sessaoAtiva");
+            await setDoc(activeSessionRef, { current: sessionId });
 
-            // Store this session locally for auto-reconnect
+            // Store this session locally as well (useful if global fails or for manual reconnect)
             localStorage.setItem(LAST_SESSION_KEY, sessionId);
 
             // Automatic connection attempt after saving
-             infoMessage.textContent = `Sessão ${sessionId} criada e ativa. A carregar dados...`;
-             listenForDataUpdates(sessionId);
+             infoMessage.textContent = `Sessão ${sessionId} criada e definida como ativa globalmente. A carregar dados...`;
+             listenForDataUpdates(sessionId); // This will also save to localStorage now
              listenForNotifications(sessionId);
         }
 
         function listenForDataUpdates(sessionId) {
             currentSessionId = sessionId; // Set currentSessionId immediately
-            localStorage.setItem(LAST_SESSION_KEY, sessionId); // Store successfully connected session
+            localStorage.setItem(LAST_SESSION_KEY, sessionId); // Store successfully connected/attempted session
             const q = collection(db, "sessoes", sessionId, "vendedores");
             if (dataListenerUnsubscribe) dataListenerUnsubscribe();
 
@@ -438,8 +441,8 @@
                 // Check if the session actually exists before proceeding
                 if (snapshot.empty && isInitialDataLoad) {
                      console.warn(`Sessão ${sessionId} não encontrada ou vazia.`);
-                     infoMessage.textContent = `Sessão ${sessionId} não encontrada. Verifique o ID ou inicie uma nova sessão.`;
-                     localStorage.removeItem(LAST_SESSION_KEY); // Remove invalid saved session
+                     infoMessage.textContent = `Sessão ${sessionId} não encontrada. Verifique o ID ou inicie uma nova sessão global.`;
+                     // Don't remove localStorage here, user might want to retry
                      resetToInitialState(true); // Reset but keep connection options visible
                      manualSessionInput.value = sessionId; // Keep the attempted ID in the input
                      if(dataListenerUnsubscribe) dataListenerUnsubscribe(); // Stop listening
@@ -529,7 +532,7 @@
             }, (error) => {
                  console.error("Erro ao escutar dados da sessão:", error);
                  infoMessage.textContent = `Erro ao carregar dados da sessão ${sessionId}. Verifique o ID ou a ligação.`;
-                 localStorage.removeItem(LAST_SESSION_KEY); // Remove invalid saved session on error too
+                 // Don't remove localStorage here
                  resetToInitialState(true); // Reset but keep connection options visible
                  manualSessionInput.value = sessionId; // Keep the attempted ID
                  if(dataListenerUnsubscribe) dataListenerUnsubscribe(); // Stop listening on error
@@ -558,6 +561,7 @@
             }
         }
         
+        // Modified resetToInitialState
         function resetToInitialState(keepConnectionOptions = false) {
             if(dataListenerUnsubscribe) dataListenerUnsubscribe();
             if(notificationListenerUnsubscribe) notificationListenerUnsubscribe();
@@ -573,53 +577,61 @@
                 inputSection.classList.add('hidden');
                 connectionSection.classList.remove('hidden');
                  if (!infoMessage.textContent.includes("não encontrada") && !infoMessage.textContent.includes("Erro")) {
-                    infoMessage.textContent = 'Nenhuma sessão ativa. Cole os dados ou conecte-se manualmente.';
+                    infoMessage.textContent = 'Nenhuma sessão ativa globalmente. Conecte-se manualmente ou inicie uma nova.';
                  }
-            } else {
+            } else { // Full reset, usually after clicking "Iniciar Nova Sessão Global"
                 inputSection.classList.remove('hidden');
                 connectionSection.classList.add('hidden');
-                infoMessage.textContent = 'Conectado. Nenhuma sessão ativa. Cole os dados para iniciar.';
+                infoMessage.textContent = 'Conectado. Nenhuma sessão ativa globalmente. Cole os dados para iniciar.';
+                manualSessionInput.value = ''; // Clear manual input on full reset
             }
 
-            processBtn.disabled = true; // Should be disabled if no session
+            processBtn.disabled = true; // Should be disabled if no session / showing input
             processBtn.textContent = 'Aguarde a conexão...'; // Reset button text
-            manualSessionInput.value = ''; // Clear manual input on full reset unless keepConnectionOptions is true maybe? Let's clear it.
             updateNotificationDisplay();
         }
 
-        // Modified listenForActiveSession to prioritize localStorage
+        // Modified listenForActiveSession to prioritize Firestore global active session
         function listenForActiveSession() {
-            const savedSessionId = localStorage.getItem(LAST_SESSION_KEY);
+            const activeSessionRef = doc(db, "configuracoes", "sessaoAtiva");
             
-            if (savedSessionId) {
-                infoMessage.textContent = `A tentar reconectar à sessão guardada: ${savedSessionId}...`;
-                inputSection.classList.add('hidden');
-                connectionSection.classList.add('hidden');
-                listenForDataUpdates(savedSessionId);
-                listenForNotifications(savedSessionId);
-            } else {
-                 // No saved session, show connection options and wait for user action or Firestore active session
-                 resetToInitialState(true);
-                 // Now, also listen for the global active session as a fallback
-                 const activeSessionRef = doc(db, "configuracoes", "sessaoAtiva");
-                 const unsubscribe = onSnapshot(activeSessionRef, async (docSnap) => {
-                     // Only connect if no session is currently loaded AND no manual attempt is in progress
-                     if (!currentSessionId && !manualSessionInput.value.trim()) {
-                         const activeSessionId = docSnap.exists() ? docSnap.data().current : null;
-                         if (activeSessionId) {
-                             infoMessage.textContent = `Sessão ativa encontrada: ${activeSessionId}. A carregar...`;
-                             connectionSection.classList.add('hidden'); // Hide connection options if auto-connecting
-                             listenForDataUpdates(activeSessionId);
-                             listenForNotifications(activeSessionId);
-                             unsubscribe(); // Stop listening once connected
-                         }
-                     }
-                 }, (error) => {
-                     infoMessage.textContent = "Erro ao verificar sessão ativa.";
-                     console.error("Active session listener error:", error);
-                     resetToInitialState(true); // Show connection options on error too
-                 });
-            }
+            // Unsubscribe function placeholder
+            let unsubscribe = null; 
+
+            unsubscribe = onSnapshot(activeSessionRef, async (docSnap) => {
+                const activeSessionId = docSnap.exists() ? docSnap.data().current : null;
+                
+                if (activeSessionId) {
+                    // If a global session is found AND it's different from the current one
+                    if (activeSessionId !== currentSessionId) {
+                        infoMessage.textContent = `Sessão ativa global encontrada: ${activeSessionId}. A carregar...`;
+                        inputSection.classList.add('hidden');
+                        connectionSection.classList.add('hidden'); // Hide connection options
+                        listenForDataUpdates(activeSessionId); // Connects and saves to localStorage
+                        listenForNotifications(activeSessionId);
+                    } else if (currentSessionId === activeSessionId) {
+                        // Already connected to the correct global session, do nothing
+                        inputSection.classList.add('hidden');
+                        connectionSection.classList.add('hidden');
+                        dashboard.classList.remove('hidden'); // Ensure dashboard is visible
+                    }
+                } else {
+                    // No active global session
+                    // Check if we were previously connected (check currentSessionId)
+                    if (currentSessionId) {
+                        // We were connected, but the global session was cleared. Reset.
+                        console.log("Sessão ativa global foi limpa. A redefinir.");
+                        resetToInitialState(true); // Show connection options
+                    } else {
+                        // No current session AND no global session, show connection options
+                        resetToInitialState(true); 
+                    }
+                }
+            }, (error) => {
+                infoMessage.textContent = "Erro ao verificar sessão ativa global.";
+                console.error("Active session listener error:", error);
+                 resetToInitialState(true); // Show connection options on error too
+            });
         }
 
 
@@ -1218,7 +1230,8 @@
         (async () => {
              try {
                  await signInAnonymously(auth);
-                 listenForActiveSession(); // This will try auto-connect from localStorage or show connection options
+                 // Now directly call listenForActiveSession, it handles localStorage check internally
+                 listenForActiveSession(); 
                  setupNotificationButton();
                  populateSegmentFilter();
              } catch (error) {
@@ -1230,6 +1243,8 @@
     </script>
 </body>
 </html>
+
+
 
 
 
