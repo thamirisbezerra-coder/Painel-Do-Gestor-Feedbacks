@@ -43,7 +43,7 @@
         </div>
         
         <div id="connection-section" class="text-center mb-8 flex flex-col sm:flex-row justify-center items-center gap-4 hidden">
-             <button id="new-session-btn" class="bg-white text-blue-600 font-semibold py-2 px-5 rounded-lg border border-blue-600 hover:bg-blue-50">Iniciar Nova Sessão</button>
+             <button id="new-session-btn" class="bg-white text-blue-600 font-semibold py-2 px-5 rounded-lg border border-blue-600 hover:bg-blue-50" title="Limpa a sessão guardada e permite colar dados para uma nova">Iniciar Nova Sessão</button>
              <div class="flex items-center gap-2">
                  <input type="text" id="manual-session-id" placeholder="Ou cole um ID de sessão aqui" class="border-gray-300 rounded-lg shadow-sm text-sm p-2">
                  <button id="connect-session-btn" class="bg-blue-600 text-white font-semibold py-2 px-5 rounded-lg hover:bg-blue-700">Conectar</button>
@@ -191,6 +191,7 @@
 
         const PENDING_STATUSES = ['EM ANÁLISE', 'AMOSTRA SEM FEEDBACK', 'SEM RETORNO DO CLIENTE', 'AMOSTRA NÃO TESTADA', 'PENDENTE'];
         const SEGMENTS = ['CÁRNEOS', 'EXPORTACAO', 'FOOD SERVICE', 'LACTEOS', 'NUTRACEUTICOS', 'NUTRICAO ANIMAL', 'PANIFICACAO', 'SMB', 'SORVETES', 'SUPPLY/FIS'];
+        const LAST_SESSION_KEY = 'lastConnectedSessionId'; // Key for localStorage
 
         const processBtn = document.getElementById('process-btn');
         const dataInput = document.getElementById('data-input');
@@ -259,12 +260,21 @@
         });
         
         newSessionBtn.addEventListener('click', async () => {
-            const activeSessionRef = doc(db, "configuracoes", "sessaoAtiva");
-            await setDoc(activeSessionRef, { current: null });
-            // Show the input section again for the user to paste new data
+            // Clear the active session in Firestore (optional, depends if you want global active session)
+             try {
+                 const activeSessionRef = doc(db, "configuracoes", "sessaoAtiva");
+                 await setDoc(activeSessionRef, { current: null });
+             } catch (error) {
+                 console.warn("Could not clear active session flag:", error);
+             }
+            
+            // Clear the locally stored session ID
+            localStorage.removeItem(LAST_SESSION_KEY);
+            
+            // Reset UI to show input section
             resetToInitialState();
             inputSection.classList.remove('hidden');
-            connectionSection.classList.add('hidden'); // Hide connection section when starting new
+            connectionSection.classList.add('hidden'); 
             infoMessage.textContent = 'Cole os dados da nova sessão para iniciar.';
         });
 
@@ -273,8 +283,9 @@
             if (manualId && manualId.startsWith('sessao_')) {
                  infoMessage.textContent = `A tentar conectar à sessão: ${manualId}...`;
                  inputSection.classList.add('hidden');
-                 connectionSection.classList.add('hidden'); // Hide connection section after attempt
-                 listenForDataUpdates(manualId);
+                 connectionSection.classList.add('hidden'); 
+                 // Attempt connection
+                 listenForDataUpdates(manualId); 
                  listenForNotifications(manualId);
             } else {
                 infoMessage.textContent = 'ID de sessão inválido. Deve começar com "sessao_".';
@@ -402,8 +413,13 @@
             }
             
             infoMessage.textContent = "Guardado com sucesso! A definir como sessão ativa para todos...";
-            const activeSessionRef = doc(db, "configuracoes", "sessaoAtiva");
-            await setDoc(activeSessionRef, { current: sessionId });
+            // Set the global active session (optional)
+            // const activeSessionRef = doc(db, "configuracoes", "sessaoAtiva");
+            // await setDoc(activeSessionRef, { current: sessionId });
+
+            // Store this session locally for auto-reconnect
+            localStorage.setItem(LAST_SESSION_KEY, sessionId);
+
             // Automatic connection attempt after saving
              infoMessage.textContent = `Sessão ${sessionId} criada e ativa. A carregar dados...`;
              listenForDataUpdates(sessionId);
@@ -412,6 +428,7 @@
 
         function listenForDataUpdates(sessionId) {
             currentSessionId = sessionId; // Set currentSessionId immediately
+            localStorage.setItem(LAST_SESSION_KEY, sessionId); // Store successfully connected session
             const q = collection(db, "sessoes", sessionId, "vendedores");
             if (dataListenerUnsubscribe) dataListenerUnsubscribe();
 
@@ -422,13 +439,13 @@
                 if (snapshot.empty && isInitialDataLoad) {
                      console.warn(`Sessão ${sessionId} não encontrada ou vazia.`);
                      infoMessage.textContent = `Sessão ${sessionId} não encontrada. Verifique o ID ou inicie uma nova sessão.`;
+                     localStorage.removeItem(LAST_SESSION_KEY); // Remove invalid saved session
                      resetToInitialState(true); // Reset but keep connection options visible
                      manualSessionInput.value = sessionId; // Keep the attempted ID in the input
                      if(dataListenerUnsubscribe) dataListenerUnsubscribe(); // Stop listening
                      currentSessionId = null; // Clear current session ID as it's invalid
                      return;
                 }
-
 
                 const previousSamples = isInitialDataLoad ? [] : [...allCurrentSamples];
                 const allSamples = snapshot.docs.flatMap(doc => doc.data().amostras || []);
@@ -447,10 +464,8 @@
                         // 1. Check for individual new feedbacks
                         const newFeedbacks = allSamples.filter(currentSample => {
                             const prevSample = previousSamples.find(p => p.id === currentSample.id);
-                            // Ensure prevSample exists and feedback was previously empty, but now has content
                             return prevSample && (!prevSample.feedback || prevSample.feedback.trim() === '') && (currentSample.feedback && currentSample.feedback.trim() !== '');
                         });
-
 
                         if (newFeedbacks.length > 0) {
                             newFeedbacks.forEach(sample => {
@@ -473,7 +488,7 @@
                             const previousSellerSamples = previousSamples.filter(s => s.sellerName === sellerName);
                             const currentSellerSamples = allSamples.filter(s => s.sellerName === sellerName);
 
-                            if (previousSellerSamples.length > 0 && currentSellerSamples.length > 0) { // Ensure samples exist for comparison
+                            if (previousSellerSamples.length > 0 && currentSellerSamples.length > 0) {
                                 const wasPendingBefore = previousSellerSamples.some(s => s.isPending);
                                 const isAllFinalizedNow = currentSellerSamples.every(s => !s.isPending);
                                 
@@ -514,6 +529,7 @@
             }, (error) => {
                  console.error("Erro ao escutar dados da sessão:", error);
                  infoMessage.textContent = `Erro ao carregar dados da sessão ${sessionId}. Verifique o ID ou a ligação.`;
+                 localStorage.removeItem(LAST_SESSION_KEY); // Remove invalid saved session on error too
                  resetToInitialState(true); // Reset but keep connection options visible
                  manualSessionInput.value = sessionId; // Keep the attempted ID
                  if(dataListenerUnsubscribe) dataListenerUnsubscribe(); // Stop listening on error
@@ -526,7 +542,6 @@
             inputSection.classList.add('hidden'); // Make sure input is hidden
             connectionSection.classList.add('hidden'); // Make sure connection options are hidden
             sessionIdText.innerHTML = `ID da Sessão: <strong>${sessionId}</strong>`;
-            // newSessionContainer.classList.remove('hidden'); // This is now part of connectionSection
 
             renderCharts(samples);
             renderFeedbackDetails(samples);
@@ -543,7 +558,6 @@
             }
         }
         
-        // Modified resetToInitialState to optionally keep connection section visible
         function resetToInitialState(keepConnectionOptions = false) {
             if(dataListenerUnsubscribe) dataListenerUnsubscribe();
             if(notificationListenerUnsubscribe) notificationListenerUnsubscribe();
@@ -567,41 +581,47 @@
                 infoMessage.textContent = 'Conectado. Nenhuma sessão ativa. Cole os dados para iniciar.';
             }
 
-            processBtn.disabled = false;
-            processBtn.textContent = 'Gerar Painel e Acessos';
-            manualSessionInput.value = ''; // Clear manual input on full reset
+            processBtn.disabled = true; // Should be disabled if no session
+            processBtn.textContent = 'Aguarde a conexão...'; // Reset button text
+            manualSessionInput.value = ''; // Clear manual input on full reset unless keepConnectionOptions is true maybe? Let's clear it.
             updateNotificationDisplay();
         }
 
+        // Modified listenForActiveSession to prioritize localStorage
         function listenForActiveSession() {
-            const activeSessionRef = doc(db, "configuracoes", "sessaoAtiva");
-            onSnapshot(activeSessionRef, async (docSnap) => {
-                const activeSessionId = docSnap.exists() ? docSnap.data().current : null;
-                
-                if (activeSessionId) {
-                    if (activeSessionId !== currentSessionId) {
-                        infoMessage.textContent = `Sessão ativa encontrada: ${activeSessionId}. A carregar...`;
-                        inputSection.classList.add('hidden');
-                        connectionSection.classList.add('hidden'); // Hide connection options if auto-connecting
-                        listenForDataUpdates(activeSessionId);
-                        listenForNotifications(activeSessionId);
-                    }
-                } else {
-                    // Check explicitly if 'current' is null or doc doesn't exist
-                    const docCheck = await getDoc(activeSessionRef);
-                     if (!docCheck.exists() || (docCheck.exists() && docCheck.data().current === null)) {
-                        // Only reset if not already manually trying to connect
-                        if (!manualSessionInput.value.trim()) {
-                           resetToInitialState(true); // Reset, keeping connection options visible
-                        }
+            const savedSessionId = localStorage.getItem(LAST_SESSION_KEY);
+            
+            if (savedSessionId) {
+                infoMessage.textContent = `A tentar reconectar à sessão guardada: ${savedSessionId}...`;
+                inputSection.classList.add('hidden');
+                connectionSection.classList.add('hidden');
+                listenForDataUpdates(savedSessionId);
+                listenForNotifications(savedSessionId);
+            } else {
+                 // No saved session, show connection options and wait for user action or Firestore active session
+                 resetToInitialState(true);
+                 // Now, also listen for the global active session as a fallback
+                 const activeSessionRef = doc(db, "configuracoes", "sessaoAtiva");
+                 const unsubscribe = onSnapshot(activeSessionRef, async (docSnap) => {
+                     // Only connect if no session is currently loaded AND no manual attempt is in progress
+                     if (!currentSessionId && !manualSessionInput.value.trim()) {
+                         const activeSessionId = docSnap.exists() ? docSnap.data().current : null;
+                         if (activeSessionId) {
+                             infoMessage.textContent = `Sessão ativa encontrada: ${activeSessionId}. A carregar...`;
+                             connectionSection.classList.add('hidden'); // Hide connection options if auto-connecting
+                             listenForDataUpdates(activeSessionId);
+                             listenForNotifications(activeSessionId);
+                             unsubscribe(); // Stop listening once connected
+                         }
                      }
-                }
-            }, (error) => {
-                infoMessage.textContent = "Erro ao verificar sessão ativa.";
-                console.error("Active session listener error:", error);
-                 resetToInitialState(true); // Show connection options on error too
-            });
+                 }, (error) => {
+                     infoMessage.textContent = "Erro ao verificar sessão ativa.";
+                     console.error("Active session listener error:", error);
+                     resetToInitialState(true); // Show connection options on error too
+                 });
+            }
         }
+
 
         function listenForNotifications(sessionId) {
             if(notificationListenerUnsubscribe) notificationListenerUnsubscribe();
@@ -611,7 +631,6 @@
             notificationListenerUnsubscribe = onSnapshot(q, (snapshot) => {
                  if (snapshot.empty && initialLoad) {
                      console.log(`Nenhuma notificação encontrada para a sessão ${sessionId}.`);
-                     // Don't reset here, just means no notifications yet
                  }
 
                 allNotifications = snapshot.docs.map(doc => ({
@@ -624,7 +643,6 @@
                     snapshot.docChanges().forEach((change) => {
                         if (change.type === "added") {
                             const notificationData = change.doc.data();
-                            // Only trigger browser notification if triggerPopup is true
                             if (notificationData.triggerPopup === true) { 
                                 const cleanMessage = notificationData.message.replace(/<[^>]*>?/gm, '');
                                 showBrowserNotification('Tarefa Finalizada', cleanMessage);
@@ -635,7 +653,6 @@
                 initialLoad = false;
             }, (error) => {
                  console.error(`Erro ao escutar notificações para a sessão ${sessionId}:`, error);
-                 // Don't reset the UI on notification error, maybe just log it
             });
         }
 
@@ -684,11 +701,6 @@
                     }] 
                 });
             }
-
-            // --- Feedback Analysis Chart Rendering (Removed as requested by user in conversation) ---
-            // const feedbackLabels = Object.keys(feedbackCounts);
-            // const feedbackData = Object.values(feedbackCounts);
-            // ... (rest of the chart rendering logic for feedback-analysis-chart)
         }
 
         function renderChart(canvasId, type, data, options = {}) {
@@ -1136,7 +1148,6 @@
                                 autoSkip: false 
                             },
                             afterFit: function(scaleInstance) {
-                                // Força uma largura mínima para a escala Y para garantir que as legendas longas caibam.
                                 scaleInstance.width = 220;
                             }
                          }
@@ -1203,10 +1214,11 @@
             });
         }
         
+        // Initial setup on page load
         (async () => {
              try {
                  await signInAnonymously(auth);
-                 listenForActiveSession(); // This will try to auto-connect or show connection options
+                 listenForActiveSession(); // This will try auto-connect from localStorage or show connection options
                  setupNotificationButton();
                  populateSegmentFilter();
              } catch (error) {
@@ -1218,6 +1230,8 @@
     </script>
 </body>
 </html>
+
+
 
 
 
