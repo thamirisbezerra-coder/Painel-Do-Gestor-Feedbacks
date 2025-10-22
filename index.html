@@ -42,9 +42,14 @@
             <p id="info-message" class="text-center text-sm mt-3 h-5"></p>
         </div>
         
-        <div id="new-session-container" class="text-center mb-8 hidden">
-            <button id="new-session-btn" class="bg-white text-blue-600 font-semibold py-2 px-5 rounded-lg border border-blue-600 hover:bg-blue-50 mr-4">Iniciar Nova Sessão</button>
+        <div id="connection-section" class="text-center mb-8 flex flex-col sm:flex-row justify-center items-center gap-4 hidden">
+             <button id="new-session-btn" class="bg-white text-blue-600 font-semibold py-2 px-5 rounded-lg border border-blue-600 hover:bg-blue-50">Iniciar Nova Sessão</button>
+             <div class="flex items-center gap-2">
+                 <input type="text" id="manual-session-id" placeholder="Ou cole um ID de sessão aqui" class="border-gray-300 rounded-lg shadow-sm text-sm p-2">
+                 <button id="connect-session-btn" class="bg-blue-600 text-white font-semibold py-2 px-5 rounded-lg hover:bg-blue-700">Conectar</button>
+             </div>
         </div>
+
 
         <div id="dashboard" class="hidden">
             <section id="notifications-section" class="mb-8 max-w-4xl mx-auto">
@@ -193,8 +198,10 @@
         const sessionIdText = document.getElementById('session-id-text');
         const dashboard = document.getElementById('dashboard');
         const inputSection = document.getElementById('input-section');
-        const newSessionContainer = document.getElementById('new-session-container');
+        const connectionSection = document.getElementById('connection-section');
         const newSessionBtn = document.getElementById('new-session-btn');
+        const manualSessionInput = document.getElementById('manual-session-id');
+        const connectSessionBtn = document.getElementById('connect-session-btn');
         const segmentModal = document.getElementById('segment-modal');
         const cancelModalBtn = document.getElementById('cancel-modal-btn');
         const confirmSegmentBtn = document.getElementById('confirm-segment-btn');
@@ -254,7 +261,29 @@
         newSessionBtn.addEventListener('click', async () => {
             const activeSessionRef = doc(db, "configuracoes", "sessaoAtiva");
             await setDoc(activeSessionRef, { current: null });
+            // Show the input section again for the user to paste new data
+            resetToInitialState();
+            inputSection.classList.remove('hidden');
+            connectionSection.classList.add('hidden'); // Hide connection section when starting new
+            infoMessage.textContent = 'Cole os dados da nova sessão para iniciar.';
         });
+
+        connectSessionBtn.addEventListener('click', () => {
+            const manualId = manualSessionInput.value.trim();
+            if (manualId && manualId.startsWith('sessao_')) {
+                 infoMessage.textContent = `A tentar conectar à sessão: ${manualId}...`;
+                 inputSection.classList.add('hidden');
+                 connectionSection.classList.add('hidden'); // Hide connection section after attempt
+                 listenForDataUpdates(manualId);
+                 listenForNotifications(manualId);
+            } else {
+                infoMessage.textContent = 'ID de sessão inválido. Deve começar com "sessao_".';
+                setTimeout(() => {
+                   if (!currentSessionId) infoMessage.textContent = 'Nenhuma sessão ativa. Cole os dados ou conecte-se manualmente.';
+                }, 3000);
+            }
+        });
+
 
         cancelModalBtn.addEventListener('click', () => segmentModal.classList.add('hidden'));
         showAllBtn.addEventListener('click', () => filterSamplesTable(null));
@@ -339,6 +368,7 @@
                     allCurrentSamples = allSamplesData;
                     
                     inputSection.classList.add('hidden');
+                    connectionSection.classList.add('hidden'); // Hide connection options when creating new
                     infoMessage.textContent = "Painel gerado. A guardar na nuvem...";
                     
                     saveDataAndUpdateActiveSession(allSamplesData, sessionId);
@@ -374,89 +404,129 @@
             infoMessage.textContent = "Guardado com sucesso! A definir como sessão ativa para todos...";
             const activeSessionRef = doc(db, "configuracoes", "sessaoAtiva");
             await setDoc(activeSessionRef, { current: sessionId });
+            // Automatic connection attempt after saving
+             infoMessage.textContent = `Sessão ${sessionId} criada e ativa. A carregar dados...`;
+             listenForDataUpdates(sessionId);
+             listenForNotifications(sessionId);
         }
 
         function listenForDataUpdates(sessionId) {
-            currentSessionId = sessionId;
+            currentSessionId = sessionId; // Set currentSessionId immediately
             const q = collection(db, "sessoes", sessionId, "vendedores");
             if (dataListenerUnsubscribe) dataListenerUnsubscribe();
 
             let isInitialDataLoad = true;
 
             dataListenerUnsubscribe = onSnapshot(q, async (snapshot) => {
+                // Check if the session actually exists before proceeding
+                if (snapshot.empty && isInitialDataLoad) {
+                     console.warn(`Sessão ${sessionId} não encontrada ou vazia.`);
+                     infoMessage.textContent = `Sessão ${sessionId} não encontrada. Verifique o ID ou inicie uma nova sessão.`;
+                     resetToInitialState(true); // Reset but keep connection options visible
+                     manualSessionInput.value = sessionId; // Keep the attempted ID in the input
+                     if(dataListenerUnsubscribe) dataListenerUnsubscribe(); // Stop listening
+                     currentSessionId = null; // Clear current session ID as it's invalid
+                     return;
+                }
+
+
                 const previousSamples = isInitialDataLoad ? [] : [...allCurrentSamples];
                 const allSamples = snapshot.docs.flatMap(doc => doc.data().amostras || []);
                 allCurrentSamples = allSamples;
 
-                if (!isInitialDataLoad) {
-                    const batch = writeBatch(db);
-                    let notificationAdded = false;
+                 // Only proceed if session is valid and has data, or if it's not the initial load
+                if (!snapshot.empty || !isInitialDataLoad) {
+                    inputSection.classList.add('hidden'); // Ensure input is hidden once connected
+                    connectionSection.classList.add('hidden'); // Ensure connection options are hidden
+                    dashboard.classList.remove('hidden'); // Show dashboard
 
-                    // 1. Check for individual new feedbacks
-                    const newFeedbacks = allSamples.filter(currentSample => {
-                        const prevSample = previousSamples.find(p => p.id === currentSample.id);
-                        return prevSample && (!prevSample.feedback || prevSample.feedback.trim() === '') && (currentSample.feedback && currentSample.feedback.trim() !== '');
-                    });
+                    if (!isInitialDataLoad) {
+                        const batch = writeBatch(db);
+                        let notificationAdded = false;
 
-                    if (newFeedbacks.length > 0) {
-                        newFeedbacks.forEach(sample => {
-                            const message = `<strong>${sample.sellerName}</strong> - deu feedback para o produto <strong>${sample.produto}</strong> - ${sample.feedback} (pedido ${sample.pedido})`;
-                            const notifId = sanitizeForFirebaseId(`notif-${sample.id}-${Date.now()}`);
-                            const notifRef = doc(db, "sessoes", currentSessionId, "notificacoes", notifId);
-                            batch.set(notifRef, {
-                                message,
-                                color: 'blue',
-                                timestamp: serverTimestamp(),
-                                triggerPopup: false
-                            });
-                            notificationAdded = true;
+                        // 1. Check for individual new feedbacks
+                        const newFeedbacks = allSamples.filter(currentSample => {
+                            const prevSample = previousSamples.find(p => p.id === currentSample.id);
+                            // Ensure prevSample exists and feedback was previously empty, but now has content
+                            return prevSample && (!prevSample.feedback || prevSample.feedback.trim() === '') && (currentSample.feedback && currentSample.feedback.trim() !== '');
                         });
-                    }
 
-                    // 2. Check for sellers who just finished ALL their samples
-                    const sellerNames = [...new Set(allSamples.map(s => s.sellerName))];
-                    sellerNames.forEach(sellerName => {
-                        const previousSellerSamples = previousSamples.filter(s => s.sellerName === sellerName);
-                        const currentSellerSamples = allSamples.filter(s => s.sellerName === sellerName);
 
-                        if (previousSellerSamples.length > 0) {
-                            const wasPendingBefore = previousSellerSamples.some(s => s.isPending);
-                            const isAllFinalizedNow = currentSellerSamples.length > 0 && currentSellerSamples.every(s => !s.isPending);
-                            
-                            if (wasPendingBefore && isAllFinalizedNow) {
-                                const message = `<strong>${sellerName}</strong> finalizou TODAS as suas amostras.`;
-                                const notifId = sanitizeForFirebaseId(`finished-${sellerName}-${Date.now()}`);
+                        if (newFeedbacks.length > 0) {
+                            newFeedbacks.forEach(sample => {
+                                const message = `<strong>${sample.sellerName}</strong> - deu feedback para o produto <strong>${sample.produto}</strong> - ${sample.feedback} (pedido ${sample.pedido})`;
+                                const notifId = sanitizeForFirebaseId(`notif-${sample.id}-${Date.now()}`);
                                 const notifRef = doc(db, "sessoes", currentSessionId, "notificacoes", notifId);
                                 batch.set(notifRef, {
                                     message,
-                                    color: 'green',
+                                    color: 'blue',
                                     timestamp: serverTimestamp(),
-                                    triggerPopup: true
+                                    triggerPopup: false
                                 });
                                 notificationAdded = true;
+                            });
+                        }
+
+                        // 2. Check for sellers who just finished ALL their samples
+                        const sellerNames = [...new Set(allSamples.map(s => s.sellerName))];
+                        sellerNames.forEach(sellerName => {
+                            const previousSellerSamples = previousSamples.filter(s => s.sellerName === sellerName);
+                            const currentSellerSamples = allSamples.filter(s => s.sellerName === sellerName);
+
+                            if (previousSellerSamples.length > 0 && currentSellerSamples.length > 0) { // Ensure samples exist for comparison
+                                const wasPendingBefore = previousSellerSamples.some(s => s.isPending);
+                                const isAllFinalizedNow = currentSellerSamples.every(s => !s.isPending);
+                                
+                                if (wasPendingBefore && isAllFinalizedNow) {
+                                    const message = `<strong>${sellerName}</strong> finalizou TODAS as suas amostras.`;
+                                    const notifId = sanitizeForFirebaseId(`finished-${sellerName}-${Date.now()}`);
+                                    const notifRef = doc(db, "sessoes", currentSessionId, "notificacoes", notifId);
+                                    batch.set(notifRef, {
+                                        message,
+                                        color: 'green',
+                                        timestamp: serverTimestamp(),
+                                        triggerPopup: true
+                                    });
+                                    notificationAdded = true;
+                                }
+                            }
+                        });
+
+                        if (notificationAdded) {
+                            try {
+                                await batch.commit();
+                            } catch (commitError) {
+                                console.error("Erro ao guardar notificações:", commitError);
                             }
                         }
-                    });
-
-                    if (notificationAdded) {
-                        await batch.commit();
                     }
-                }
 
-                const sellerDocs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                if (sellerDocs.length > 0) {
-                    await loadAllSellerSegments([...new Set(allSamples.map(s => s.sellerName))]);
-                }
+                    const sellerDocs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    if (sellerDocs.length > 0) {
+                        await loadAllSellerSegments([...new Set(allSamples.map(s => s.sellerName))]);
+                    }
 
-                processAndDisplayDashboard(allSamples, sessionId, sellerDocs);
+                    processAndDisplayDashboard(allSamples, sessionId, sellerDocs);
+                    infoMessage.textContent = ''; // Clear status message on successful load/update
+                }
+                
                 isInitialDataLoad = false;
+            }, (error) => {
+                 console.error("Erro ao escutar dados da sessão:", error);
+                 infoMessage.textContent = `Erro ao carregar dados da sessão ${sessionId}. Verifique o ID ou a ligação.`;
+                 resetToInitialState(true); // Reset but keep connection options visible
+                 manualSessionInput.value = sessionId; // Keep the attempted ID
+                 if(dataListenerUnsubscribe) dataListenerUnsubscribe(); // Stop listening on error
+                 currentSessionId = null; // Clear current session ID as it failed
             });
         }
         
         function processAndDisplayDashboard(samples, sessionId, sellerDocs = []) {
             dashboard.classList.remove('hidden');
+            inputSection.classList.add('hidden'); // Make sure input is hidden
+            connectionSection.classList.add('hidden'); // Make sure connection options are hidden
             sessionIdText.innerHTML = `ID da Sessão: <strong>${sessionId}</strong>`;
-            newSessionContainer.classList.remove('hidden');
+            // newSessionContainer.classList.remove('hidden'); // This is now part of connectionSection
 
             renderCharts(samples);
             renderFeedbackDetails(samples);
@@ -473,7 +543,8 @@
             }
         }
         
-        function resetToInitialState() {
+        // Modified resetToInitialState to optionally keep connection section visible
+        function resetToInitialState(keepConnectionOptions = false) {
             if(dataListenerUnsubscribe) dataListenerUnsubscribe();
             if(notificationListenerUnsubscribe) notificationListenerUnsubscribe();
             currentSessionId = null;
@@ -482,12 +553,23 @@
             areAllNotificationsVisible = false;
             sellerSegmentsCache = {};
             dashboard.classList.add('hidden');
-            inputSection.classList.remove('hidden');
-            newSessionContainer.classList.add('hidden');
             sessionIdText.textContent = 'Nenhuma sessão iniciada';
-            infoMessage.textContent = 'Conectado. Nenhuma sessão ativa. Cole os dados para iniciar.';
+            
+            if (keepConnectionOptions) {
+                inputSection.classList.add('hidden');
+                connectionSection.classList.remove('hidden');
+                 if (!infoMessage.textContent.includes("não encontrada") && !infoMessage.textContent.includes("Erro")) {
+                    infoMessage.textContent = 'Nenhuma sessão ativa. Cole os dados ou conecte-se manualmente.';
+                 }
+            } else {
+                inputSection.classList.remove('hidden');
+                connectionSection.classList.add('hidden');
+                infoMessage.textContent = 'Conectado. Nenhuma sessão ativa. Cole os dados para iniciar.';
+            }
+
             processBtn.disabled = false;
             processBtn.textContent = 'Gerar Painel e Acessos';
+            manualSessionInput.value = ''; // Clear manual input on full reset
             updateNotificationDisplay();
         }
 
@@ -500,18 +582,24 @@
                     if (activeSessionId !== currentSessionId) {
                         infoMessage.textContent = `Sessão ativa encontrada: ${activeSessionId}. A carregar...`;
                         inputSection.classList.add('hidden');
+                        connectionSection.classList.add('hidden'); // Hide connection options if auto-connecting
                         listenForDataUpdates(activeSessionId);
                         listenForNotifications(activeSessionId);
                     }
                 } else {
+                    // Check explicitly if 'current' is null or doc doesn't exist
                     const docCheck = await getDoc(activeSessionRef);
-                    if (!docCheck.exists() || (docCheck.exists() && docCheck.data().current === null)) {
-                         resetToInitialState();
-                    }
+                     if (!docCheck.exists() || (docCheck.exists() && docCheck.data().current === null)) {
+                        // Only reset if not already manually trying to connect
+                        if (!manualSessionInput.value.trim()) {
+                           resetToInitialState(true); // Reset, keeping connection options visible
+                        }
+                     }
                 }
             }, (error) => {
                 infoMessage.textContent = "Erro ao verificar sessão ativa.";
                 console.error("Active session listener error:", error);
+                 resetToInitialState(true); // Show connection options on error too
             });
         }
 
@@ -521,6 +609,11 @@
             
             let initialLoad = true;
             notificationListenerUnsubscribe = onSnapshot(q, (snapshot) => {
+                 if (snapshot.empty && initialLoad) {
+                     console.log(`Nenhuma notificação encontrada para a sessão ${sessionId}.`);
+                     // Don't reset here, just means no notifications yet
+                 }
+
                 allNotifications = snapshot.docs.map(doc => ({
                     ...doc.data(),
                     timestamp: doc.data().timestamp?.toDate()
@@ -531,7 +624,8 @@
                     snapshot.docChanges().forEach((change) => {
                         if (change.type === "added") {
                             const notificationData = change.doc.data();
-                            if (notificationData.triggerPopup) {
+                            // Only trigger browser notification if triggerPopup is true
+                            if (notificationData.triggerPopup === true) { 
                                 const cleanMessage = notificationData.message.replace(/<[^>]*>?/gm, '');
                                 showBrowserNotification('Tarefa Finalizada', cleanMessage);
                             }
@@ -539,6 +633,9 @@
                     });
                 }
                 initialLoad = false;
+            }, (error) => {
+                 console.error(`Erro ao escutar notificações para a sessão ${sessionId}:`, error);
+                 // Don't reset the UI on notification error, maybe just log it
             });
         }
 
@@ -588,16 +685,10 @@
                 });
             }
 
-            const feedbackLabels = Object.keys(feedbackCounts);
-            const feedbackData = Object.values(feedbackCounts);
-            if(feedbackLabels.length > 0) {
-                renderChart('feedback-analysis-chart', 'bar', 
-                    { labels: feedbackLabels, datasets: [{ label: 'Quantidade', data: feedbackData, backgroundColor: generateColorPalette(feedbackLabels.length) }] }, 
-                    { indexAxis: 'y', layout: { padding: { left: 50 } }, scales: { x: { beginAtZero: true } }, plugins: { legend: { display: false } } }
-                );
-            } else {
-                 renderChart('feedback-analysis-chart', 'bar', { labels: ['Aguardando Respostas'], datasets: [{ data: [1], backgroundColor: ['#e5e7eb'] }] }, { indexAxis: 'y', plugins: { legend: { display: false } } });
-            }
+            // --- Feedback Analysis Chart Rendering (Removed as requested by user in conversation) ---
+            // const feedbackLabels = Object.keys(feedbackCounts);
+            // const feedbackData = Object.values(feedbackCounts);
+            // ... (rest of the chart rendering logic for feedback-analysis-chart)
         }
 
         function renderChart(canvasId, type, data, options = {}) {
@@ -913,7 +1004,7 @@
                     item.className = 'p-3 border-b';
                     item.innerHTML = `
                         <p class="text-sm text-gray-800">${notification.message}</p>
-                        <p class="text-xs text-gray-500 mt-1">${notification.timestamp.toLocaleString('pt-BR')}</p>
+                        <p class="text-xs text-gray-500 mt-1">${notification.timestamp ? notification.timestamp.toLocaleString('pt-BR') : 'Data indisponível'}</p>
                     `;
                     historyList.appendChild(item);
                 });
@@ -954,7 +1045,7 @@
                 events: document.getElementById('events-feedback-list')
             };
             
-            Object.values(lists).forEach(list => list.innerHTML = '');
+            Object.values(lists).forEach(list => { if(list) list.innerHTML = ''; }); // Check if list exists
 
             const counts = { approved: {}, rejected: {}, events: {} };
             
@@ -981,6 +1072,7 @@
             });
 
             const renderList = (listElement, data) => {
+                 if (!listElement) return; // Add check if element exists
                 const sortedData = Object.entries(data).sort(([, a], [, b]) => b - a);
                 if (sortedData.length === 0) {
                     listElement.innerHTML = '<li>Nenhum feedback nesta categoria.</li>';
@@ -1114,12 +1206,13 @@
         (async () => {
              try {
                  await signInAnonymously(auth);
-                 listenForActiveSession();
+                 listenForActiveSession(); // This will try to auto-connect or show connection options
                  setupNotificationButton();
                  populateSegmentFilter();
              } catch (error) {
                  infoMessage.textContent = "Não foi possível conectar ao serviço."; 
                  console.error("Firebase Auth Error:", error);
+                 resetToInitialState(true); // Show connection options on auth error
              }
         })();
     </script>
