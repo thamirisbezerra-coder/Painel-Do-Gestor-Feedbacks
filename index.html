@@ -17,8 +17,6 @@
         /* Add styles for the new modal */
         .feedback-sample-item { border-bottom: 1px solid #e5e7eb; padding-bottom: 0.75rem; margin-bottom: 0.75rem; }
         .feedback-sample-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
-        /* Style for old pending samples - REMOVED */
-        /* .old-pending-sample { background-color: #FEF2F2; } */
     </style>
 </head>
 <body class="text-gray-800">
@@ -72,7 +70,8 @@
             
             <section id="feedback-details-section" class="mb-10">
                 <h2 class="text-2xl font-bold text-gray-900 mb-4">Análise de Respostas</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Updated grid layout to lg:grid-cols-4 -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     <div class="bg-white p-6 rounded-2xl shadow-sm border">
                         <h3 class="font-bold text-lg mb-3 text-green-600">Aprovados</h3>
                         <ul id="approved-feedback-list" class="space-y-1 text-sm"></ul>
@@ -84,6 +83,11 @@
                     <div class="bg-white p-6 rounded-2xl shadow-sm border">
                         <h3 class="font-bold text-lg mb-3 text-purple-600">Eventos</h3>
                         <ul id="events-feedback-list" class="space-y-1 text-sm"></ul>
+                    </div>
+                     <!-- New Card for Pending Feedbacks -->
+                     <div class="bg-white p-6 rounded-2xl shadow-sm border">
+                        <h3 class="font-bold text-lg mb-3 text-amber-600">Pendência</h3>
+                        <ul id="pending-feedback-list" class="space-y-1 text-sm"></ul>
                     </div>
                 </div>
             </section>
@@ -123,8 +127,6 @@
                     <h2 id="samples-table-title" class="text-2xl font-bold text-gray-900">Visualização Geral de Amostras</h2>
                     <div class="flex items-center gap-2">
                         <button id="show-all-btn" class="hidden bg-gray-200 text-gray-700 text-sm font-semibold py-1 px-3 rounded-lg hover:bg-gray-300">Mostrar Todos</button>
-                        <!-- Export CSV Button Removed -->
-                        <!-- <button id="export-csv-btn" class="bg-green-600 text-white text-sm font-semibold py-1 px-3 rounded-lg hover:bg-green-700">Exportar CSV</button> -->
                     </div>
                 </div>
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-x-auto">
@@ -299,13 +301,12 @@
                 'APROVADO COM PEDIDO': 'COM PEDIDO',
                 'APROVADA SEM PEDIDO': 'APROVADO SEM PEDIDO',
                 'INNOVATION / EVENTOS': 'EVENTO',
+                'AMOSTRA NAO TESTADA': 'AMOSTRA NÃO TESTADA', // Add normalization for pending
+                'EM ANALISE': 'EM ANÁLISE' // Add normalization for pending
             };
+            // Return mapped value or the original normalized value
             return mapping[normalized] || normalized;
         }
-
-        // --- Helper function to parse DD/MM/YYYY date strings (REMOVED - Not needed without highlight) ---
-        // function parseDate(dateString) { ... }
-
 
         processBtn.addEventListener('click', () => {
             const data = dataInput.value.trim();
@@ -338,7 +339,9 @@
 
                  try {
                     const sessionCheckRef = collection(db, "sessoes", manualId, "vendedores");
-                    const sessionCheckSnap = await getDocs(query(sessionCheckRef)); 
+                    // Use getDocs with a limit of 1 just to check existence efficiently
+                    const sessionCheckSnap = await getDocs(query(sessionCheckRef, orderBy('__name__'), limit(1))); 
+
 
                     if(sessionCheckSnap.empty) {
                         infoMessage.textContent = `Sessão ${manualId} não encontrada ou vazia.`;
@@ -991,8 +994,6 @@
         function renderFullSamplesTable(samples) {
             fullSamplesTbody.innerHTML = '';
              // Removed date parsing and highlighting logic
-             // const thirtyDaysAgo = new Date();
-             // thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - OLD_SAMPLE_THRESHOLD_DAYS);
 
             samples.sort((a,b) => a.sellerName.localeCompare(b.sellerName) || a.pedido.localeCompare(b.pedido)).forEach(sample => {
                 let feedbackDisplay = '<span class="text-gray-400">Pendente</span>';
@@ -1034,7 +1035,14 @@
                 );
             }
 
-            samplesWithObservations.sort((a, b) => (b.lastUpdate?.toMillis() || 0) - (a.lastUpdate?.toMillis() || 0));
+            // Sort by timestamp if available, otherwise just keep original order (or sort by name/pedido)
+            // Firebase Timestamps need toMillis() for comparison
+             samplesWithObservations.sort((a, b) => {
+                const timeA = a.lastUpdate ? a.lastUpdate.toMillis() : 0; // Assuming lastUpdate is the timestamp field
+                const timeB = b.lastUpdate ? b.lastUpdate.toMillis() : 0;
+                return timeB - timeA; // Descending order
+            });
+
 
             if (samplesWithObservations.length === 0) {
                 feedContainer.innerHTML = '<p class="text-gray-500 placeholder-observation">Nenhuma observação encontrada com os filtros atuais.</p>';
@@ -1166,16 +1174,19 @@
             const lists = {
                 approved: document.getElementById('approved-feedback-list'),
                 rejected: document.getElementById('rejected-feedback-list'),
-                events: document.getElementById('events-feedback-list')
+                events: document.getElementById('events-feedback-list'),
+                pending: document.getElementById('pending-feedback-list') // Added pending list
             };
             
             Object.values(lists).forEach(list => { if(list) list.innerHTML = ''; }); 
 
-            const counts = { approved: {}, rejected: {}, events: {} };
+            const counts = { approved: {}, rejected: {}, events: {}, pending: {} }; // Added pending counts
             
             const CANONICAL_APPROVED = ['COM PEDIDO', 'APROVADO SEM PEDIDO'];
             const CANONICAL_REJECTED = ['APRESENTAÇÃO PRÓ ATIVA', 'CALIBRE', 'EXTRAVIADA', 'FORA DA ESPECIFICAÇÃO DO CLIENTE', 'FORA DO PERFIL DO CLIENTE', 'FRACA / ESTOURANDO / COM CHUVEIRO', 'PRODUTO DESCONTINUADO', 'QUANTIDADE INSUFICIENTE', 'REPRESENTAÇÃO / DISTRIBUIDOR', 'SEM RETORNO DO CLIENTE', 'EXPORTACAO'];
             const CANONICAL_EVENTS = ['EVENTO'];
+            const CANONICAL_PENDING = ['AMOSTRA NÃO TESTADA', 'EM ANÁLISE', 'AMOSTRA SEM FEEDBACK']; // Define canonical pending texts
+
 
             samples.forEach(sample => {
                 if (!sample.feedback || sample.feedback.trim() === '') return;
@@ -1187,6 +1198,9 @@
                 if (feedback.startsWith('A -') || CANONICAL_APPROVED.includes(canonicalFeedback)) category = 'approved';
                 else if (feedback.startsWith('R -') || CANONICAL_REJECTED.includes(canonicalFeedback)) category = 'rejected';
                 else if (feedback.startsWith('E -') || CANONICAL_EVENTS.includes(canonicalFeedback)) category = 'events';
+                // Check for pending category
+                else if (feedback.startsWith('P -') || CANONICAL_PENDING.includes(canonicalFeedback)) category = 'pending';
+
 
                 if (category) {
                     counts[category][canonicalFeedback] = (counts[category][canonicalFeedback] || 0) + 1;
@@ -1216,14 +1230,18 @@
             renderList(lists.approved, counts.approved);
             renderList(lists.rejected, counts.rejected);
             renderList(lists.events, counts.events);
+            renderList(lists.pending, counts.pending); // Render the pending list
+
         }
 
         function showFeedbackSamples(feedbackText, segmentFilter = '') {
             currentFeedbackFilter = feedbackText; 
             if (!allCurrentSamples || allCurrentSamples.length === 0) return;
 
+             // Find samples matching the canonical feedback text, regardless of their pending status
+             // Because "AMOSTRA NÃO TESTADA" etc. are now considered feedbacks themselves.
             let filteredSamples = allCurrentSamples.filter(sample => {
-                return !sample.isPending && getCanonicalFeedback(sample.feedback) === feedbackText;
+                return getCanonicalFeedback(sample.feedback) === feedbackText;
             });
 
             if(segmentFilter) {
@@ -1403,7 +1421,6 @@
         }
 
         // Removed CSV Export Function
-        // function exportVisibleTableToCSV() { ... }
         
         // Initial setup on page load
         (async () => {
@@ -1421,6 +1438,8 @@
     </script>
 </body>
 </html>
+
+
 
 
 
