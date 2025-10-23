@@ -308,12 +308,12 @@
         const replyModal = document.getElementById('reply-modal');
         const replyModalProduct = document.getElementById('reply-modal-product');
         const replyModalSeller = document.getElementById('reply-modal-seller');
-        const replyModalObservation = replyModal.querySelector('.italic'); // Target the italic element
+        const replyModalObservation = replyModal.querySelector('.italic'); 
         const managerNameInput = document.getElementById('manager-name-input');
         const replyMessageInput = document.getElementById('reply-message-input');
         const cancelReplyBtn = document.getElementById('cancel-reply-btn');
         const sendReplyBtn = document.getElementById('send-reply-btn');
-        let currentSampleForReply = null; // To store sample data for sending reply
+        let currentSampleForReply = null; 
 
 
         let dataListenerUnsubscribe = null;
@@ -375,7 +375,7 @@
 
                  try {
                     const sessionCheckRef = collection(db, "sessoes", manualId, "vendedores");
-                    const sessionCheckSnap = await getDocs(query(sessionCheckRef, orderBy('__name__'), limit(1))); 
+                    const sessionCheckSnap = await getDocs(query(sessionCheckRef, limit(1))); // Use limit for efficiency
 
 
                     if(sessionCheckSnap.empty) {
@@ -1074,14 +1074,11 @@
             }
 
              samplesWithObservations.sort((a, b) => {
-                // Heuristic: Sort by isPending first (pending observations at the top), then maybe by name/pedido
                  if (a.isPending && !b.isPending) return -1;
                  if (!a.isPending && b.isPending) return 1;
-                 // Add secondary sort if needed, e.g., by seller name then pedido
                  const nameCompare = a.sellerName.localeCompare(b.sellerName);
                  if (nameCompare !== 0) return nameCompare;
                  return a.pedido.localeCompare(b.pedido);
-                // Note: Timestamp sorting removed as 'lastUpdate' wasn't being set
             });
 
 
@@ -1118,8 +1115,9 @@
         function openReplyModal(event) {
              const sampleId = event.target.dataset.sampleId;
              const sample = allCurrentSamples.find(s => s.id === sampleId);
-             if (!sample) {
-                 console.error("Sample not found for reply:", sampleId);
+             if (!sample || !sample.observation) { // Ensure there is an observation to reply to
+                 console.error("Sample not found or no observation to reply to:", sampleId);
+                 alert("Não é possível responder a uma amostra sem observação.");
                  return;
              }
              currentSampleForReply = sample; // Store sample data
@@ -1128,8 +1126,7 @@
              replyModalSeller.textContent = `Observação de: ${sample.sellerName}`;
              replyModalObservation.textContent = `"${sample.observation}"`;
              replyMessageInput.value = ''; // Clear previous reply
-             // You might want to store/retrieve manager name from localStorage here later
-             // managerNameInput.value = localStorage.getItem('managerName') || ''; 
+             managerNameInput.value = localStorage.getItem('managerName') || ''; // Load saved name
              
              replyModal.classList.remove('hidden');
         }
@@ -1150,8 +1147,8 @@
             sendReplyBtn.textContent = 'A Enviar...';
 
             try {
-                // Store manager name locally for next time (optional)
-                // localStorage.setItem('managerName', managerName); 
+                // Store manager name locally for next time
+                localStorage.setItem('managerName', managerName); 
 
                 const notificationData = {
                     managerName: managerName,
@@ -1169,7 +1166,6 @@
                 await addDoc(sellerNotifsRef, notificationData);
 
                 replyModal.classList.add('hidden');
-                // Maybe show a temporary success message in infoMessage
                 infoMessage.textContent = `Resposta enviada para ${currentSampleForReply.sellerName}.`;
                 setTimeout(() => { infoMessage.textContent = ''; }, 3000);
 
@@ -1304,7 +1300,6 @@
 
 
             samples.forEach(sample => {
-                // Count only samples that HAVE feedback for these lists
                  if (!sample.feedback || sample.feedback.trim() === '') return; 
 
                 const feedback = sample.feedback.trim();
@@ -1354,7 +1349,6 @@
             if (!allCurrentSamples || allCurrentSamples.length === 0) return;
 
             let filteredSamples = allCurrentSamples.filter(sample => {
-                // Include samples matching the canonical feedback, even if originally pending
                 return getCanonicalFeedback(sample.feedback) === feedbackText;
             });
 
@@ -1371,17 +1365,29 @@
                 filteredSamples.sort((a,b) => a.sellerName.localeCompare(b.sellerName) || a.pedido.localeCompare(b.pedido)).forEach(sample => {
                     const itemDiv = document.createElement('div');
                     itemDiv.className = 'feedback-sample-item text-sm';
+                    // Add reply button here if there's an observation
+                    const replyButtonHtml = sample.observation ? `<button class="reply-observation-btn bg-blue-100 text-blue-700 hover:bg-blue-200 px-2 py-1 rounded text-xs font-semibold ml-2" data-sample-id="${sample.id}">Responder</button>` : '';
+
                     itemDiv.innerHTML = `
-                        <p class="font-semibold">${sample.produto}</p>
-                        ${sample.descricao ? `<p class="text-xs text-gray-600">${sample.descricao}</p>` : ''} 
-                        <p>Pedido: ${sample.pedido}</p>
-                        <p class="text-xs text-gray-500 mt-1">
-                            Vendedor: ${sample.sellerName} ${sample.emissaoNF ? `| NF: ${sample.emissaoNF}` : ''} ${sample.qtde ? `| Qtde: ${sample.qtde}` : ''}
-                        </p>
+                        <div class="flex justify-between items-start">
+                             <div>
+                                <p class="font-semibold">${sample.produto}</p>
+                                ${sample.descricao ? `<p class="text-xs text-gray-600">${sample.descricao}</p>` : ''} 
+                                <p>Pedido: ${sample.pedido}</p>
+                                <p class="text-xs text-gray-500 mt-1">
+                                    Vendedor: ${sample.sellerName} ${sample.emissaoNF ? `| NF: ${sample.emissaoNF}` : ''} ${sample.qtde ? `| Qtde: ${sample.qtde}` : ''}
+                                </p>
+                             </div>
+                             ${replyButtonHtml}
+                         </div>
                         ${sample.observation ? `<p class="text-xs text-gray-600 mt-1 italic">Obs: ${sample.observation}</p>` : ''}
                     `;
                     feedbackSamplesList.appendChild(itemDiv);
                 });
+                 // Add event listeners for reply buttons *within the modal*
+                 feedbackSamplesList.querySelectorAll('.reply-observation-btn').forEach(btn => {
+                     btn.addEventListener('click', openReplyModal);
+                 });
             }
              if (feedbackSamplesModal.classList.contains('hidden')) {
                 populateModalSegmentFilter(); 
@@ -1389,6 +1395,7 @@
                 feedbackSamplesModal.classList.remove('hidden');
              }
         }
+
 
         function populateModalSegmentFilter() {
             const currentSegments = [...new Set(allCurrentSamples.map(s => sellerSegmentsCache[s.sellerName]).filter(Boolean))].sort();
@@ -1416,12 +1423,10 @@
             
             samples.forEach(sample => {
                 const segment = sellerSegmentsCache[sample.sellerName];
-                // Include samples that are NOT pending for segment charts
                 if (segment && !sample.isPending && sample.feedback && sample.feedback.trim() !== '') {
-                     // Exclude pending feedbacks from segment charts if needed
                      const canonicalFeedback = getCanonicalFeedback(sample.feedback);
                      const CANONICAL_PENDING = ['AMOSTRA NÃO TESTADA', 'EM ANÁLISE', 'AMOSTRA SEM FEEDBACK'];
-                     if (CANONICAL_PENDING.includes(canonicalFeedback)) return; // Skip pending feedbacks here
+                     if (CANONICAL_PENDING.includes(canonicalFeedback)) return; 
 
                     if (!samplesBySegment[segment]) {
                         samplesBySegment[segment] = {};
@@ -1521,24 +1526,26 @@
              const currentSegments = [...new Set(Object.values(sellerSegmentsCache).filter(Boolean))].sort();
              
              // Populate Observation Filter
-             const obsCurrentValue = observationSegmentFilter.value;
-             observationSegmentFilter.innerHTML = '<option value="">Todos os Segmentos</option>';
+             const obsSelect = document.getElementById('observation-segment-filter');
+             const obsCurrentValue = obsSelect.value;
+             // Keep "Todos" but clear others
+             obsSelect.innerHTML = '<option value="">Todos os Segmentos</option>'; 
              currentSegments.forEach(segment => {
                  const option = document.createElement('option');
                  option.value = segment;
                  option.textContent = segment;
-                 observationSegmentFilter.appendChild(option);
+                 obsSelect.appendChild(option);
              });
-              if (observationSegmentFilter.querySelector(`option[value="${obsCurrentValue}"]`)) {
-                 observationSegmentFilter.value = obsCurrentValue;
+              // Restore selection if possible
+              if (obsSelect.querySelector(`option[value="${obsCurrentValue}"]`)) {
+                 obsSelect.value = obsCurrentValue;
              } else {
-                  observationSegmentFilter.value = "";
+                  obsSelect.value = ""; // Default to "Todos"
              }
 
              // Populate Modal Filter
-              populateModalSegmentFilter(); // This function already handles modal population logic
+              populateModalSegmentFilter(); // This handles the modal filter separately
         }
-
         
         // Initial setup on page load
         (async () => {
@@ -1556,6 +1563,8 @@
     </script>
 </body>
 </html>
+
+
 
 
 
