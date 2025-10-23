@@ -207,11 +207,37 @@
          </div>
      </div>
 
+     <!-- Observation Reply Modal -->
+     <div id="reply-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 hidden z-40">
+         <div class="bg-white rounded-2xl shadow-xl w-full max-w-xl p-6">
+             <h3 class="text-xl font-bold mb-4">Responder à Observação</h3>
+             <div class="mb-4 p-3 bg-gray-100 rounded border text-sm">
+                 <p class="font-semibold" id="reply-modal-product"></p>
+                 <p class="text-xs text-gray-600 mb-1" id="reply-modal-seller"></p>
+                 <p class="italic">"${' '}"</p> <!-- Placeholder for observation -->
+             </div>
+             <div class="space-y-4">
+                  <div>
+                      <label for="manager-name-input" class="block text-sm font-medium text-gray-700">Seu Nome (Gestor)</label>
+                      <input type="text" id="manager-name-input" class="mt-1 w-full border-gray-300 rounded-lg shadow-sm" placeholder="Digite seu nome">
+                  </div>
+                  <div>
+                     <label for="reply-message-input" class="block text-sm font-medium text-gray-700">Sua Resposta</label>
+                     <textarea id="reply-message-input" rows="3" class="mt-1 w-full border-gray-300 rounded-lg shadow-sm" placeholder="Digite sua resposta aqui..."></textarea>
+                 </div>
+             </div>
+             <div class="mt-6 flex justify-end space-x-3">
+                 <button id="cancel-reply-btn" class="bg-gray-200 text-gray-700 font-semibold py-2 px-5 rounded-lg">Cancelar</button>
+                 <button id="send-reply-btn" class="bg-blue-600 text-white font-bold py-2 px-5 rounded-lg">Enviar Resposta</button>
+             </div>
+         </div>
+     </div>
+
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, onSnapshot, doc, writeBatch, setDoc, getDoc, getDocs, updateDoc, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, doc, writeBatch, setDoc, getDoc, getDocs, updateDoc, query, orderBy, serverTimestamp, addDoc, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"; // Added addDoc and limit
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
         const firebaseConfig = {
@@ -278,6 +304,17 @@
         const closeFeedbackSamplesBtnBottom = document.getElementById('close-feedback-samples-btn-bottom');
         const modalSegmentFilter = document.getElementById('modal-segment-filter'); 
 
+        // Observation Reply Modal Elements
+        const replyModal = document.getElementById('reply-modal');
+        const replyModalProduct = document.getElementById('reply-modal-product');
+        const replyModalSeller = document.getElementById('reply-modal-seller');
+        const replyModalObservation = replyModal.querySelector('.italic'); // Target the italic element
+        const managerNameInput = document.getElementById('manager-name-input');
+        const replyMessageInput = document.getElementById('reply-message-input');
+        const cancelReplyBtn = document.getElementById('cancel-reply-btn');
+        const sendReplyBtn = document.getElementById('send-reply-btn');
+        let currentSampleForReply = null; // To store sample data for sending reply
+
 
         let dataListenerUnsubscribe = null;
         let notificationListenerUnsubscribe = null;
@@ -301,10 +338,9 @@
                 'APROVADO COM PEDIDO': 'COM PEDIDO',
                 'APROVADA SEM PEDIDO': 'APROVADO SEM PEDIDO',
                 'INNOVATION / EVENTOS': 'EVENTO',
-                'AMOSTRA NAO TESTADA': 'AMOSTRA NÃO TESTADA', // Add normalization for pending
-                'EM ANALISE': 'EM ANÁLISE' // Add normalization for pending
+                'AMOSTRA NAO TESTADA': 'AMOSTRA NÃO TESTADA', 
+                'EM ANALISE': 'EM ANÁLISE' 
             };
-            // Return mapped value or the original normalized value
             return mapping[normalized] || normalized;
         }
 
@@ -339,7 +375,6 @@
 
                  try {
                     const sessionCheckRef = collection(db, "sessoes", manualId, "vendedores");
-                    // Use getDocs with a limit of 1 just to check existence efficiently
                     const sessionCheckSnap = await getDocs(query(sessionCheckRef, orderBy('__name__'), limit(1))); 
 
 
@@ -387,6 +422,9 @@
         modalSegmentFilter.addEventListener('change', () => {
              showFeedbackSamples(currentFeedbackFilter, modalSegmentFilter.value); 
         });
+        // Reply Modal listeners
+        cancelReplyBtn.addEventListener('click', () => replyModal.classList.add('hidden'));
+        sendReplyBtn.addEventListener('click', sendReplyToSeller);
 
 
         confirmSegmentBtn.addEventListener('click', async () => {
@@ -1035,12 +1073,15 @@
                 );
             }
 
-            // Sort by timestamp if available, otherwise just keep original order (or sort by name/pedido)
-            // Firebase Timestamps need toMillis() for comparison
              samplesWithObservations.sort((a, b) => {
-                const timeA = a.lastUpdate ? a.lastUpdate.toMillis() : 0; // Assuming lastUpdate is the timestamp field
-                const timeB = b.lastUpdate ? b.lastUpdate.toMillis() : 0;
-                return timeB - timeA; // Descending order
+                // Heuristic: Sort by isPending first (pending observations at the top), then maybe by name/pedido
+                 if (a.isPending && !b.isPending) return -1;
+                 if (!a.isPending && b.isPending) return 1;
+                 // Add secondary sort if needed, e.g., by seller name then pedido
+                 const nameCompare = a.sellerName.localeCompare(b.sellerName);
+                 if (nameCompare !== 0) return nameCompare;
+                 return a.pedido.localeCompare(b.pedido);
+                // Note: Timestamp sorting removed as 'lastUpdate' wasn't being set
             });
 
 
@@ -1059,13 +1100,89 @@
                         <p class="font-bold text-gray-800">${sample.produto} - ${sample.descricao}</p>
                     </div>
                     <p class="text-gray-700 mb-3">"${sample.observation}"</p>
-                    <div class="text-right text-xs text-gray-500">
+                    <div class="flex justify-between items-center text-xs text-gray-500">
                         <span>- ${sample.sellerName} (Pedido: ${sample.pedido})</span>
+                        <button class="reply-observation-btn bg-blue-100 text-blue-700 hover:bg-blue-200 px-2 py-1 rounded text-xs font-semibold" data-sample-id="${sample.id}">Responder</button>
                     </div>
                 `;
                 feedContainer.appendChild(card);
             });
+
+             // Add event listeners for new reply buttons
+             feedContainer.querySelectorAll('.reply-observation-btn').forEach(btn => {
+                 btn.addEventListener('click', openReplyModal);
+             });
         }
+
+        // --- New Function to Open Reply Modal ---
+        function openReplyModal(event) {
+             const sampleId = event.target.dataset.sampleId;
+             const sample = allCurrentSamples.find(s => s.id === sampleId);
+             if (!sample) {
+                 console.error("Sample not found for reply:", sampleId);
+                 return;
+             }
+             currentSampleForReply = sample; // Store sample data
+
+             replyModalProduct.textContent = `${sample.produto} (${sample.pedido})`;
+             replyModalSeller.textContent = `Observação de: ${sample.sellerName}`;
+             replyModalObservation.textContent = `"${sample.observation}"`;
+             replyMessageInput.value = ''; // Clear previous reply
+             // You might want to store/retrieve manager name from localStorage here later
+             // managerNameInput.value = localStorage.getItem('managerName') || ''; 
+             
+             replyModal.classList.remove('hidden');
+        }
+
+         // --- New Function to Send Reply ---
+         async function sendReplyToSeller() {
+            if (!currentSampleForReply || !currentSessionId) return;
+
+            const managerName = managerNameInput.value.trim();
+            const replyMessage = replyMessageInput.value.trim();
+
+            if (!managerName || !replyMessage) {
+                alert("Por favor, preencha o seu nome e a mensagem de resposta.");
+                return;
+            }
+
+            sendReplyBtn.disabled = true;
+            sendReplyBtn.textContent = 'A Enviar...';
+
+            try {
+                // Store manager name locally for next time (optional)
+                // localStorage.setItem('managerName', managerName); 
+
+                const notificationData = {
+                    managerName: managerName,
+                    replyMessage: replyMessage,
+                    originalObservation: currentSampleForReply.observation,
+                    sellerName: currentSampleForReply.sellerName, // Target seller
+                    pedido: currentSampleForReply.pedido,
+                    produto: currentSampleForReply.produto,
+                    timestamp: serverTimestamp(),
+                    read: false // Seller hasn't read it yet
+                };
+
+                // Add to the new seller notifications collection
+                const sellerNotifsRef = collection(db, "sessoes", currentSessionId, "notificacoesVendedor");
+                await addDoc(sellerNotifsRef, notificationData);
+
+                replyModal.classList.add('hidden');
+                // Maybe show a temporary success message in infoMessage
+                infoMessage.textContent = `Resposta enviada para ${currentSampleForReply.sellerName}.`;
+                setTimeout(() => { infoMessage.textContent = ''; }, 3000);
+
+            } catch (error) {
+                console.error("Erro ao enviar resposta:", error);
+                alert("Ocorreu um erro ao enviar a resposta. Tente novamente.");
+            } finally {
+                sendReplyBtn.disabled = false;
+                sendReplyBtn.textContent = 'Enviar Resposta';
+                currentSampleForReply = null; // Clear stored sample
+            }
+        }
+
 
         function filterSamplesTable(sellerName) {
             const rows = fullSamplesTbody.querySelectorAll('tr');
@@ -1148,7 +1265,6 @@
             const uniqueSellers = [...new Set(sellerNames)];
             const sellersToFetch = uniqueSellers.filter(name => !sellerSegmentsCache.hasOwnProperty(name));
             if (sellersToFetch.length === 0) {
-                 // Even if cache is full, we might need to update filters if segments changed
                  populateSegmentFilters();
                  return;
             }
@@ -1166,7 +1282,6 @@
                 sellerSegmentsCache[name] = fetchedConfigs[sellerId] || null;
             });
             
-            // Populate filters after loading segments
             populateSegmentFilters();
         }
         
@@ -1175,21 +1290,22 @@
                 approved: document.getElementById('approved-feedback-list'),
                 rejected: document.getElementById('rejected-feedback-list'),
                 events: document.getElementById('events-feedback-list'),
-                pending: document.getElementById('pending-feedback-list') // Added pending list
+                pending: document.getElementById('pending-feedback-list') 
             };
             
             Object.values(lists).forEach(list => { if(list) list.innerHTML = ''; }); 
 
-            const counts = { approved: {}, rejected: {}, events: {}, pending: {} }; // Added pending counts
+            const counts = { approved: {}, rejected: {}, events: {}, pending: {} }; 
             
             const CANONICAL_APPROVED = ['COM PEDIDO', 'APROVADO SEM PEDIDO'];
             const CANONICAL_REJECTED = ['APRESENTAÇÃO PRÓ ATIVA', 'CALIBRE', 'EXTRAVIADA', 'FORA DA ESPECIFICAÇÃO DO CLIENTE', 'FORA DO PERFIL DO CLIENTE', 'FRACA / ESTOURANDO / COM CHUVEIRO', 'PRODUTO DESCONTINUADO', 'QUANTIDADE INSUFICIENTE', 'REPRESENTAÇÃO / DISTRIBUIDOR', 'SEM RETORNO DO CLIENTE', 'EXPORTACAO'];
             const CANONICAL_EVENTS = ['EVENTO'];
-            const CANONICAL_PENDING = ['AMOSTRA NÃO TESTADA', 'EM ANÁLISE', 'AMOSTRA SEM FEEDBACK']; // Define canonical pending texts
+            const CANONICAL_PENDING = ['AMOSTRA NÃO TESTADA', 'EM ANÁLISE', 'AMOSTRA SEM FEEDBACK']; 
 
 
             samples.forEach(sample => {
-                if (!sample.feedback || sample.feedback.trim() === '') return;
+                // Count only samples that HAVE feedback for these lists
+                 if (!sample.feedback || sample.feedback.trim() === '') return; 
 
                 const feedback = sample.feedback.trim();
                 const canonicalFeedback = getCanonicalFeedback(feedback);
@@ -1198,7 +1314,6 @@
                 if (feedback.startsWith('A -') || CANONICAL_APPROVED.includes(canonicalFeedback)) category = 'approved';
                 else if (feedback.startsWith('R -') || CANONICAL_REJECTED.includes(canonicalFeedback)) category = 'rejected';
                 else if (feedback.startsWith('E -') || CANONICAL_EVENTS.includes(canonicalFeedback)) category = 'events';
-                // Check for pending category
                 else if (feedback.startsWith('P -') || CANONICAL_PENDING.includes(canonicalFeedback)) category = 'pending';
 
 
@@ -1230,7 +1345,7 @@
             renderList(lists.approved, counts.approved);
             renderList(lists.rejected, counts.rejected);
             renderList(lists.events, counts.events);
-            renderList(lists.pending, counts.pending); // Render the pending list
+            renderList(lists.pending, counts.pending); 
 
         }
 
@@ -1238,9 +1353,8 @@
             currentFeedbackFilter = feedbackText; 
             if (!allCurrentSamples || allCurrentSamples.length === 0) return;
 
-             // Find samples matching the canonical feedback text, regardless of their pending status
-             // Because "AMOSTRA NÃO TESTADA" etc. are now considered feedbacks themselves.
             let filteredSamples = allCurrentSamples.filter(sample => {
+                // Include samples matching the canonical feedback, even if originally pending
                 return getCanonicalFeedback(sample.feedback) === feedbackText;
             });
 
@@ -1302,17 +1416,22 @@
             
             samples.forEach(sample => {
                 const segment = sellerSegmentsCache[sample.sellerName];
+                // Include samples that are NOT pending for segment charts
                 if (segment && !sample.isPending && sample.feedback && sample.feedback.trim() !== '') {
+                     // Exclude pending feedbacks from segment charts if needed
+                     const canonicalFeedback = getCanonicalFeedback(sample.feedback);
+                     const CANONICAL_PENDING = ['AMOSTRA NÃO TESTADA', 'EM ANÁLISE', 'AMOSTRA SEM FEEDBACK'];
+                     if (CANONICAL_PENDING.includes(canonicalFeedback)) return; // Skip pending feedbacks here
+
                     if (!samplesBySegment[segment]) {
                         samplesBySegment[segment] = {};
                     }
-                    const canonicalFeedback = getCanonicalFeedback(sample.feedback);
                     samplesBySegment[segment][canonicalFeedback] = (samplesBySegment[segment][canonicalFeedback] || 0) + 1;
                 }
             });
 
             if (Object.keys(samplesBySegment).length === 0) {
-                segmentChartsGrid.innerHTML = '<p class="text-gray-500 text-center">Nenhum feedback de segmento para mostrar ainda.</p>';
+                segmentChartsGrid.innerHTML = '<p class="text-gray-500 text-center">Nenhum feedback finalizado por segmento para mostrar.</p>';
                 return;
             }
 
@@ -1420,7 +1539,6 @@
               populateModalSegmentFilter(); // This function already handles modal population logic
         }
 
-        // Removed CSV Export Function
         
         // Initial setup on page load
         (async () => {
@@ -1428,7 +1546,7 @@
                  await signInAnonymously(auth);
                  listenForActiveSession(); 
                  setupNotificationButton();
-                 // populateSegmentFilters(); // Call this inside processAndDisplayDashboard after segments are loaded
+                 // populateSegmentFilters(); // Called inside processAndDisplayDashboard
              } catch (error) {
                  infoMessage.textContent = "Não foi possível conectar ao serviço."; 
                  console.error("Firebase Auth Error:", error);
@@ -1438,6 +1556,8 @@
     </script>
 </body>
 </html>
+
+
 
 
 
