@@ -178,9 +178,16 @@
      <!-- Feedback Samples Modal -->
      <div id="feedback-samples-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 hidden z-30">
          <div class="bg-white rounded-2xl shadow-xl w-full max-w-3xl p-6">
-             <div class="flex justify-between items-center mb-4 border-b pb-3">
+             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 border-b pb-3 gap-2">
                 <h3 id="feedback-samples-title" class="text-xl font-bold">Amostras com Feedback:</h3>
-                <button id="close-feedback-samples-btn" class="text-2xl font-bold text-gray-500 hover:text-gray-800">&times;</button>
+                <div class="flex items-center gap-2">
+                    <label for="modal-segment-filter" class="text-sm font-medium">Segmento:</label>
+                    <select id="modal-segment-filter" class="border-gray-300 rounded-lg shadow-sm text-sm p-1">
+                       <option value="">Todos os Segmentos</option> 
+                       <!-- Options will be populated by JS -->
+                    </select>
+                </div>
+                <button id="close-feedback-samples-btn" class="text-2xl font-bold text-gray-500 hover:text-gray-800 sm:ml-4">&times;</button>
              </div>
              <div id="feedback-samples-list" class="space-y-3 max-h-[60vh] overflow-y-auto pr-2">
                   <p class="text-gray-500">A carregar detalhes...</p>
@@ -214,7 +221,7 @@
 
         const PENDING_STATUSES = ['EM ANÁLISE', 'AMOSTRA SEM FEEDBACK', 'SEM RETORNO DO CLIENTE', 'AMOSTRA NÃO TESTADA', 'PENDENTE'];
         const SEGMENTS = ['CÁRNEOS', 'EXPORTACAO', 'FOOD SERVICE', 'LACTEOS', 'NUTRACEUTICOS', 'NUTRICAO ANIMAL', 'PANIFICACAO', 'SMB', 'SORVETES', 'SUPPLY/FIS'];
-        const LAST_SESSION_KEY = 'lastConnectedSessionId'; // Key for localStorage
+        const LAST_SESSION_KEY = 'lastConnectedSessionId'; 
 
         const processBtn = document.getElementById('process-btn');
         const dataInput = document.getElementById('data-input');
@@ -259,6 +266,7 @@
         const feedbackSamplesList = document.getElementById('feedback-samples-list');
         const closeFeedbackSamplesBtn = document.getElementById('close-feedback-samples-btn');
         const closeFeedbackSamplesBtnBottom = document.getElementById('close-feedback-samples-btn-bottom');
+        const modalSegmentFilter = document.getElementById('modal-segment-filter'); // New filter element
 
 
         let dataListenerUnsubscribe = null;
@@ -268,6 +276,7 @@
         let currentSellerForSegment = null;
         let allCurrentSamples = [];
         let sellerSegmentsCache = {};
+        let currentFeedbackFilter = ''; // Store the feedback being viewed in the modal
         
         let allNotifications = [];
         let areAllNotificationsVisible = false;
@@ -332,9 +341,13 @@
             Notification.requestPermission().then(setupNotificationButton);
         });
         closeChartModalBtn.addEventListener('click', () => chartModal.classList.add('hidden'));
-        // Close Feedback Samples Modal listeners
         closeFeedbackSamplesBtn.addEventListener('click', () => feedbackSamplesModal.classList.add('hidden'));
         closeFeedbackSamplesBtnBottom.addEventListener('click', () => feedbackSamplesModal.classList.add('hidden'));
+        // Event listener for the new segment filter inside the modal
+        modalSegmentFilter.addEventListener('change', () => {
+             // Re-render the list inside the modal with the new segment filter applied
+             showFeedbackSamples(currentFeedbackFilter, modalSegmentFilter.value); 
+        });
 
 
         confirmSegmentBtn.addEventListener('click', async () => {
@@ -566,12 +579,15 @@
             sessionIdText.innerHTML = `ID da Sessão: <strong>${sessionId}</strong>`;
 
             renderCharts(samples);
-            renderFeedbackDetails(samples);
+            renderFeedbackDetails(samples); // This needs to be called *before* potential modal opening
             renderSegmentCharts(samples);
             renderSellersList(samples, sessionId, sellerDocs);
             renderObservationsFeed(samples);
             renderFullSamplesTable(samples);
             
+            // Re-populate modal segment filter when dashboard updates (in case segments change)
+            populateModalSegmentFilter(); 
+
             const currentFilteredSeller = samplesTableTitle.dataset.filteredSeller;
             if(currentFilteredSeller) {
                 filterSamplesTable(currentFilteredSeller);
@@ -597,16 +613,16 @@
                  if (!infoMessage.textContent.includes("não encontrada") && !infoMessage.textContent.includes("Erro")) {
                     infoMessage.textContent = 'Nenhuma sessão ativa globalmente. Conecte-se manualmente ou inicie uma nova.';
                  }
-                 processBtn.disabled = true; // Disable process btn if showing connection options
+                 processBtn.disabled = true; 
             } else { 
                 inputSection.classList.remove('hidden');
                 connectionSection.classList.add('hidden');
                 infoMessage.textContent = 'Conectado. Nenhuma sessão ativa globalmente. Cole os dados para iniciar.';
                 manualSessionInput.value = ''; 
-                processBtn.disabled = false; // Enable process btn only when showing input
+                processBtn.disabled = false; 
                 processBtn.textContent = 'Gerar Painel e Acessos';
             }
-            if(processBtn.disabled) { // Adjust button text based on disabled state
+            if(processBtn.disabled) { 
                  processBtn.textContent = 'Aguarde a conexão...';
             }
 
@@ -627,7 +643,6 @@
                         connectionSection.classList.add('hidden'); 
                         listenForDataUpdates(activeSessionId); 
                         listenForNotifications(activeSessionId);
-                        // No need to unsubscribe here, we want to keep listening in case it changes again
                     } else if (currentSessionId === activeSessionId) {
                         inputSection.classList.add('hidden');
                         connectionSection.classList.add('hidden');
@@ -638,7 +653,6 @@
                         console.log("Sessão ativa global foi limpa. A redefinir.");
                         resetToInitialState(true); 
                     } else {
-                        // Only show connection options if not already showing input section
                         if(inputSection.classList.contains('hidden')) {
                             resetToInitialState(true); 
                         }
@@ -1125,7 +1139,6 @@
                         </button>
                     </li>
                 `).join('');
-                // Add event listeners after rendering
                  listElement.querySelectorAll('.feedback-item-btn').forEach(btn => {
                      btn.addEventListener('click', () => showFeedbackSamples(btn.dataset.feedback));
                  });
@@ -1136,19 +1149,24 @@
             renderList(lists.events, counts.events);
         }
 
-        // --- New Function to Show Feedback Samples ---
-        function showFeedbackSamples(feedbackText) {
+        function showFeedbackSamples(feedbackText, segmentFilter = '') {
+            currentFeedbackFilter = feedbackText; // Store the current feedback for re-filtering
             if (!allCurrentSamples || allCurrentSamples.length === 0) return;
 
-            const filteredSamples = allCurrentSamples.filter(sample => {
+            let filteredSamples = allCurrentSamples.filter(sample => {
                 return !sample.isPending && getCanonicalFeedback(sample.feedback) === feedbackText;
             });
 
+            // Apply segment filter if provided
+            if(segmentFilter) {
+                filteredSamples = filteredSamples.filter(sample => sellerSegmentsCache[sample.sellerName] === segmentFilter);
+            }
+
             feedbackSamplesTitle.textContent = `Amostras com Feedback: "${feedbackText}" (${filteredSamples.length})`;
-            feedbackSamplesList.innerHTML = ''; // Clear previous list
+            feedbackSamplesList.innerHTML = ''; 
 
             if (filteredSamples.length === 0) {
-                feedbackSamplesList.innerHTML = '<p class="text-gray-500">Nenhuma amostra encontrada com este feedback específico.</p>';
+                feedbackSamplesList.innerHTML = `<p class="text-gray-500">Nenhuma amostra encontrada ${segmentFilter ? `no segmento ${segmentFilter}` : ''} com este feedback.</p>`;
             } else {
                 filteredSamples.sort((a,b) => a.sellerName.localeCompare(b.sellerName) || a.pedido.localeCompare(b.pedido)).forEach(sample => {
                     const itemDiv = document.createElement('div');
@@ -1165,7 +1183,36 @@
                 });
             }
 
-            feedbackSamplesModal.classList.remove('hidden');
+             // Only show modal if it's not already visible (to avoid flicker on re-filter)
+             if (feedbackSamplesModal.classList.contains('hidden')) {
+                populateModalSegmentFilter(); // Populate filter options when opening
+                modalSegmentFilter.value = segmentFilter; // Set filter value if reopening
+                feedbackSamplesModal.classList.remove('hidden');
+             }
+        }
+
+        // --- New Function to Populate Modal Segment Filter ---
+        function populateModalSegmentFilter() {
+            // Get unique segments currently present in the data
+            const currentSegments = [...new Set(allCurrentSamples.map(s => sellerSegmentsCache[s.sellerName]).filter(Boolean))].sort();
+            
+            // Preserve current value if possible
+            const currentValue = modalSegmentFilter.value; 
+            
+            modalSegmentFilter.innerHTML = '<option value="">Todos os Segmentos</option>'; // Reset options
+            currentSegments.forEach(segment => {
+                const option = document.createElement('option');
+                option.value = segment;
+                option.textContent = segment;
+                modalSegmentFilter.appendChild(option);
+            });
+
+            // Try to restore previous selection
+            if (modalSegmentFilter.querySelector(`option[value="${currentValue}"]`)) {
+                modalSegmentFilter.value = currentValue;
+            } else {
+                modalSegmentFilter.value = ""; // Default to "Todos" if previous selection is no longer valid
+            }
         }
 
         
@@ -1271,13 +1318,24 @@
         }
         
         function populateSegmentFilter() {
+            // Populate the main observation feed filter
+            const currentSegments = [...new Set(Object.values(sellerSegmentsCache).filter(Boolean))].sort();
+            const currentValue = observationSegmentFilter.value;
             observationSegmentFilter.innerHTML = '<option value="">Todos os Segmentos</option>';
-            SEGMENTS.forEach(segment => {
+            currentSegments.forEach(segment => {
                 const option = document.createElement('option');
                 option.value = segment;
                 option.textContent = segment;
                 observationSegmentFilter.appendChild(option);
             });
+             if (observationSegmentFilter.querySelector(`option[value="${currentValue}"]`)) {
+                observationSegmentFilter.value = currentValue;
+            } else {
+                 observationSegmentFilter.value = "";
+            }
+
+            // Also populate the modal filter (will be refined when modal opens)
+             populateModalSegmentFilter();
         }
         
         // Initial setup on page load
@@ -1286,7 +1344,7 @@
                  await signInAnonymously(auth);
                  listenForActiveSession(); 
                  setupNotificationButton();
-                 populateSegmentFilter();
+                 populateSegmentFilter(); // Initial population
              } catch (error) {
                  infoMessage.textContent = "Não foi possível conectar ao serviço."; 
                  console.error("Firebase Auth Error:", error);
@@ -1296,8 +1354,6 @@
     </script>
 </body>
 </html>
-
-
 
 
 
