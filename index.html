@@ -17,6 +17,14 @@
         /* Add styles for the new modal */
         .feedback-sample-item { border-bottom: 1px solid #e5e7eb; padding-bottom: 0.75rem; margin-bottom: 0.75rem; }
         .feedback-sample-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        /* Style for manager reply in observation feed */
+        .manager-reply {
+            margin-top: 0.5rem;
+            padding-top: 0.5rem;
+            border-top: 1px dashed #d1d5db; /* gray-300 */
+            font-size: 0.8rem;
+            color: #4b5563; /* gray-600 */
+        }
     </style>
 </head>
 <body class="text-gray-800">
@@ -237,7 +245,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, onSnapshot, doc, writeBatch, setDoc, getDoc, getDocs, updateDoc, query, orderBy, serverTimestamp, addDoc, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"; // Added addDoc and limit
+        import { getFirestore, collection, onSnapshot, doc, writeBatch, setDoc, getDoc, getDocs, updateDoc, query, orderBy, serverTimestamp, addDoc, limit, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"; // Added where
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
         const firebaseConfig = {
@@ -318,12 +326,14 @@
 
         let dataListenerUnsubscribe = null;
         let notificationListenerUnsubscribe = null;
+        let sellerRepliesListenerUnsubscribe = null; // Listener for replies TO sellers
         let currentSessionId = null;
         let chartInstances = {};
         let currentSellerForSegment = null;
         let allCurrentSamples = [];
         let sellerSegmentsCache = {};
         let currentFeedbackFilter = ''; 
+        let allSellerReplies = []; // Store replies sent by manager
         
         let allNotifications = [];
         let areAllNotificationsVisible = false;
@@ -391,6 +401,7 @@
 
                     listenForDataUpdates(manualId); 
                     listenForNotifications(manualId);
+                    listenForSellerReplies(manualId); // Start listening for replies
 
                  } catch (error) {
                      console.error(`Erro ao verificar ou definir sessão ativa ${manualId}:`, error);
@@ -543,6 +554,7 @@
              infoMessage.textContent = `Sessão ${sessionId} criada e definida como ativa globalmente. A carregar dados...`;
              listenForDataUpdates(sessionId); // This will connect to the new session
              listenForNotifications(sessionId);
+             listenForSellerReplies(sessionId); // Start listening for replies
         }
 
         function listenForDataUpdates(sessionId) {
@@ -639,6 +651,9 @@
                         await loadAllSellerSegments([...new Set(allSamples.map(s => s.sellerName))]);
                     }
 
+                    // Fetch replies *before* rendering the observation feed
+                    await listenForSellerReplies(sessionId); 
+
                     processAndDisplayDashboard(allSamples, sessionId, sellerDocs);
                     infoMessage.textContent = ''; // Clear status message on successful load/update
                 }
@@ -665,7 +680,7 @@
             renderFeedbackDetails(samples); 
             renderSegmentCharts(samples);
             renderSellersList(samples, sessionId, sellerDocs);
-            renderObservationsFeed(samples);
+            renderObservationsFeed(samples); // Now uses allSellerReplies
             renderFullSamplesTable(samples);
             
             populateSegmentFilters(); // Call unified function here
@@ -682,9 +697,11 @@
         function resetToInitialState(keepConnectionOptions = false) {
             if(dataListenerUnsubscribe) dataListenerUnsubscribe();
             if(notificationListenerUnsubscribe) notificationListenerUnsubscribe();
+            if(sellerRepliesListenerUnsubscribe) sellerRepliesListenerUnsubscribe(); // Stop reply listener
             currentSessionId = null;
             allCurrentSamples = [];
             allNotifications = [];
+            allSellerReplies = []; // Clear replies
             areAllNotificationsVisible = false;
             sellerSegmentsCache = {};
             dashboard.classList.add('hidden');
@@ -729,6 +746,7 @@
                         connectionSection.classList.add('hidden'); 
                         listenForDataUpdates(activeSessionId); 
                         listenForNotifications(activeSessionId);
+                        listenForSellerReplies(activeSessionId); // Start listening for replies
                     } else {
                         // Already connected and dashboard likely visible, do nothing special
                         console.log(`Already connected to global session ${activeSessionId}`);
@@ -792,6 +810,30 @@
                  console.error(`Erro ao escutar notificações para a sessão ${sessionId}:`, error);
             });
         }
+
+        // --- New Listener for Seller Replies ---
+        async function listenForSellerReplies(sessionId) {
+            if (!sessionId) return;
+            if (sellerRepliesListenerUnsubscribe) sellerRepliesListenerUnsubscribe();
+
+            const repliesRef = collection(db, "sessoes", sessionId, "notificacoesVendedor");
+            // No need to order here, we can sort later if needed, avoids index requirement
+            const q = query(repliesRef); 
+
+            sellerRepliesListenerUnsubscribe = onSnapshot(q, (snapshot) => {
+                 allSellerReplies = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                 console.log(`Loaded ${allSellerReplies.length} seller replies.`);
+                 // Re-render the observation feed to potentially show new replies
+                 if(allCurrentSamples.length > 0 && !dashboard.classList.contains('hidden')) {
+                    renderObservationsFeed(allCurrentSamples);
+                 }
+            }, (error) => {
+                 console.error(`Erro ao escutar respostas para vendedores na sessão ${sessionId}:`, error);
+                 allSellerReplies = []; // Clear replies on error
+                 // Maybe show an error message?
+            });
+        }
+
 
         function renderCharts(samples) {
             let pending = 0, resolved = 0, approved = 0, rejected = 0, events = 0;
@@ -1056,6 +1098,7 @@
             });
         }
         
+        // --- Modified renderObservationsFeed to include replies ---
         function renderObservationsFeed(samples) {
             const feedContainer = document.getElementById('observations-feed-list');
             const segmentFilter = observationSegmentFilter.value;
@@ -1092,14 +1135,31 @@
             samplesWithObservations.forEach(sample => {
                 const card = document.createElement('div');
                 card.className = 'p-4 rounded-lg border bg-gray-50';
+
+                 // Find the latest reply for this specific observation (match by key details)
+                 const reply = allSellerReplies
+                     .filter(r => r.sellerName === sample.sellerName && r.pedido === sample.pedido && r.produto === sample.produto && r.originalObservation === sample.observation)
+                     .sort((a, b) => (b.timestamp?.toDate() ?? 0) - (a.timestamp?.toDate() ?? 0))[0]; // Get the most recent
+
+                 const replyHtml = reply ? `
+                     <div class="manager-reply">
+                         <p><strong>${reply.managerName} respondeu:</strong> ${reply.replyMessage}</p>
+                         <p class="text-xs text-gray-400 text-right">${reply.timestamp?.toDate().toLocaleString('pt-BR') ?? ''}</p>
+                     </div>
+                 ` : '';
+
+
                 card.innerHTML = `
                     <div class="mb-2">
                         <p class="font-bold text-gray-800">${sample.produto} - ${sample.descricao}</p>
                     </div>
                     <p class="text-gray-700 mb-3">"${sample.observation}"</p>
-                    <div class="flex justify-between items-center text-xs text-gray-500">
+                    ${replyHtml} 
+                    <div class="flex justify-between items-center text-xs text-gray-500 ${replyHtml ? 'mt-2' : 'mt-3'}">
                         <span>- ${sample.sellerName} (Pedido: ${sample.pedido})</span>
-                        <button class="reply-observation-btn bg-blue-100 text-blue-700 hover:bg-blue-200 px-2 py-1 rounded text-xs font-semibold" data-sample-id="${sample.id}">Responder</button>
+                        <button class="reply-observation-btn bg-blue-100 text-blue-700 hover:bg-blue-200 px-2 py-1 rounded text-xs font-semibold" data-sample-id="${sample.id}">
+                            ${reply ? 'Responder Novamente' : 'Responder'}
+                        </button>
                     </div>
                 `;
                 feedContainer.appendChild(card);
@@ -1111,22 +1171,23 @@
              });
         }
 
+
         // --- New Function to Open Reply Modal ---
         function openReplyModal(event) {
              const sampleId = event.target.dataset.sampleId;
              const sample = allCurrentSamples.find(s => s.id === sampleId);
-             if (!sample || !sample.observation) { // Ensure there is an observation to reply to
+             if (!sample || !sample.observation) { 
                  console.error("Sample not found or no observation to reply to:", sampleId);
                  alert("Não é possível responder a uma amostra sem observação.");
                  return;
              }
-             currentSampleForReply = sample; // Store sample data
+             currentSampleForReply = sample; 
 
              replyModalProduct.textContent = `${sample.produto} (${sample.pedido})`;
              replyModalSeller.textContent = `Observação de: ${sample.sellerName}`;
              replyModalObservation.textContent = `"${sample.observation}"`;
-             replyMessageInput.value = ''; // Clear previous reply
-             managerNameInput.value = localStorage.getItem('managerName') || ''; // Load saved name
+             replyMessageInput.value = ''; 
+             managerNameInput.value = localStorage.getItem('managerName') || ''; 
              
              replyModal.classList.remove('hidden');
         }
@@ -1147,27 +1208,26 @@
             sendReplyBtn.textContent = 'A Enviar...';
 
             try {
-                // Store manager name locally for next time
                 localStorage.setItem('managerName', managerName); 
 
                 const notificationData = {
                     managerName: managerName,
                     replyMessage: replyMessage,
                     originalObservation: currentSampleForReply.observation,
-                    sellerName: currentSampleForReply.sellerName, // Target seller
+                    sellerName: currentSampleForReply.sellerName, 
                     pedido: currentSampleForReply.pedido,
                     produto: currentSampleForReply.produto,
                     timestamp: serverTimestamp(),
-                    read: false // Seller hasn't read it yet
+                    read: false 
                 };
 
-                // Add to the new seller notifications collection
                 const sellerNotifsRef = collection(db, "sessoes", currentSessionId, "notificacoesVendedor");
                 await addDoc(sellerNotifsRef, notificationData);
 
                 replyModal.classList.add('hidden');
                 infoMessage.textContent = `Resposta enviada para ${currentSampleForReply.sellerName}.`;
                 setTimeout(() => { infoMessage.textContent = ''; }, 3000);
+                 // No need to manually refresh feed, listener will catch the new reply
 
             } catch (error) {
                 console.error("Erro ao enviar resposta:", error);
@@ -1175,7 +1235,7 @@
             } finally {
                 sendReplyBtn.disabled = false;
                 sendReplyBtn.textContent = 'Enviar Resposta';
-                currentSampleForReply = null; // Clear stored sample
+                currentSampleForReply = null; 
             }
         }
 
@@ -1527,6 +1587,7 @@
              
              // Populate Observation Filter
              const obsSelect = document.getElementById('observation-segment-filter');
+             if(!obsSelect) return; // Add check
              const obsCurrentValue = obsSelect.value;
              // Keep "Todos" but clear others
              obsSelect.innerHTML = '<option value="">Todos os Segmentos</option>'; 
@@ -1563,6 +1624,7 @@
     </script>
 </body>
 </html>
+
 
 
 
