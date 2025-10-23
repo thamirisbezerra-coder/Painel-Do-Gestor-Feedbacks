@@ -652,7 +652,8 @@
                     }
 
                     // Fetch replies *before* rendering the observation feed
-                    await listenForSellerReplies(sessionId); 
+                    // No need to await here, renderObservationsFeed will use the latest allSellerReplies
+                    listenForSellerReplies(sessionId); 
 
                     processAndDisplayDashboard(allSamples, sessionId, sellerDocs);
                     infoMessage.textContent = ''; // Clear status message on successful load/update
@@ -817,20 +818,25 @@
             if (sellerRepliesListenerUnsubscribe) sellerRepliesListenerUnsubscribe();
 
             const repliesRef = collection(db, "sessoes", sessionId, "notificacoesVendedor");
-            // No need to order here, we can sort later if needed, avoids index requirement
-            const q = query(repliesRef); 
+            const q = query(repliesRef); // No ordering needed for listener
 
             sellerRepliesListenerUnsubscribe = onSnapshot(q, (snapshot) => {
                  allSellerReplies = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                 console.log(`Loaded ${allSellerReplies.length} seller replies.`);
-                 // Re-render the observation feed to potentially show new replies
-                 if(allCurrentSamples.length > 0 && !dashboard.classList.contains('hidden')) {
-                    renderObservationsFeed(allCurrentSamples);
+                 console.log(`Loaded/Updated ${allSellerReplies.length} seller replies.`);
+                 // Re-render relevant sections if dashboard is visible
+                 if(!dashboard.classList.contains('hidden')) {
+                    renderObservationsFeed(allCurrentSamples); // Update observation feed
+                    // Update feedback details modal if it's currently showing replies
+                    if (!feedbackSamplesModal.classList.contains('hidden') && currentFeedbackFilter) {
+                         showFeedbackSamples(currentFeedbackFilter, modalSegmentFilter.value);
+                    }
                  }
             }, (error) => {
                  console.error(`Erro ao escutar respostas para vendedores na sessão ${sessionId}:`, error);
                  allSellerReplies = []; // Clear replies on error
-                 // Maybe show an error message?
+                 if(!dashboard.classList.contains('hidden')) {
+                     renderObservationsFeed(allCurrentSamples); // Re-render feed without replies
+                 }
             });
         }
 
@@ -1404,6 +1410,7 @@
 
         }
 
+        // --- Modified showFeedbackSamples to include replies ---
         function showFeedbackSamples(feedbackText, segmentFilter = '') {
             currentFeedbackFilter = feedbackText; 
             if (!allCurrentSamples || allCurrentSamples.length === 0) return;
@@ -1425,8 +1432,20 @@
                 filteredSamples.sort((a,b) => a.sellerName.localeCompare(b.sellerName) || a.pedido.localeCompare(b.pedido)).forEach(sample => {
                     const itemDiv = document.createElement('div');
                     itemDiv.className = 'feedback-sample-item text-sm';
-                    // Add reply button here if there's an observation
-                    const replyButtonHtml = sample.observation ? `<button class="reply-observation-btn bg-blue-100 text-blue-700 hover:bg-blue-200 px-2 py-1 rounded text-xs font-semibold ml-2" data-sample-id="${sample.id}">Responder</button>` : '';
+                    
+                    // Find the latest reply for this specific sample's observation
+                    const reply = allSellerReplies
+                        .filter(r => r.sellerName === sample.sellerName && r.pedido === sample.pedido && r.produto === sample.produto && r.originalObservation === sample.observation)
+                        .sort((a, b) => (b.timestamp?.toDate() ?? 0) - (a.timestamp?.toDate() ?? 0))[0]; // Get the most recent
+
+                    const replyHtml = reply ? `
+                        <div class="manager-reply">
+                            <p><strong>${reply.managerName} respondeu:</strong> ${reply.replyMessage}</p>
+                            <p class="text-xs text-gray-400 text-right">${reply.timestamp?.toDate().toLocaleString('pt-BR') ?? ''}</p>
+                        </div>
+                    ` : '';
+
+                    const replyButtonHtml = sample.observation ? `<button class="reply-observation-btn bg-blue-100 text-blue-700 hover:bg-blue-200 px-2 py-1 rounded text-xs font-semibold ml-2" data-sample-id="${sample.id}">${reply ? 'Responder Novamente' : 'Responder'}</button>` : '';
 
                     itemDiv.innerHTML = `
                         <div class="flex justify-between items-start">
@@ -1441,6 +1460,7 @@
                              ${replyButtonHtml}
                          </div>
                         ${sample.observation ? `<p class="text-xs text-gray-600 mt-1 italic">Obs: ${sample.observation}</p>` : ''}
+                        ${replyHtml} 
                     `;
                     feedbackSamplesList.appendChild(itemDiv);
                 });
@@ -1624,6 +1644,9 @@
     </script>
 </body>
 </html>
+
+
+
 
 
 
