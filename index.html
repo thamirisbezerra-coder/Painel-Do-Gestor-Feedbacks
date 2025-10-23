@@ -17,6 +17,8 @@
         /* Add styles for the new modal */
         .feedback-sample-item { border-bottom: 1px solid #e5e7eb; padding-bottom: 0.75rem; margin-bottom: 0.75rem; }
         .feedback-sample-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        /* Style for old pending samples - REMOVED */
+        /* .old-pending-sample { background-color: #FEF2F2; } */
     </style>
 </head>
 <body class="text-gray-800">
@@ -91,6 +93,7 @@
                      <h2 class="text-2xl font-bold text-gray-900">Feed de Observações dos Vendedores</h2>
                      <div class="flex items-center gap-2">
                          <select id="observation-segment-filter" class="border-gray-300 rounded-lg shadow-sm text-sm">
+                              <option value="">Todos os Segmentos</option> <!-- Default option -->
                          </select>
                          <input id="observation-search-input" type="text" placeholder="Pesquisar por vendedor..." class="border-gray-300 rounded-lg shadow-sm text-sm">
                      </div>
@@ -116,9 +119,13 @@
             </section>
 
             <section id="full-samples-section">
-                <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
                     <h2 id="samples-table-title" class="text-2xl font-bold text-gray-900">Visualização Geral de Amostras</h2>
-                    <button id="show-all-btn" class="hidden bg-gray-200 text-gray-700 text-sm font-semibold py-1 px-3 rounded-lg hover:bg-gray-300">Mostrar Todos</button>
+                    <div class="flex items-center gap-2">
+                        <button id="show-all-btn" class="hidden bg-gray-200 text-gray-700 text-sm font-semibold py-1 px-3 rounded-lg hover:bg-gray-300">Mostrar Todos</button>
+                        <!-- Export CSV Button Removed -->
+                        <!-- <button id="export-csv-btn" class="bg-green-600 text-white text-sm font-semibold py-1 px-3 rounded-lg hover:bg-green-700">Exportar CSV</button> -->
+                    </div>
                 </div>
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-x-auto">
                     <table class="min-w-full text-sm">
@@ -244,6 +251,7 @@
         const fullSamplesTbody = document.getElementById('full-samples-tbody');
         const samplesTableTitle = document.getElementById('samples-table-title');
         const showAllBtn = document.getElementById('show-all-btn');
+        // Removed exportCsvBtn reference
         const sellerSearchInput = document.getElementById('seller-search-input');
         
         const historyBtn = document.getElementById('history-btn');
@@ -295,6 +303,10 @@
             return mapping[normalized] || normalized;
         }
 
+        // --- Helper function to parse DD/MM/YYYY date strings (REMOVED - Not needed without highlight) ---
+        // function parseDate(dateString) { ... }
+
+
         processBtn.addEventListener('click', () => {
             const data = dataInput.value.trim();
             if (data) parseAndCreateNewSession(data);
@@ -317,32 +329,28 @@
             infoMessage.textContent = 'Sessão global limpa. Cole os dados da nova sessão para iniciar.';
         });
 
-        connectSessionBtn.addEventListener('click', async () => { // Make async to await setDoc
+        connectSessionBtn.addEventListener('click', async () => { 
             const manualId = manualSessionInput.value.trim();
             if (manualId && manualId.startsWith('sessao_')) {
                  infoMessage.textContent = `A tentar conectar à sessão: ${manualId}...`;
                  inputSection.classList.add('hidden');
                  connectionSection.classList.add('hidden'); 
 
-                 // Attempt connection first
                  try {
-                    // Check if session exists before setting it globally
                     const sessionCheckRef = collection(db, "sessoes", manualId, "vendedores");
-                    const sessionCheckSnap = await getDocs(query(sessionCheckRef)); // Simple check if collection exists/not empty
+                    const sessionCheckSnap = await getDocs(query(sessionCheckRef)); 
 
                     if(sessionCheckSnap.empty) {
                         infoMessage.textContent = `Sessão ${manualId} não encontrada ou vazia.`;
-                         resetToInitialState(true); // Show connection options again
-                         manualSessionInput.value = manualId; // Keep the ID for retry
-                         return; // Stop connection attempt
+                         resetToInitialState(true); 
+                         manualSessionInput.value = manualId; 
+                         return; 
                     }
 
-                    // Session seems valid, set it globally
                     const activeSessionRef = doc(db, "configuracoes", "sessaoAtiva");
                     await setDoc(activeSessionRef, { current: manualId });
                     console.log(`Sessão ${manualId} definida como ativa globalmente.`);
 
-                    // Now start listening (which will connect UI)
                     listenForDataUpdates(manualId); 
                     listenForNotifications(manualId);
 
@@ -364,6 +372,7 @@
 
         cancelModalBtn.addEventListener('click', () => segmentModal.classList.add('hidden'));
         showAllBtn.addEventListener('click', () => filterSamplesTable(null));
+        // Removed exportCsvBtn listener
         historyBtn.addEventListener('click', () => renderNotificationHistory());
         closeHistoryBtn.addEventListener('click', () => historyModal.classList.add('hidden'));
         notificationsPermissionBtn.addEventListener('click', () => {
@@ -433,7 +442,7 @@
                              id: `sample_${Date.now()}_${index}`,
                              sellerName: String(sellerName), isPending: PENDING_STATUSES.includes(normalizedStatus),
                              pedido: String(row['Pedido'] || ''), razaoSocial: String(row['Razão Social'] || ''),
-                             produto: String(row['Produto'] || ''), descricao: String(row['Descrição'] || ''), // Added description
+                             produto: String(row['Produto'] || ''), descricao: String(row['Descrição'] || ''), 
                              qtde: String(row['Qtde.'] || ''), notaFiscal: String(row['Nota Fiscal'] || ''),
                              emissaoNF: String(row['Emissão NF'] || ''), originalStatus: String(row['Status'] || ''),
                              feedback: '', observation: '', finalizedByVendor: false,
@@ -488,7 +497,7 @@
             // Set the global active session
             const activeSessionRef = doc(db, "configuracoes", "sessaoAtiva");
             await setDoc(activeSessionRef, { current: sessionId });
-            // localStorage.setItem(LAST_SESSION_KEY, sessionId); // Removed localStorage for global active session
+            // localStorage.setItem(LAST_SESSION_KEY, sessionId); // Removed localStorage
 
              infoMessage.textContent = `Sessão ${sessionId} criada e definida como ativa globalmente. A carregar dados...`;
              listenForDataUpdates(sessionId); // This will connect to the new session
@@ -618,7 +627,7 @@
             renderObservationsFeed(samples);
             renderFullSamplesTable(samples);
             
-            populateModalSegmentFilter(); 
+            populateSegmentFilters(); // Call unified function here
 
             const currentFilteredSeller = samplesTableTitle.dataset.filteredSeller;
             if(currentFilteredSeller) {
@@ -671,38 +680,32 @@
                 const activeSessionId = docSnap.exists() ? docSnap.data().current : null;
                 
                 if (activeSessionId) {
-                    // If a global session is found AND it's different from the current one
-                    if (activeSessionId !== currentSessionId) {
-                        console.log(`Global active session changed to ${activeSessionId}. Connecting...`);
+                    // If a global session is found AND it's different from the current one OR dashboard is hidden
+                    if (activeSessionId !== currentSessionId || dashboard.classList.contains('hidden')) {
+                        console.log(`Global active session is ${activeSessionId}. Connecting...`);
                         infoMessage.textContent = `Sessão ativa global encontrada: ${activeSessionId}. A carregar...`;
                         inputSection.classList.add('hidden');
                         connectionSection.classList.add('hidden'); 
                         listenForDataUpdates(activeSessionId); 
                         listenForNotifications(activeSessionId);
-                    } else if (currentSessionId === activeSessionId && dashboard.classList.contains('hidden')) {
-                        // We are already listening to the correct session, but dashboard is hidden (e.g., after an error)
-                        console.log(`Re-displaying dashboard for already connected session ${activeSessionId}.`);
-                         inputSection.classList.add('hidden');
-                         connectionSection.classList.add('hidden');
-                         dashboard.classList.remove('hidden'); 
-                         infoMessage.textContent = ''; // Clear error messages
+                    } else {
+                        // Already connected and dashboard likely visible, do nothing special
+                        console.log(`Already connected to global session ${activeSessionId}`);
                     }
                 } else {
                     // No active global session
-                    // Check if we were previously connected (check currentSessionId)
                     if (currentSessionId) {
                         // We were connected, but the global session was cleared. Reset.
                         console.log("Sessão ativa global foi limpa. A redefinir.");
                         resetToInitialState(true); // Show connection options
                     } else {
                         // No current session AND no global session, show connection options
-                        // Only reset if input section isn't already visible (prevent loop on initial load)
                         if(inputSection.classList.contains('hidden')) {
                             console.log("Nenhuma sessão global ou local ativa. A mostrar opções de ligação.");
                             resetToInitialState(true); 
                         } else {
                              console.log("Input section visible, awaiting user action.");
-                             processBtn.disabled = false; // Ensure process btn is enabled here
+                             processBtn.disabled = false; 
                              processBtn.textContent = 'Gerar Painel e Acessos';
                              infoMessage.textContent = 'Conectado. Nenhuma sessão ativa globalmente. Cole os dados para iniciar.';
                         }
@@ -987,13 +990,21 @@
         
         function renderFullSamplesTable(samples) {
             fullSamplesTbody.innerHTML = '';
+             // Removed date parsing and highlighting logic
+             // const thirtyDaysAgo = new Date();
+             // thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - OLD_SAMPLE_THRESHOLD_DAYS);
+
             samples.sort((a,b) => a.sellerName.localeCompare(b.sellerName) || a.pedido.localeCompare(b.pedido)).forEach(sample => {
                 let feedbackDisplay = '<span class="text-gray-400">Pendente</span>';
+                let rowClass = 'border-b'; // Reset rowClass
+                
                 if (!sample.isPending) {
                     feedbackDisplay = `<span class="font-semibold">${sample.feedback || 'N/A'}</span><p class="text-xs text-gray-500">${sample.observation || ''}</p>`;
-                }
+                } 
+                // Removed else block for highlighting
+
                 const row = document.createElement('tr');
-                row.className = 'border-b';
+                row.className = rowClass; 
                 row.dataset.sellerName = sample.sellerName;
                 row.innerHTML = `
                     <td class="px-4 py-2 font-medium">${sample.sellerName}</td>
@@ -1128,7 +1139,12 @@
         async function loadAllSellerSegments(sellerNames) {
             const uniqueSellers = [...new Set(sellerNames)];
             const sellersToFetch = uniqueSellers.filter(name => !sellerSegmentsCache.hasOwnProperty(name));
-            if (sellersToFetch.length === 0) return;
+            if (sellersToFetch.length === 0) {
+                 // Even if cache is full, we might need to update filters if segments changed
+                 populateSegmentFilters();
+                 return;
+            }
+
 
             const fetchedConfigs = {};
             const q = collection(db, "vendedorConfig");
@@ -1141,6 +1157,9 @@
                 const sellerId = sanitizeForFirebaseId(name);
                 sellerSegmentsCache[name] = fetchedConfigs[sellerId] || null;
             });
+            
+            // Populate filters after loading segments
+            populateSegmentFilters();
         }
         
         function renderFeedbackDetails(samples) {
@@ -1360,23 +1379,31 @@
             }
         }
         
-        function populateSegmentFilter() {
-            const currentSegments = [...new Set(Object.values(sellerSegmentsCache).filter(Boolean))].sort();
-            const currentValue = observationSegmentFilter.value;
-            observationSegmentFilter.innerHTML = '<option value="">Todos os Segmentos</option>';
-            currentSegments.forEach(segment => {
-                const option = document.createElement('option');
-                option.value = segment;
-                option.textContent = segment;
-                observationSegmentFilter.appendChild(option);
-            });
-             if (observationSegmentFilter.querySelector(`option[value="${currentValue}"]`)) {
-                observationSegmentFilter.value = currentValue;
-            } else {
-                 observationSegmentFilter.value = "";
-            }
-             populateModalSegmentFilter();
+        // Unified function to populate both segment filters
+        function populateSegmentFilters() {
+             const currentSegments = [...new Set(Object.values(sellerSegmentsCache).filter(Boolean))].sort();
+             
+             // Populate Observation Filter
+             const obsCurrentValue = observationSegmentFilter.value;
+             observationSegmentFilter.innerHTML = '<option value="">Todos os Segmentos</option>';
+             currentSegments.forEach(segment => {
+                 const option = document.createElement('option');
+                 option.value = segment;
+                 option.textContent = segment;
+                 observationSegmentFilter.appendChild(option);
+             });
+              if (observationSegmentFilter.querySelector(`option[value="${obsCurrentValue}"]`)) {
+                 observationSegmentFilter.value = obsCurrentValue;
+             } else {
+                  observationSegmentFilter.value = "";
+             }
+
+             // Populate Modal Filter
+              populateModalSegmentFilter(); // This function already handles modal population logic
         }
+
+        // Removed CSV Export Function
+        // function exportVisibleTableToCSV() { ... }
         
         // Initial setup on page load
         (async () => {
@@ -1384,7 +1411,7 @@
                  await signInAnonymously(auth);
                  listenForActiveSession(); 
                  setupNotificationButton();
-                 populateSegmentFilter(); 
+                 // populateSegmentFilters(); // Call this inside processAndDisplayDashboard after segments are loaded
              } catch (error) {
                  infoMessage.textContent = "Não foi possível conectar ao serviço."; 
                  console.error("Firebase Auth Error:", error);
@@ -1394,6 +1421,9 @@
     </script>
 </body>
 </html>
+
+
+
 
 
 
