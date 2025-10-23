@@ -343,9 +343,7 @@
         closeChartModalBtn.addEventListener('click', () => chartModal.classList.add('hidden'));
         closeFeedbackSamplesBtn.addEventListener('click', () => feedbackSamplesModal.classList.add('hidden'));
         closeFeedbackSamplesBtnBottom.addEventListener('click', () => feedbackSamplesModal.classList.add('hidden'));
-        // Event listener for the new segment filter inside the modal
         modalSegmentFilter.addEventListener('change', () => {
-             // Re-render the list inside the modal with the new segment filter applied
              showFeedbackSamples(currentFeedbackFilter, modalSegmentFilter.value); 
         });
 
@@ -406,7 +404,7 @@
                              id: `sample_${Date.now()}_${index}`,
                              sellerName: String(sellerName), isPending: PENDING_STATUSES.includes(normalizedStatus),
                              pedido: String(row['Pedido'] || ''), razaoSocial: String(row['Razão Social'] || ''),
-                             produto: String(row['Produto'] || ''), descricao: String(row['Descrição'] || ''),
+                             produto: String(row['Produto'] || ''), descricao: String(row['Descrição'] || ''), // Added description
                              qtde: String(row['Qtde.'] || ''), notaFiscal: String(row['Nota Fiscal'] || ''),
                              emissaoNF: String(row['Emissão NF'] || ''), originalStatus: String(row['Status'] || ''),
                              feedback: '', observation: '', finalizedByVendor: false,
@@ -585,7 +583,6 @@
             renderObservationsFeed(samples);
             renderFullSamplesTable(samples);
             
-            // Re-populate modal segment filter when dashboard updates (in case segments change)
             populateModalSegmentFilter(); 
 
             const currentFilteredSeller = samplesTableTitle.dataset.filteredSeller;
@@ -1150,14 +1147,13 @@
         }
 
         function showFeedbackSamples(feedbackText, segmentFilter = '') {
-            currentFeedbackFilter = feedbackText; // Store the current feedback for re-filtering
+            currentFeedbackFilter = feedbackText; 
             if (!allCurrentSamples || allCurrentSamples.length === 0) return;
 
             let filteredSamples = allCurrentSamples.filter(sample => {
                 return !sample.isPending && getCanonicalFeedback(sample.feedback) === feedbackText;
             });
 
-            // Apply segment filter if provided
             if(segmentFilter) {
                 filteredSamples = filteredSamples.filter(sample => sellerSegmentsCache[sample.sellerName] === segmentFilter);
             }
@@ -1173,33 +1169,28 @@
                     itemDiv.className = 'feedback-sample-item text-sm';
                     itemDiv.innerHTML = `
                         <p class="font-semibold">${sample.produto}</p>
+                        ${sample.descricao ? `<p class="text-xs text-gray-600">${sample.descricao}</p>` : ''} 
                         <p>Pedido: ${sample.pedido}</p>
                         <p class="text-xs text-gray-500 mt-1">
-                            Vendedor: ${sample.sellerName} ${sample.emissaoNF ? `| NF: ${sample.emissaoNF}` : ''}
+                            Vendedor: ${sample.sellerName} ${sample.emissaoNF ? `| NF: ${sample.emissaoNF}` : ''} ${sample.qtde ? `| Qtde: ${sample.qtde}` : ''}
                         </p>
                         ${sample.observation ? `<p class="text-xs text-gray-600 mt-1 italic">Obs: ${sample.observation}</p>` : ''}
                     `;
                     feedbackSamplesList.appendChild(itemDiv);
                 });
             }
-
-             // Only show modal if it's not already visible (to avoid flicker on re-filter)
              if (feedbackSamplesModal.classList.contains('hidden')) {
-                populateModalSegmentFilter(); // Populate filter options when opening
-                modalSegmentFilter.value = segmentFilter; // Set filter value if reopening
+                populateModalSegmentFilter(); 
+                modalSegmentFilter.value = segmentFilter; 
                 feedbackSamplesModal.classList.remove('hidden');
              }
         }
 
-        // --- New Function to Populate Modal Segment Filter ---
         function populateModalSegmentFilter() {
-            // Get unique segments currently present in the data
             const currentSegments = [...new Set(allCurrentSamples.map(s => sellerSegmentsCache[s.sellerName]).filter(Boolean))].sort();
-            
-            // Preserve current value if possible
             const currentValue = modalSegmentFilter.value; 
             
-            modalSegmentFilter.innerHTML = '<option value="">Todos os Segmentos</option>'; // Reset options
+            modalSegmentFilter.innerHTML = '<option value="">Todos os Segmentos</option>'; 
             currentSegments.forEach(segment => {
                 const option = document.createElement('option');
                 option.value = segment;
@@ -1207,11 +1198,10 @@
                 modalSegmentFilter.appendChild(option);
             });
 
-            // Try to restore previous selection
             if (modalSegmentFilter.querySelector(`option[value="${currentValue}"]`)) {
                 modalSegmentFilter.value = currentValue;
             } else {
-                modalSegmentFilter.value = ""; // Default to "Todos" if previous selection is no longer valid
+                modalSegmentFilter.value = ""; 
             }
         }
 
@@ -1318,7 +1308,6 @@
         }
         
         function populateSegmentFilter() {
-            // Populate the main observation feed filter
             const currentSegments = [...new Set(Object.values(sellerSegmentsCache).filter(Boolean))].sort();
             const currentValue = observationSegmentFilter.value;
             observationSegmentFilter.innerHTML = '<option value="">Todos os Segmentos</option>';
@@ -1333,8 +1322,6 @@
             } else {
                  observationSegmentFilter.value = "";
             }
-
-            // Also populate the modal filter (will be refined when modal opens)
              populateModalSegmentFilter();
         }
         
@@ -1354,6 +1341,7 @@
     </script>
 </body>
 </html>
+
 
 
 
