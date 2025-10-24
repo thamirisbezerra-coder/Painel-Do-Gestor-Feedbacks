@@ -14,16 +14,21 @@
         .notification-card { animation: slideIn 0.5s ease-out; }
         @keyframes slideIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
         canvas { cursor: pointer; }
-        /* Add styles for the new modal */
         .feedback-sample-item { border-bottom: 1px solid #e5e7eb; padding-bottom: 0.75rem; margin-bottom: 0.75rem; }
         .feedback-sample-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
-        /* Style for manager reply in observation feed */
-        .manager-reply {
+        .manager-reply, .seller-reply {
             margin-top: 0.5rem;
             padding-top: 0.5rem;
             border-top: 1px dashed #d1d5db; /* gray-300 */
             font-size: 0.8rem;
             color: #4b5563; /* gray-600 */
+        }
+        .seller-reply {
+            padding-left: 0.5rem;
+            border-left: 2px solid #fdba74; /* orange-300 */
+            background-color: #fffbeb; /* amber-50 */
+            padding-bottom: 0.5rem;
+            border-top: 1px dashed #fed7aa; /* orange-200 */
         }
     </style>
 </head>
@@ -327,6 +332,7 @@
         let dataListenerUnsubscribe = null;
         let notificationListenerUnsubscribe = null;
         let sellerRepliesListenerUnsubscribe = null; // Listener for replies TO sellers
+        let sellerRepliesToManagerListenerUnsubscribe = null; // Listener for replies FROM sellers
         let currentSessionId = null;
         let chartInstances = {};
         let currentSellerForSegment = null;
@@ -334,6 +340,7 @@
         let sellerSegmentsCache = {};
         let currentFeedbackFilter = ''; 
         let allSellerReplies = []; // Store replies sent by manager
+        let allSellerRepliesToManager = []; // Store replies sent by seller
         
         let allNotifications = [];
         let areAllNotificationsVisible = false;
@@ -401,7 +408,8 @@
 
                     listenForDataUpdates(manualId); 
                     listenForNotifications(manualId);
-                    listenForSellerReplies(manualId); // Start listening for replies
+                    listenForSellerReplies(manualId); // Start listening for manager replies
+                    listenForSellerRepliesToManager(manualId); // Start listening for seller replies
 
                  } catch (error) {
                      console.error(`Erro ao verificar ou definir sessão ativa ${manualId}:`, error);
@@ -555,6 +563,7 @@
              listenForDataUpdates(sessionId); // This will connect to the new session
              listenForNotifications(sessionId);
              listenForSellerReplies(sessionId); // Start listening for replies
+             listenForSellerRepliesToManager(sessionId); // Start listening for seller replies
         }
 
         function listenForDataUpdates(sessionId) {
@@ -654,6 +663,7 @@
                     // Fetch replies *before* rendering the observation feed
                     // No need to await here, renderObservationsFeed will use the latest allSellerReplies
                     listenForSellerReplies(sessionId); 
+                    listenForSellerRepliesToManager(sessionId); // Also listen for replies FROM seller
 
                     processAndDisplayDashboard(allSamples, sessionId, sellerDocs);
                     infoMessage.textContent = ''; // Clear status message on successful load/update
@@ -698,11 +708,13 @@
         function resetToInitialState(keepConnectionOptions = false) {
             if(dataListenerUnsubscribe) dataListenerUnsubscribe();
             if(notificationListenerUnsubscribe) notificationListenerUnsubscribe();
-            if(sellerRepliesListenerUnsubscribe) sellerRepliesListenerUnsubscribe(); // Stop reply listener
+            if(sellerRepliesListenerUnsubscribe) sellerRepliesListenerUnsubscribe(); 
+            if(sellerRepliesToManagerListenerUnsubscribe) sellerRepliesToManagerListenerUnsubscribe(); // Stop new listener
             currentSessionId = null;
             allCurrentSamples = [];
             allNotifications = [];
             allSellerReplies = []; // Clear replies
+            allSellerRepliesToManager = []; // Clear replies from seller
             areAllNotificationsVisible = false;
             sellerSegmentsCache = {};
             dashboard.classList.add('hidden');
@@ -748,6 +760,7 @@
                         listenForDataUpdates(activeSessionId); 
                         listenForNotifications(activeSessionId);
                         listenForSellerReplies(activeSessionId); // Start listening for replies
+                        listenForSellerRepliesToManager(activeSessionId); // Start listening for seller replies
                     } else {
                         // Already connected and dashboard likely visible, do nothing special
                         console.log(`Already connected to global session ${activeSessionId}`);
@@ -791,7 +804,7 @@
 
                 allNotifications = snapshot.docs.map(doc => ({
                     ...doc.data(),
-                    timestamp: doc.data().timestamp?.toDate()
+                    timestamp: doc.data().timestamp // Keep as Firestore Timestamp
                 }));
                 updateNotificationDisplay();
 
@@ -801,7 +814,7 @@
                             const notificationData = change.doc.data();
                             if (notificationData.triggerPopup === true) { 
                                 const cleanMessage = notificationData.message.replace(/<[^>]*>?/gm, '');
-                                showBrowserNotification('Tarefa Finalizada', cleanMessage);
+                                showBrowserNotification(notificationData.color === 'green' ? 'Tarefa Finalizada' : 'Nova Resposta', cleanMessage);
                             }
                         }
                     });
@@ -812,28 +825,98 @@
             });
         }
 
-        // --- New Listener for Seller Replies ---
+        // --- Listener for Manager Replies TO Sellers ---
         async function listenForSellerReplies(sessionId) {
             if (!sessionId) return;
             if (sellerRepliesListenerUnsubscribe) sellerRepliesListenerUnsubscribe();
 
             const repliesRef = collection(db, "sessoes", sessionId, "notificacoesVendedor");
-            const q = query(repliesRef); // No ordering needed for listener
+            const q = query(repliesRef); 
 
             sellerRepliesListenerUnsubscribe = onSnapshot(q, (snapshot) => {
                  allSellerReplies = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                 console.log(`Loaded/Updated ${allSellerReplies.length} seller replies.`);
-                 // Re-render relevant sections if dashboard is visible
+                 console.log(`Loaded/Updated ${allSellerReplies.length} manager replies.`);
                  if(!dashboard.classList.contains('hidden')) {
-                    renderObservationsFeed(allCurrentSamples); // Update observation feed
-                    // Update feedback details modal if it's currently showing replies
+                    renderObservationsFeed(allCurrentSamples); 
                     if (!feedbackSamplesModal.classList.contains('hidden') && currentFeedbackFilter) {
                          showFeedbackSamples(currentFeedbackFilter, modalSegmentFilter.value);
                     }
                  }
             }, (error) => {
                  console.error(`Erro ao escutar respostas para vendedores na sessão ${sessionId}:`, error);
-                 allSellerReplies = []; // Clear replies on error
+                 allSellerReplies = []; 
+                 if(!dashboard.classList.contains('hidden')) {
+                     renderObservationsFeed(allCurrentSamples); 
+                 }
+            });
+        }
+
+         // --- New Listener for Seller Replies TO Manager ---
+         async function listenForSellerRepliesToManager(sessionId) {
+            if (!sessionId) return;
+            if (sellerRepliesToManagerListenerUnsubscribe) sellerRepliesToManagerListenerUnsubscribe();
+
+            const repliesRef = collection(db, "sessoes", sessionId, "respostasVendedor");
+            // Listen ordered by timestamp to only check new ones
+            const q = query(repliesRef, orderBy("timestamp", "desc"), limit(10)); 
+
+            sellerRepliesToManagerListenerUnsubscribe = onSnapshot(q, async (snapshot) => {
+                 const newReplies = [];
+                 snapshot.docChanges().forEach((change) => {
+                     if (change.type === "added") {
+                         const replyData = change.doc.data();
+                         // Avoid processing replies we already have in allSellerRepliesToManager
+                         if (!allSellerRepliesToManager.find(r => r.id === change.doc.id)) {
+                             newReplies.push({ id: change.doc.id, ...replyData });
+                         }
+                     }
+                 });
+
+                 // Add new replies to the start of the main array (since query is desc)
+                 allSellerRepliesToManager.unshift(...newReplies);
+                 // Keep array sorted (optional, but good practice)
+                 allSellerRepliesToManager.sort((a, b) => (b.timestamp?.toDate() ?? 0) - (a.timestamp?.toDate() ?? 0));
+
+                 console.log(`Loaded/Updated ${allSellerRepliesToManager.length} seller replies to manager.`);
+                 
+                 const batch = writeBatch(db);
+                 let notificationAdded = false;
+
+                 // Check for new, unread replies from sellers
+                 if (newReplies.length > 0) {
+                     newReplies.forEach(replyData => {
+                         const message = `<strong>${replyData.sellerName}</strong> respondeu à sua observação sobre <strong>${replyData.produto}</strong>: "${replyData.replyMessage}"`;
+                         const notifId = sanitizeForFirebaseId(`seller-reply-${replyData.id}`); // Use reply ID
+                         const notifRef = doc(db, "sessoes", currentSessionId, "notificacoes", notifId);
+                         
+                         batch.set(notifRef, {
+                             message,
+                             color: 'orange', // Use orange for replies from sellers
+                             timestamp: serverTimestamp(),
+                             triggerPopup: true // Trigger popup for manager
+                         });
+                         notificationAdded = true;
+                     });
+                 }
+
+                 if (notificationAdded) {
+                     try {
+                         await batch.commit();
+                     } catch (commitError) {
+                         console.error("Erro ao criar notificação para resposta do vendedor:", commitError);
+                     }
+                 }
+
+                 // Re-render relevant sections if dashboard is visible
+                 if(!dashboard.classList.contains('hidden')) {
+                    renderObservationsFeed(allCurrentSamples); 
+                    if (!feedbackSamplesModal.classList.contains('hidden') && currentFeedbackFilter) {
+                         showFeedbackSamples(currentFeedbackFilter, modalSegmentFilter.value);
+                    }
+                 }
+            }, (error) => {
+                 console.error(`Erro ao escutar respostas de vendedores na sessão ${sessionId}:`, error);
+                 allSellerRepliesToManager = []; // Clear replies on error
                  if(!dashboard.classList.contains('hidden')) {
                      renderObservationsFeed(allCurrentSamples); // Re-render feed without replies
                  }
@@ -1142,17 +1225,34 @@
                 const card = document.createElement('div');
                 card.className = 'p-4 rounded-lg border bg-gray-50';
 
-                 // Find the latest reply for this specific observation (match by key details)
-                 const reply = allSellerReplies
+                 // Find the latest manager reply for this specific observation
+                 const managerReply = allSellerReplies
                      .filter(r => r.sellerName === sample.sellerName && r.pedido === sample.pedido && r.produto === sample.produto && r.originalObservation === sample.observation)
                      .sort((a, b) => (b.timestamp?.toDate() ?? 0) - (a.timestamp?.toDate() ?? 0))[0]; // Get the most recent
 
-                 const replyHtml = reply ? `
-                     <div class="manager-reply">
-                         <p><strong>${reply.managerName} respondeu:</strong> ${reply.replyMessage}</p>
-                         <p class="text-xs text-gray-400 text-right">${reply.timestamp?.toDate().toLocaleString('pt-BR') ?? ''}</p>
-                     </div>
-                 ` : '';
+                 let repliesHtml = '';
+                 if (managerReply) {
+                     repliesHtml += `
+                         <div class="manager-reply">
+                             <p><strong>${managerReply.managerName} respondeu:</strong> ${managerReply.replyMessage}</p>
+                             <p class="text-xs text-gray-400 text-right">${managerReply.timestamp?.toDate().toLocaleString('pt-BR') ?? ''}</p>
+                         </div>
+                     `;
+                     
+                     // Find the latest seller reply *to this manager's reply*
+                     const sellerReply = allSellerRepliesToManager
+                         .filter(r => r.originalManagerMessage === managerReply.replyMessage && r.pedido === sample.pedido && r.produto === sample.produto)
+                         .sort((a, b) => (b.timestamp?.toDate() ?? 0) - (a.timestamp?.toDate() ?? 0))[0];
+
+                     if (sellerReply) {
+                         repliesHtml += `
+                             <div class="seller-reply">
+                                 <p><strong>${sellerReply.sellerName} respondeu:</strong> ${sellerReply.replyMessage}</p>
+                                 <p class="text-xs text-gray-400 text-right">${sellerReply.timestamp?.toDate().toLocaleString('pt-BR') ?? ''}</p>
+                             </div>
+                         `;
+                     }
+                 }
 
 
                 card.innerHTML = `
@@ -1160,11 +1260,11 @@
                         <p class="font-bold text-gray-800">${sample.produto} - ${sample.descricao}</p>
                     </div>
                     <p class="text-gray-700 mb-3">"${sample.observation}"</p>
-                    ${replyHtml} 
-                    <div class="flex justify-between items-center text-xs text-gray-500 ${replyHtml ? 'mt-2' : 'mt-3'}">
+                    ${repliesHtml} 
+                    <div class="flex justify-between items-center text-xs text-gray-500 ${repliesHtml ? 'mt-2' : 'mt-3'}">
                         <span>- ${sample.sellerName} (Pedido: ${sample.pedido})</span>
                         <button class="reply-observation-btn bg-blue-100 text-blue-700 hover:bg-blue-200 px-2 py-1 rounded text-xs font-semibold" data-sample-id="${sample.id}">
-                            ${reply ? 'Responder Novamente' : 'Responder'}
+                            ${managerReply ? 'Responder Novamente' : 'Responder'}
                         </button>
                     </div>
                 `;
@@ -1266,6 +1366,15 @@
                 notificationsList.innerHTML = '<p class="text-gray-500 placeholder-notification">Nenhuma notificação nova.</p>';
                 return;
             }
+            
+            // Sort notifications by timestamp before slicing
+            // FIX: Check if timestamp exists and has toDate() before calling it
+            allNotifications.sort((a, b) => {
+                const timeA = a.timestamp && a.timestamp.toDate ? a.timestamp.toDate().getTime() : (a.timestamp || 0); // Handle Date objects or numbers
+                const timeB = b.timestamp && b.timestamp.toDate ? b.timestamp.toDate().getTime() : (b.timestamp || 0);
+                return timeB - timeA;
+            });
+
 
             const notificationsToDisplay = areAllNotificationsVisible ? allNotifications : allNotifications.slice(0, 3);
             
@@ -1299,15 +1408,26 @@
         
         function renderNotificationHistory() {
             historyList.innerHTML = '';
-            if (allNotifications.length === 0) {
+            // Sort notifications by timestamp for history modal
+            // FIX: Check if timestamp exists and has toDate() before calling it
+            const sortedNotifications = [...allNotifications].sort((a, b) => {
+                 const timeA = a.timestamp && a.timestamp.toDate ? a.timestamp.toDate().getTime() : (a.timestamp || 0);
+                 const timeB = b.timestamp && b.timestamp.toDate ? b.timestamp.toDate().getTime() : (b.timestamp || 0);
+                 return timeB - timeA;
+            });
+
+
+            if (sortedNotifications.length === 0) {
                 historyList.innerHTML = '<p class="text-gray-500">Nenhum histórico para mostrar.</p>';
             } else {
-                allNotifications.forEach(notification => {
+                sortedNotifications.forEach(notification => {
                     const item = document.createElement('div');
                     item.className = 'p-3 border-b';
+                    // Also check timestamp for toLocaleString
+                    const timestampDate = notification.timestamp && notification.timestamp.toDate ? notification.timestamp.toDate() : (notification.timestamp ? new Date(notification.timestamp) : null);
                     item.innerHTML = `
                         <p class="text-sm text-gray-800">${notification.message}</p>
-                        <p class="text-xs text-gray-500 mt-1">${notification.timestamp ? notification.timestamp.toLocaleString('pt-BR') : 'Data indisponível'}</p>
+                        <p class="text-xs text-gray-500 mt-1">${timestampDate ? timestampDate.toLocaleString('pt-BR') : 'Data indisponível'}</p>
                     `;
                     historyList.appendChild(item);
                 });
@@ -1410,7 +1530,6 @@
 
         }
 
-        // --- Modified showFeedbackSamples to include replies ---
         function showFeedbackSamples(feedbackText, segmentFilter = '') {
             currentFeedbackFilter = feedbackText; 
             if (!allCurrentSamples || allCurrentSamples.length === 0) return;
@@ -1433,19 +1552,38 @@
                     const itemDiv = document.createElement('div');
                     itemDiv.className = 'feedback-sample-item text-sm';
                     
-                    // Find the latest reply for this specific sample's observation
-                    const reply = allSellerReplies
+                    // Find the latest manager reply for this specific sample's observation
+                    const managerReply = allSellerReplies
                         .filter(r => r.sellerName === sample.sellerName && r.pedido === sample.pedido && r.produto === sample.produto && r.originalObservation === sample.observation)
                         .sort((a, b) => (b.timestamp?.toDate() ?? 0) - (a.timestamp?.toDate() ?? 0))[0]; // Get the most recent
 
-                    const replyHtml = reply ? `
-                        <div class="manager-reply">
-                            <p><strong>${reply.managerName} respondeu:</strong> ${reply.replyMessage}</p>
-                            <p class="text-xs text-gray-400 text-right">${reply.timestamp?.toDate().toLocaleString('pt-BR') ?? ''}</p>
-                        </div>
-                    ` : '';
+                    let repliesHtml = '';
+                    if (managerReply) {
+                        const managerTime = managerReply.timestamp?.toDate() ? managerReply.timestamp.toDate().toLocaleString('pt-BR') : '';
+                        repliesHtml += `
+                            <div class="manager-reply">
+                                <p><strong>${managerReply.managerName} respondeu:</strong> ${managerReply.replyMessage}</p>
+                                <p class="text-xs text-gray-400 text-right">${managerTime}</p>
+                            </div>
+                        `;
+                        
+                        // Find the latest seller reply *to this manager's reply*
+                        const sellerReply = allSellerRepliesToManager
+                            .filter(r => r.originalManagerMessage === managerReply.replyMessage && r.pedido === sample.pedido && r.produto === sample.produto)
+                            .sort((a, b) => (b.timestamp?.toDate() ?? 0) - (a.timestamp?.toDate() ?? 0))[0];
 
-                    const replyButtonHtml = sample.observation ? `<button class="reply-observation-btn bg-blue-100 text-blue-700 hover:bg-blue-200 px-2 py-1 rounded text-xs font-semibold ml-2" data-sample-id="${sample.id}">${reply ? 'Responder Novamente' : 'Responder'}</button>` : '';
+                        if (sellerReply) {
+                             const sellerTime = sellerReply.timestamp?.toDate() ? sellerReply.timestamp.toDate().toLocaleString('pt-BR') : '';
+                            repliesHtml += `
+                                <div class="seller-reply">
+                                    <p><strong>${sellerReply.sellerName} respondeu:</strong> ${sellerReply.replyMessage}</p>
+                                    <p class="text-xs text-gray-400 text-right">${sellerTime}</p>
+                                </div>
+                            `;
+                        }
+                    }
+
+                    const replyButtonHtml = sample.observation ? `<button class="reply-observation-btn bg-blue-100 text-blue-700 hover:bg-blue-200 px-2 py-1 rounded text-xs font-semibold ml-2" data-sample-id="${sample.id}">${managerReply ? 'Responder Novamente' : 'Responder'}</button>` : '';
 
                     itemDiv.innerHTML = `
                         <div class="flex justify-between items-start">
@@ -1460,7 +1598,7 @@
                              ${replyButtonHtml}
                          </div>
                         ${sample.observation ? `<p class="text-xs text-gray-600 mt-1 italic">Obs: ${sample.observation}</p>` : ''}
-                        ${replyHtml} 
+                        ${repliesHtml} 
                     `;
                     feedbackSamplesList.appendChild(itemDiv);
                 });
@@ -1594,6 +1732,10 @@
 
         function showBrowserNotification(title, body) {
             if (Notification.permission === 'granted') {
+                 if(document.visibilityState === 'visible') {
+                     console.log("Tab is active, skipping browser notification.");
+                     return; // Don't show if user is looking at the page
+                }
                 const notification = new Notification(title, {
                     body: body,
                     icon: 'https://img.icons8.com/color/96/000000/appointment-reminders--v1.png'
@@ -1644,6 +1786,8 @@
     </script>
 </body>
 </html>
+
+
 
 
 
