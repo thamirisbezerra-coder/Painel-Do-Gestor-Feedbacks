@@ -15,8 +15,18 @@
         @keyframes slideIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
         canvas { cursor: pointer; }
         /* Add styles for the new modal */
-        .feedback-sample-item { border-bottom: 1px solid #e5e7eb; padding-bottom: 0.75rem; margin-bottom: 0.75rem; }
+        .feedback-sample-item { 
+            border-bottom: 1px solid #e5e7eb; 
+            padding-bottom: 0.75rem; 
+            margin-bottom: 0.75rem;
+            transition: background-color 0.2s;
+        }
         .feedback-sample-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        /* Style for highlighted sample in modal */
+        .feedback-sample-item.highlight {
+            background-color: #fffbeb; /* bg-amber-50 */
+        }
+
         /* Style for manager reply in observation feed */
         .manager-reply, .seller-reply {
             margin-top: 0.5rem;
@@ -272,9 +282,7 @@
         const PENDING_STATUSES = ['EM ANÁLISE', 'AMOSTRA SEM FEEDBACK', 'SEM RETORNO DO CLIENTE', 'AMOSTRA NÃO TESTADA', 'PENDENTE'];
         const SEGMENTS = ['CÁRNEOS', 'EXPORTACAO', 'FOOD SERVICE', 'LACTEOS', 'NUTRACEUTICOS', 'NUTRICAO ANIMAL', 'PANIFICACAO', 'SMB', 'SORVETES', 'SUPPLY/FIS'];
         
-        // --- Priority feedbacks for sorting in analysis view ---
-        // (Removed, as user now selects highlights manually)
-        // const PRIORITY_FEEDBACKS = [ ... ];
+        // --- REMOVED Priority feedbacks ---
 
         const processBtn = document.getElementById('process-btn');
         const dataInput = document.getElementById('data-input');
@@ -337,7 +345,8 @@
         let notificationListenerUnsubscribe = null;
         let sellerRepliesListenerUnsubscribe = null; 
         let sellerRepliesToManagerListenerUnsubscribe = null; 
-        let destaquesDocListenerUnsubscribe = null; // --- NEW: Listener for highlights
+        let destaquesDocListenerUnsubscribe = null; 
+        let destaquesAmostrasListenerUnsubscribe = null; // --- NEW: Listener for sample highlights
         let currentSessionId = null;
         let chartInstances = {};
         let currentSellerForSegment = null;
@@ -346,7 +355,8 @@
         let currentFeedbackFilter = ''; 
         let allSellerReplies = []; 
         let allSellerRepliesToManager = []; 
-        let highlightedFeedbacksCache = []; // --- NEW: Cache for highlighted feedbacks
+        let highlightedFeedbacksCache = []; // This is for Feedback *Types*
+        let highlightedSamplesCache = []; // --- NEW: Cache for highlighted *Sample IDs*
         
         let allNotifications = [];
         let areAllNotificationsVisible = false;
@@ -414,7 +424,8 @@
                     listenForNotifications(manualId);
                     listenForSellerReplies(manualId); 
                     listenForSellerRepliesToManager(manualId); 
-                    listenForDestaques(manualId); // --- ADDED ---
+                    listenForDestaques(manualId); 
+                    listenForDestaquesAmostras(manualId); // --- ADDED ---
 
                  } catch (error) {
                      console.error(`Erro ao verificar ou definir sessão ativa ${manualId}:`, error);
@@ -565,9 +576,10 @@
              infoMessage.textContent = `Sessão ${sessionId} criada e definida como ativa globalmente. A carregar dados...`;
              listenForDataUpdates(sessionId); // This will connect to the new session
              listenForNotifications(sessionId);
-             listenForSellerReplies(sessionId); // Start listening for replies
-             listenForSellerRepliesToManager(sessionId); // Start listening for seller replies
-             listenForDestaques(sessionId); // --- ADDED ---
+             listenForSellerReplies(sessionId); 
+             listenForSellerRepliesToManager(sessionId); 
+             listenForDestaques(sessionId); 
+             listenForDestaquesAmostras(sessionId); // --- ADDED ---
         }
 
         function listenForDataUpdates(sessionId) {
@@ -625,7 +637,7 @@
                         // 2. Check for sellers who just finished ALL their samples
                         const sellerNames = [...new Set(allSamples.map(s => s.sellerName))];
                         sellerNames.forEach(sellerName => {
-                            const previousSellerSamples = previousSellerSamples.filter(s => s.sellerName === sellerName);
+                            const previousSellerSamples = previousSamples.filter(s => s.sellerName === sellerName);
                             const currentSellerSamples = allSamples.filter(s => s.sellerName === sellerName);
 
                             if (previousSellerSamples.length > 0 && currentSellerSamples.length > 0) {
@@ -664,7 +676,9 @@
                     // Ensure listeners are active *before* processing
                     if (!sellerRepliesListenerUnsubscribe) listenForSellerReplies(sessionId); 
                     if (!sellerRepliesToManagerListenerUnsubscribe) listenForSellerRepliesToManager(sessionId); 
-                    if (!destaquesDocListenerUnsubscribe) listenForDestaques(sessionId); // --- ADDED ---
+                    if (!destaquesDocListenerUnsubscribe) listenForDestaques(sessionId); 
+                    if (!destaquesAmostrasListenerUnsubscribe) listenForDestaquesAmostras(sessionId); // --- ADDED ---
+
 
                     processAndDisplayDashboard(allSamples, sessionId, sellerDocs);
                     infoMessage.textContent = ''; 
@@ -710,13 +724,15 @@
             if(notificationListenerUnsubscribe) notificationListenerUnsubscribe();
             if(sellerRepliesListenerUnsubscribe) sellerRepliesListenerUnsubscribe(); 
             if(sellerRepliesToManagerListenerUnsubscribe) sellerRepliesToManagerListenerUnsubscribe(); 
-            if(destaquesDocListenerUnsubscribe) destaquesDocListenerUnsubscribe(); // --- ADDED ---
+            if(destaquesDocListenerUnsubscribe) destaquesDocListenerUnsubscribe(); 
+            if(destaquesAmostrasListenerUnsubscribe) destaquesAmostrasListenerUnsubscribe(); // --- ADDED ---
             currentSessionId = null;
             allCurrentSamples = [];
             allNotifications = [];
             allSellerReplies = []; 
             allSellerRepliesToManager = []; 
-            highlightedFeedbacksCache = []; // --- ADDED ---
+            highlightedFeedbacksCache = []; 
+            highlightedSamplesCache = []; // --- ADDED ---
             areAllNotificationsVisible = false;
             sellerSegmentsCache = {};
             dashboard.classList.add('hidden');
@@ -763,7 +779,8 @@
                         listenForNotifications(activeSessionId);
                         listenForSellerReplies(activeSessionId); 
                         listenForSellerRepliesToManager(activeSessionId); 
-                        listenForDestaques(activeSessionId); // --- ADDED ---
+                        listenForDestaques(activeSessionId); 
+                        listenForDestaquesAmostras(activeSessionId); // --- ADDED ---
                     } else {
                         // Already connected and dashboard likely visible, do nothing special
                         console.log(`Already connected to global session ${activeSessionId}`);
@@ -927,6 +944,7 @@
 
         // --- NEW: Listener for Highlighted Feedbacks ---
         function listenForDestaques(sessionId) {
+            if (!sessionId) return;
             if (destaquesDocListenerUnsubscribe) destaquesDocListenerUnsubscribe();
             const destaquesRef = doc(db, "sessoes", sessionId, "configuracoes", "destaques");
             
@@ -945,8 +963,60 @@
                 highlightedFeedbacksCache = [];
             });
         }
+        
+        // --- NEW: Listener for Highlighted Samples ---
+        function listenForDestaquesAmostras(sessionId) {
+            if (!sessionId) return;
+            if (destaquesAmostrasListenerUnsubscribe) destaquesAmostrasListenerUnsubscribe();
+            const destaquesRef = doc(db, "sessoes", sessionId, "configuracoes", "destaquesAmostras");
+            
+            destaquesAmostrasListenerUnsubscribe = onSnapshot(destaquesRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    highlightedSamplesCache = docSnap.data().lista || [];
+                } else {
+                    highlightedSamplesCache = [];
+                }
+                // Re-render the modal if it's open
+                if (!feedbackSamplesModal.classList.contains('hidden') && currentFeedbackFilter) {
+                     showFeedbackSamples(currentFeedbackFilter, modalSegmentFilter.value);
+                }
+            }, (error) => {
+                console.error("Erro ao escutar destaques de amostras:", error);
+                highlightedSamplesCache = [];
+            });
+        }
 
-        // --- NEW: Function to toggle highlight ---
+
+        // --- NEW: Function to toggle highlight for a specific sample ID ---
+        async function toggleDestaqueAmostra(e) {
+            e.stopPropagation(); // Prevent modal from opening
+            const sampleId = e.currentTarget.dataset.sampleId;
+            if (!currentSessionId || !sampleId) return;
+
+            const destaquesRef = doc(db, "sessoes", currentSessionId, "configuracoes", "destaquesAmostras");
+            
+            let updatedList = [...highlightedSamplesCache];
+            if (updatedList.includes(sampleId)) {
+                updatedList = updatedList.filter(id => id !== sampleId); // Remove
+            } else {
+                updatedList.push(sampleId); // Add
+            }
+
+            try {
+                // Update Firestore
+                await setDoc(destaquesRef, { lista: updatedList });
+                // The onSnapshot listener (listenForDestaquesAmostras) will automatically update the cache
+                // and trigger the re-render of the modal
+                console.log(`Destaques de amostras atualizados: ${updatedList.join(', ')}`);
+            } catch (error) {
+                console.error("Erro ao atualizar destaques de amostra:", error);
+                infoMessage.textContent = "Erro ao guardar destaque de amostra.";
+                setTimeout(() => infoMessage.textContent = '', 3000);
+            }
+        }
+
+
+        // --- NEW: Function to toggle highlight for a feedback *type* ---
         async function toggleHighlightFeedback(e) {
             e.stopPropagation(); // Prevent modal from opening
             const feedbackText = e.currentTarget.dataset.feedback;
@@ -966,10 +1036,10 @@
                 await setDoc(destaquesRef, { lista: updatedList });
                 // The onSnapshot listener (listenForDestaques) will automatically update the cache
                 // and trigger the re-render via renderFeedbackDetails
-                console.log(`Destaques atualizados: ${updatedList.join(', ')}`);
+                console.log(`Destaques de feedback atualizados: ${updatedList.join(', ')}`);
             } catch (error) {
-                console.error("Erro ao atualizar destaques:", error);
-                infoMessage.textContent = "Erro ao guardar destaque.";
+                console.error("Erro ao atualizar destaques de feedback:", error);
+                infoMessage.textContent = "Erro ao guardar destaque de feedback.";
                 setTimeout(() => infoMessage.textContent = '', 3000);
             }
         }
@@ -1622,15 +1692,34 @@
                 filteredSamples = filteredSamples.filter(sample => sellerSegmentsCache[sample.sellerName] === segmentFilter);
             }
 
+            // --- NEW SORTING LOGIC FOR MODAL ---
+            filteredSamples.sort((a, b) => {
+                const isAHighlighted = highlightedSamplesCache.includes(a.id);
+                const isBHighlighted = highlightedSamplesCache.includes(b.id);
+
+                if (isAHighlighted && !isBHighlighted) return -1; // A comes first
+                if (!isAHighlighted && isBHighlighted) return 1; // B comes first
+                
+                // If both are same highlight status, sort by seller/pedido
+                const nameCompare = a.sellerName.localeCompare(b.sellerName);
+                if (nameCompare !== 0) return nameCompare;
+                return a.pedido.localeCompare(b.pedido);
+            });
+            // --- END NEW SORTING LOGIC ---
+
+
             feedbackSamplesTitle.textContent = `Amostras com Feedback: "${feedbackText}" (${filteredSamples.length})`;
             feedbackSamplesList.innerHTML = ''; 
 
             if (filteredSamples.length === 0) {
                 feedbackSamplesList.innerHTML = `<p class="text-gray-500">Nenhuma amostra encontrada ${segmentFilter ? `no segmento ${segmentFilter}` : ''} com este feedback.</p>`;
             } else {
-                filteredSamples.sort((a,b) => a.sellerName.localeCompare(b.sellerName) || a.pedido.localeCompare(b.pedido)).forEach(sample => {
+                filteredSamples.forEach(sample => {
                     const itemDiv = document.createElement('div');
-                    itemDiv.className = 'feedback-sample-item text-sm';
+                    // --- ADDED HIGHLIGHT CLASS ---
+                    const isHighlighted = highlightedSamplesCache.includes(sample.id);
+                    const highlightClass = isHighlighted ? 'bg-amber-50 rounded-lg p-2' : '';
+                    itemDiv.className = `feedback-sample-item text-sm ${highlightClass}`;
                     
                     // Find the latest manager reply for this specific sample's observation
                     const managerReply = allSellerReplies
@@ -1665,6 +1754,13 @@
 
                     const replyButtonHtml = sample.observation ? `<button class="reply-observation-btn bg-blue-100 text-blue-700 hover:bg-blue-200 px-2 py-1 rounded text-xs font-semibold ml-2" data-sample-id="${sample.id}">${managerReply ? 'Responder Novamente' : 'Responder'}</button>` : '';
 
+                    // --- NEW: Highlight (Star) button ---
+                    const starIcon = isHighlighted ? 
+                        `<svg class="w-5 h-5 text-amber-500" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>` :
+                        `<svg class="w-5 h-5 text-gray-400 hover:text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.524 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.524 4.674c.3.921-.755 1.688-1.54 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.784.57-1.838-.197-1.539-1.118l1.524-4.674a1 1 0 00-.363-1.118L2.98 10.1c-.783-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.524-4.674z"></path></svg>`;
+                    const highlightButtonHtml = `<button class="highlight-sample-btn p-1 rounded-full hover:bg-gray-200" data-sample-id="${sample.id}" title="Destacar Amostra">${starIcon}</button>`;
+
+
                     itemDiv.innerHTML = `
                         <div class="flex justify-between items-start">
                              <div>
@@ -1676,7 +1772,10 @@
                                     Vendedor: ${sample.sellerName} ${sample.emissaoNF ? `| NF: ${sample.emissaoNF}` : ''} ${sample.qtde ? `| Qtde: ${sample.qtde}` : ''}
                                 </p>
                              </div>
-                             ${replyButtonHtml}
+                             <div class="flex items-center gap-1 flex-shrink-0"> <!-- Wrapper for buttons -->
+                                ${replyButtonHtml}
+                                ${highlightButtonHtml} <!-- Adicionado aqui -->
+                             </div>
                          </div>
                         ${sample.observation ? `<p class="text-xs text-gray-600 mt-1 italic">Obs: ${sample.observation}</p>` : ''}
                         ${repliesHtml} 
@@ -1686,6 +1785,10 @@
                  // Add event listeners for reply buttons *within the modal*
                  feedbackSamplesList.querySelectorAll('.reply-observation-btn').forEach(btn => {
                      btn.addEventListener('click', openReplyModal);
+                 });
+                 // --- ADDED: Listener for new highlight buttons ---
+                 feedbackSamplesList.querySelectorAll('.highlight-sample-btn').forEach(btn => {
+                     btn.addEventListener('click', toggleDestaqueAmostra);
                  });
             }
              if (feedbackSamplesModal.classList.contains('hidden')) {
@@ -1867,6 +1970,9 @@
     </script>
 </body>
 </html>
+
+
+
 
 
 
