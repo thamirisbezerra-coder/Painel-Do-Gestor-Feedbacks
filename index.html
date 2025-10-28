@@ -174,33 +174,49 @@
                             </ul>
                         </div>
                         
-                        <!-- Highlight Aroma "Com Pedido" -->
-                        <div class="mb-4">
-                            <h4 class="font-semibold text-gray-800 mb-2">Aroma Destaque (Com Pedido)</h4>
-                            <div id="aroma-highlight-com-pedido" class="p-3 rounded-lg bg-green-50 border border-green-200">
-                                <!-- JS will populate this -->
-                                <p class="text-gray-500">Calculando...</p>
+                        <!-- Collapsible Details Container -->
+                        <div id="aroma-details-com-pedido" class="hidden">
+                            <!-- Highlight Aroma "Com Pedido" -->
+                            <div class="mb-4">
+                                <h4 class="font-semibold text-gray-800 mb-2">Aroma Destaque (Com Pedido)</h4>
+                                <div id="aroma-highlight-com-pedido" class="p-3 rounded-lg bg-green-50 border border-green-200">
+                                    <!-- JS will populate this -->
+                                    <p class="text-gray-500">Calculando...</p>
+                                </div>
                             </div>
+
+                            <!-- Full Ranking List "Com Pedido" -->
+                            <div>
+                                <h4 class="font-semibold text-gray-800 mb-2">Lista de Aromas (Com Pedido)</h4>
+                                <div class="max-h-60 overflow-y-auto border rounded-lg">
+                                    <table class="min-w-full text-sm">
+                                        <thead class="bg-gray-100 sticky top-0">
+                                            <tr>
+                                                <th class="px-3 py-2 text-left font-medium text-gray-600">Aroma</th>
+                                                <th class="px-3 py-2 text-left font-medium text-gray-600">Aprovados</th>
+                                                <th class="px-3 py-2 text-left font-medium text-gray-600">Enviados</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="aroma-list-tbody-com-pedido">
+                                            <!-- JS will populate this -->
+                                            <tr><td colspan="3" class="p-3 text-center text-gray-500">Calculando...</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <!-- Hide Details Button -->
+                             <div class="mt-4 text-center">
+                                 <button class="toggle-aroma-details-btn text-blue-600 hover:underline text-sm font-medium" data-target="aroma-details-com-pedido">
+                                     Ocultar Detalhes
+                                 </button>
+                             </div>
                         </div>
 
-                        <!-- Full Ranking List "Com Pedido" -->
-                        <div>
-                            <h4 class="font-semibold text-gray-800 mb-2">Lista de Aromas (Com Pedido)</h4>
-                            <div class="max-h-60 overflow-y-auto border rounded-lg">
-                                <table class="min-w-full text-sm">
-                                    <thead class="bg-gray-100 sticky top-0">
-                                        <tr>
-                                            <th class="px-3 py-2 text-left font-medium text-gray-600">Aroma</th>
-                                            <th class="px-3 py-2 text-left font-medium text-gray-600">Aprovados</th>
-                                            <th class="px-3 py-2 text-left font-medium text-gray-600">Enviados</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="aroma-list-tbody-com-pedido">
-                                        <!-- JS will populate this -->
-                                        <tr><td colspan="3" class="p-3 text-center text-gray-500">Calculando...</td></tr>
-                                    </tbody>
-                                </table>
-                            </div>
+                        <!-- Show Details Button (Initially Visible if details hidden) -->
+                        <div id="show-details-btn-com-pedido" class="mt-4 text-center">
+                            <button class="toggle-aroma-details-btn text-blue-600 hover:underline text-sm font-medium" data-target="aroma-details-com-pedido">
+                                Ver Detalhes (Destaque e Lista)
+                            </button>
                         </div>
                     </div>
 
@@ -217,33 +233,49 @@
                             </ul>
                         </div>
                         
-                        <!-- Highlight Aroma "Sem Pedido" -->
-                        <div class="mb-4">
-                            <h4 class="font-semibold text-gray-800 mb-2">Aroma Destaque (Sem Pedido)</h4>
-                            <div id="aroma-highlight-sem-pedido" class="p-3 rounded-lg bg-blue-50 border border-blue-200">
-                                <!-- JS will populate this -->
-                                <p class="text-gray-500">Calculando...</p>
+                        <!-- Collapsible Details Container -->
+                        <div id="aroma-details-sem-pedido" class="hidden">
+                            <!-- Highlight Aroma "Sem Pedido" -->
+                            <div class="mb-4">
+                                <h4 class="font-semibold text-gray-800 mb-2">Aroma Destaque (Sem Pedido)</h4>
+                                <div id="aroma-highlight-sem-pedido" class="p-3 rounded-lg bg-blue-50 border border-blue-200">
+                                    <!-- JS will populate this -->
+                                    <p class="text-gray-500">Calculando...</p>
+                                </div>
                             </div>
+
+                            <!-- Full Ranking List "Sem Pedido" -->
+                            <div>
+                                <h4 class="font-semibold text-gray-800 mb-2">Lista de Aromas (Sem Pedido)</h4>
+                                <div class="max-h-60 overflow-y-auto border rounded-lg">
+                                    <table class="min-w-full text-sm">
+                                        <thead class="bg-gray-100 sticky top-0">
+                                            <tr>
+                                                <th class="px-3 py-2 text-left font-medium text-gray-600">Aroma</th>
+                                                <th class="px-3 py-2 text-left font-medium text-gray-600">Aprovados</th>
+                                                <th class="px-3 py-2 text-left font-medium text-gray-600">Enviados</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="aroma-list-tbody-sem-pedido">
+                                            <!-- JS will populate this -->
+                                            <tr><td colspan="3" class="p-3 text-center text-gray-500">Calculando...</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                             <!-- Hide Details Button -->
+                             <div class="mt-4 text-center">
+                                 <button class="toggle-aroma-details-btn text-blue-600 hover:underline text-sm font-medium" data-target="aroma-details-sem-pedido">
+                                     Ocultar Detalhes
+                                 </button>
+                             </div>
                         </div>
 
-                        <!-- Full Ranking List "Sem Pedido" -->
-                        <div>
-                            <h4 class="font-semibold text-gray-800 mb-2">Lista de Aromas (Sem Pedido)</h4>
-                            <div class="max-h-60 overflow-y-auto border rounded-lg">
-                                <table class="min-w-full text-sm">
-                                    <thead class="bg-gray-100 sticky top-0">
-                                        <tr>
-                                            <th class="px-3 py-2 text-left font-medium text-gray-600">Aroma</th>
-                                            <th class="px-3 py-2 text-left font-medium text-gray-600">Aprovados</th>
-                                            <th class="px-3 py-2 text-left font-medium text-gray-600">Enviados</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="aroma-list-tbody-sem-pedido">
-                                        <!-- JS will populate this -->
-                                        <tr><td colspan="3" class="p-3 text-center text-gray-500">Calculando...</td></tr>
-                                    </tbody>
-                                </table>
-                            </div>
+                         <!-- Show Details Button (Initially Visible if details hidden) -->
+                        <div id="show-details-btn-sem-pedido" class="mt-4 text-center">
+                            <button class="toggle-aroma-details-btn text-blue-600 hover:underline text-sm font-medium" data-target="aroma-details-sem-pedido">
+                                Ver Detalhes (Destaque e Lista)
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -418,7 +450,7 @@
         </div>
     </div>
 
-    <!-- Seller Aroma Details Modal (NOVO) -->
+    <!-- Seller Aroma Details Modal -->
     <div id="seller-aroma-details-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 hidden z-30">
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-4xl p-6">
             <div class="flex justify-between items-center mb-4">
@@ -524,10 +556,14 @@
         const aromaTopSellersComPedido = document.getElementById('aroma-top-sellers-com-pedido');
         const aromaHighlightComPedido = document.getElementById('aroma-highlight-com-pedido');
         const aromaListTbodyComPedido = document.getElementById('aroma-list-tbody-com-pedido');
+        const aromaDetailsComPedido = document.getElementById('aroma-details-com-pedido'); // Container dos detalhes
+        const showDetailsBtnComPedido = document.getElementById('show-details-btn-com-pedido'); // Botão "Ver Detalhes"
         
         const aromaTopSellersSemPedido = document.getElementById('aroma-top-sellers-sem-pedido');
         const aromaHighlightSemPedido = document.getElementById('aroma-highlight-sem-pedido');
         const aromaListTbodySemPedido = document.getElementById('aroma-list-tbody-sem-pedido');
+        const aromaDetailsSemPedido = document.getElementById('aroma-details-sem-pedido'); // Container dos detalhes
+        const showDetailsBtnSemPedido = document.getElementById('show-details-btn-sem-pedido'); // Botão "Ver Detalhes"
 
         const historicalDataSection = document.getElementById('historical-data-section');
         const historicalDataInput = document.getElementById('historical-data-input');
@@ -568,7 +604,6 @@
         let areAllNotificationsVisible = false;
         
         let historicalAromaData = []; // Store parsed historical data for aromas
-        // let currentAromaDataSource = 'live'; // 'live' or 'historical' - REMOVED
         let currentAromaRankingsCache = {}; // Cache rankings to show in modal
 
         // --- Utility Functions ---
@@ -823,6 +858,25 @@
                 }
             });
         });
+
+        // Listener for all "Ver/Ocultar Detalhes" buttons
+        document.querySelectorAll('.toggle-aroma-details-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const targetId = e.target.dataset.target;
+                const detailsContainer = document.getElementById(targetId);
+                const showButtonContainerId = `show-details-btn-${targetId.split('-')[2]}-${targetId.split('-')[3]}`; // e.g., show-details-btn-com-pedido
+                const showButtonContainer = document.getElementById(showButtonContainerId);
+                
+                if (detailsContainer) {
+                    detailsContainer.classList.toggle('hidden');
+                    // Toggle visibility of the "Ver Detalhes" button container
+                    if(showButtonContainer) {
+                         showButtonContainer.classList.toggle('hidden', !detailsContainer.classList.contains('hidden'));
+                    }
+                }
+            });
+        });
+
 
         // Modal Close Buttons
         closeFullSellerRankingBtn.addEventListener('click', () => fullSellerRankingModal.classList.add('hidden'));
@@ -1095,7 +1149,6 @@
             currentFeedbackFilter = '';
             
             historicalAromaData = []; // Clear historical data on reset
-            // currentAromaDataSource = 'live'; // Reset data source - REMOVED
             currentAromaRankingsCache = {};
             historicalDataSection.classList.add('hidden');
             historicalDataInput.value = '';
@@ -1103,6 +1156,13 @@
             // Reset UI elements
             dashboard.classList.add('hidden');
             sessionIdText.textContent = 'Nenhuma sessão iniciada';
+
+            // Reset Aroma Details Visibility
+             if(aromaDetailsComPedido) aromaDetailsComPedido.classList.add('hidden');
+             if(showDetailsBtnComPedido) showDetailsBtnComPedido.classList.remove('hidden');
+             if(aromaDetailsSemPedido) aromaDetailsSemPedido.classList.add('hidden');
+             if(showDetailsBtnSemPedido) showDetailsBtnSemPedido.classList.remove('hidden');
+
 
             if (keepConnectionOptions) {
                 // Show connection section if resetting due to error or cleared global session
@@ -2331,9 +2391,9 @@
             const filteredSamples = combinedSamples.filter(s => {
                 // Filter by Segment
                  // Use segment cache for live data, assume historical data doesn't need segment filtering unless you add that column
-                 const sampleSegment = s.id.startsWith('sample_') ? sellerSegmentsCache[s.sellerName] : null; // Only check cache for live samples
+                 const sampleSegment = s.id?.startsWith('sample_') ? sellerSegmentsCache[s.sellerName] : null; // Only check cache for live samples
                  const segmentMatch = !segment || (sampleSegment === segment); // Match if no filter OR segment matches live sample
-                if (!segmentMatch && s.id.startsWith('sample_')) return false; // Exclude non-matching live samples
+                if (!segmentMatch && s.id?.startsWith('sample_')) return false; // Exclude non-matching live samples
 
                 // Filter by Date (only if dates are set)
                 if (startDate || endDate) {
@@ -2354,7 +2414,9 @@
                 aromaHighlightComPedido,
                 aromaListTbodyComPedido,
                 'com-pedido',
-                'Nenhum aroma "Com Pedido" encontrado com os filtros atuais.'
+                'Nenhum aroma "Com Pedido" encontrado com os filtros atuais.',
+                aromaDetailsComPedido, // Pass details container
+                showDetailsBtnComPedido // Pass show button container
             );
 
             // 3. Process "Sem Pedido"
@@ -2365,7 +2427,9 @@
                 aromaHighlightSemPedido,
                 aromaListTbodySemPedido,
                 'sem-pedido',
-                'Nenhum aroma "Sem Pedido" encontrado com os filtros atuais.'
+                'Nenhum aroma "Sem Pedido" encontrado com os filtros atuais.',
+                aromaDetailsSemPedido, // Pass details container
+                showDetailsBtnSemPedido // Pass show button container
             );
             
             // 4. Cache results for modals (use the filtered combined data)
@@ -2434,13 +2498,25 @@
 
         /**
          * Renders the HTML for one of the aroma ranking panels. (Estilo Antigo)
+         * Now includes logic to show/hide details.
          */
-        function renderAromaPanel(rankings, topSellersEl, highlightEl, listEl, type, emptyMsg) {
-            // Render Top Sellers
+        function renderAromaPanel(rankings, topSellersEl, highlightEl, listEl, type, emptyMsg, detailsContainer, showButtonContainer) {
+            // Render Top Sellers (always visible)
             topSellersEl.innerHTML = '';
             if (rankings.sellerRanking.length === 0) {
                 topSellersEl.innerHTML = `<p class="text-gray-500">${emptyMsg}</p>`;
+                // Hide details sections if no sellers
+                 if(detailsContainer) detailsContainer.classList.add('hidden');
+                 if(showButtonContainer) showButtonContainer.classList.add('hidden');
             } else {
+                 // Show the "Ver Detalhes" button container if details are hidden
+                 if(detailsContainer && detailsContainer.classList.contains('hidden')) {
+                     if(showButtonContainer) showButtonContainer.classList.remove('hidden');
+                 } else if (detailsContainer && !detailsContainer.classList.contains('hidden')) {
+                     if(showButtonContainer) showButtonContainer.classList.add('hidden'); // Hide "Ver" if details are shown
+                 }
+
+
                 // Estilo Antigo
                 const colors = ['bg-yellow-400 text-yellow-800', 'bg-gray-300 text-gray-700', 'bg-red-300 text-red-700']; // 1st, 2nd, 3rd (Adjusted 3rd color)
 
@@ -2509,7 +2585,7 @@
                 });
             }
             
-            // Render Highlight Aroma
+            // Render Highlight Aroma (inside details container)
             if (!rankings.highlightAroma) {
                 highlightEl.innerHTML = `<p class="text-gray-500">${emptyMsg}</p>`;
             } else {
@@ -2523,7 +2599,7 @@
                 `;
             }
 
-            // Render Full Aroma List
+            // Render Full Aroma List (inside details container)
             listEl.innerHTML = '';
             if (rankings.aromaRanking.length === 0) {
                 listEl.innerHTML = `<tr><td colspan="3" class="p-3 text-center text-gray-500">${emptyMsg}</td></tr>`;
@@ -2728,6 +2804,9 @@
     </script>
 </body>
 </html>
+
+
+
 
 
 
