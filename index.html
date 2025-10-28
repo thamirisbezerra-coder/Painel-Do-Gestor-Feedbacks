@@ -42,6 +42,26 @@
             padding-bottom: 0.5rem;
             border-top: 1px dashed #fed7aa; /* orange-200 */
         }
+        
+        /* Transition for aroma ranking content */
+        #aroma-ranking-content {
+            transition: max-height 0.5s ease-in-out, opacity 0.3s ease-in-out;
+            overflow: hidden;
+            max-height: 2000px; /* Set to a large value when open */
+            opacity: 1;
+        }
+        #aroma-ranking-content.collapsed {
+            max-height: 0;
+            opacity: 0;
+            margin-top: 0; /* Remove margin when collapsed */
+        }
+        #toggle-aroma-ranking-btn svg {
+            transition: transform 0.3s ease;
+        }
+        #toggle-aroma-ranking-btn.collapsed svg {
+            transform: rotate(-90deg);
+        }
+
     </style>
 </head>
 <body class="text-gray-800">
@@ -124,16 +144,15 @@
             <!-- Aroma Ranking Section -->
             <section id="aroma-ranking-section" class="mb-10 bg-white p-6 rounded-2xl shadow-sm border">
                 <!-- Section Header and Global Filters -->
-                 <div class="flex justify-between items-center mb-4">
-                     <h2 class="text-2xl font-bold text-gray-900">Ranking de Aromas (DAR)</h2>
-                     <button id="toggle-aroma-details-btn" class="text-sm font-semibold text-blue-600 hover:text-blue-800 flex items-center">
-                         <span id="toggle-aroma-text">Expandir</span>
-                         <svg id="toggle-aroma-icon" class="w-5 h-5 ml-1 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                     </button>
-                 </div>
-                 
-                 <!-- Container for Details (Initially Hidden) -->
-                 <div id="aroma-ranking-details" class="hidden">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-2xl font-bold text-gray-900">Ranking de Aromas (DAR)</h2>
+                    <button id="toggle-aroma-ranking-btn" class="p-2 rounded-full hover:bg-gray-200" title="Expandir/Recolher">
+                        <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                </div>
+
+                <!-- Collapsible Content -->
+                <div id="aroma-ranking-content" class="mt-4">
                     <div class="flex flex-wrap items-center gap-4 mb-6 pb-4 border-b">
                         <!-- Date Filters -->
                         <div>
@@ -202,13 +221,14 @@
                                         <thead class="bg-gray-100 sticky top-0">
                                             <tr>
                                                 <th class="px-3 py-2 text-left font-medium text-gray-600">Aroma</th>
+                                                <th class="px-3 py-2 text-left font-medium text-gray-600">Descrição</th>
                                                 <th class="px-3 py-2 text-left font-medium text-gray-600">Aprovados</th>
                                                 <th class="px-3 py-2 text-left font-medium text-gray-600">Enviados</th>
                                             </tr>
                                         </thead>
                                         <tbody id="aroma-list-tbody-com-pedido">
                                             <!-- JS will populate this -->
-                                            <tr><td colspan="3" class="p-3 text-center text-gray-500">Calculando...</td></tr>
+                                            <tr><td colspan="4" class="p-3 text-center text-gray-500">Calculando...</td></tr>
                                         </tbody>
                                     </table>
                                 </div>
@@ -245,13 +265,14 @@
                                         <thead class="bg-gray-100 sticky top-0">
                                             <tr>
                                                 <th class="px-3 py-2 text-left font-medium text-gray-600">Aroma</th>
+                                                <th class="px-3 py-2 text-left font-medium text-gray-600">Descrição</th>
                                                 <th class="px-3 py-2 text-left font-medium text-gray-600">Aprovados</th>
                                                 <th class="px-3 py-2 text-left font-medium text-gray-600">Enviados</th>
                                             </tr>
                                         </thead>
                                         <tbody id="aroma-list-tbody-sem-pedido">
                                             <!-- JS will populate this -->
-                                            <tr><td colspan="3" class="p-3 text-center text-gray-500">Calculando...</td></tr>
+                                            <tr><td colspan="4" class="p-3 text-center text-gray-500">Calculando...</td></tr>
                                         </tbody>
                                     </table>
                                 </div>
@@ -528,6 +549,8 @@
 
         // --- Aroma Ranking DOM Elements ---
         const aromaRankingSection = document.getElementById('aroma-ranking-section');
+        const toggleAromaRankingBtn = document.getElementById('toggle-aroma-ranking-btn');
+        const aromaRankingContent = document.getElementById('aroma-ranking-content');
         const aromaSegmentFilter = document.getElementById('aroma-segment-filter');
         const aromaStartDateInput = document.getElementById('aroma-start-date');
         const aromaEndDateInput = document.getElementById('aroma-end-date');
@@ -560,12 +583,6 @@
         const closeSellerAromaDetailsBtn = document.getElementById('close-seller-aroma-details-btn');
         const closeSellerAromaDetailsBtnBottom = document.getElementById('close-seller-aroma-details-btn-bottom');
 
-        // --- Aroma Toggle Elements ---
-        const toggleAromaDetailsBtn = document.getElementById('toggle-aroma-details-btn');
-        const aromaRankingDetails = document.getElementById('aroma-ranking-details');
-        const toggleAromaText = document.getElementById('toggle-aroma-text');
-        const toggleAromaIcon = document.getElementById('toggle-aroma-icon');
-
         // --- State Variables ---
         let dataListenerUnsubscribe = null;
         let notificationListenerUnsubscribe = null;
@@ -589,7 +606,7 @@
         let historicalAromaData = []; // Store parsed historical data (APPENDS)
         let currentAromaDataSource = 'live'; // 'live' or 'historical' (now combined)
         let currentAromaRankingsCache = {}; // Cache rankings to show in modal
-        let isAromaDetailsExpanded = false; // Track aroma section state
+        let isAromaRankingExpanded = false; // Estado do botão expandir
 
         // --- Utility Functions ---
         const normalizeText = (text = '') => text ? text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim() : '';
@@ -607,6 +624,20 @@
              };
              return mapping[normalized] || normalized;
         }
+        
+        // --- Toggle Aroma Ranking ---
+        function toggleAromaRankingDisplay() {
+            isAromaRankingExpanded = !isAromaRankingExpanded;
+            aromaRankingContent.classList.toggle('collapsed', !isAromaRankingExpanded);
+            toggleAromaRankingBtn.classList.toggle('collapsed', !isAromaRankingExpanded);
+            
+            if(isAromaRankingExpanded) {
+                toggleAromaRankingBtn.title = "Recolher";
+            } else {
+                toggleAromaRankingBtn.title = "Expandir";
+            }
+        }
+
 
         // --- Main Dashboard Rendering Function ---
         // Moved earlier to ensure it's defined before event listeners call it.
@@ -615,6 +646,13 @@
             inputSection.classList.add('hidden');
             connectionSection.classList.add('hidden');
             sessionIdText.innerHTML = `ID da Sessão: <strong>${sessionId}</strong>`;
+            
+            // Set initial state for aroma ranking (collapsed)
+            isAromaRankingExpanded = false; 
+            aromaRankingContent.classList.add('collapsed');
+            toggleAromaRankingBtn.classList.add('collapsed');
+            toggleAromaRankingBtn.title = "Expandir";
+
 
             // Render all dashboard components
             renderCharts(samples);
@@ -632,8 +670,6 @@
             aromaDataSourceLabel.textContent = 'Exibindo dados: Atuais (Live)';
             toggleAromaDataBtn.textContent = 'Carregar Dados Históricos';
 
-            // Set initial state for aroma section toggle
-            setAromaDetailsVisibility(isAromaDetailsExpanded); // Use stored state or default (false)
 
             populateSegmentFilters(); // Update segment dropdowns
 
@@ -773,6 +809,8 @@
         observationSearchInput.addEventListener('input', () => renderObservationsFeed(allCurrentSamples));
         
         // --- Aroma Ranking Event Listeners ---
+        toggleAromaRankingBtn.addEventListener('click', toggleAromaRankingDisplay); // Botão expandir
+
         aromaSegmentFilter.addEventListener('change', () => {
             calculateAndRenderAromaRankings();
         });
@@ -825,7 +863,7 @@
                             sellerName: String(row['Vendedor(a)'] || ''),
                             produto: String(row['Produto'] || ''),
                             descricao: String(row['Descrição'] || ''),
-                            feedback: String(row['Feedback'] || ''), // <<< USA COLUNA 'Feedback'
+                            feedback: String(row['Feedback'] || ''), // <<< USA "Feedback"
                             emissaoNF: String(row['Emissão NF'] || ''),
                             razaoSocial: String(row['Razão Social'] || ''),
                             pedido: String(row['Pedido'] || ''),
@@ -853,12 +891,6 @@
                     setTimeout(() => infoMessage.textContent = '', 4000);
                 }
             });
-        });
-
-        // --- Aroma Toggle Listener ---
-        toggleAromaDetailsBtn.addEventListener('click', () => {
-            isAromaDetailsExpanded = !isAromaDetailsExpanded;
-            setAromaDetailsVisibility(isAromaDetailsExpanded);
         });
 
         // Modal Close Buttons
@@ -997,7 +1029,7 @@
                 const previousSamples = isInitialDataLoad ? [] : [...allCurrentSamples];
                 // Flatten all samples from all seller documents
                 const allSamples = snapshot.docs.flatMap(doc => doc.data().amostras || []);
-                allCurrentSamples = allSamples;
+                allCurrentSamples = allSamples; // Atualiza os dados da sessão
 
                 // Show dashboard once data is loaded (or if session becomes non-empty)
                 if (!snapshot.empty || !isInitialDataLoad) {
@@ -1080,7 +1112,23 @@
                     if (!destaquesAmostrasListenerUnsubscribe) listenForDestaquesAmostras(sessionId);
 
                     // Update the UI with the latest data
-                    processAndDisplayDashboard(allSamples, sessionId, sellerDocs);
+                    // Não chama processAndDisplayDashboard() aqui se for só uma atualização
+                    // Apenas renderiza os componentes que mudam
+                    
+                    if (isInitialDataLoad) {
+                        processAndDisplayDashboard(allSamples, sessionId, sellerDocs);
+                    } else {
+                        // Re-render components that depend on 'allCurrentSamples'
+                        renderCharts(allSamples);
+                        renderFeedbackDetails(allSamples);
+                        renderSegmentCharts(allSamples);
+                        renderSellersList(allSamples, sessionId, sellerDocs);
+                        renderObservationsFeed(allSamples);
+                        renderFullSamplesTable(allSamples);
+                        // Re-calcula o ranking de aromas (pois os dados 'live' mudaram)
+                        calculateAndRenderAromaRankings(); 
+                    }
+                    
                     infoMessage.textContent = ''; // Clear loading messages
 
                 } // End dashboard display logic
@@ -1123,7 +1171,6 @@
             aromaDataSourceToggle.classList.add('hidden');
             historicalDataSection.classList.add('hidden');
             historicalDataInput.value = '';
-            isAromaDetailsExpanded = false; // Reset toggle state
 
             // Reset UI elements
             dashboard.classList.add('hidden');
@@ -2387,6 +2434,11 @@
                         aromaCounts[aroma] = { approved: 0, sent: 0, description: s.descricao || '' };
                     }
                     aromaCounts[aroma].sent += 1;
+                    
+                    // Se a descrição estiver vazia mas existir em outra amostra, preenche
+                    if (!aromaCounts[aroma].description && s.descricao) {
+                        aromaCounts[aroma].description = s.descricao;
+                    }
                 }
             });
 
@@ -2505,7 +2557,7 @@
             } else {
                 highlightEl.innerHTML = `
                     <p class="font-bold text-lg text-gray-800">${rankings.highlightAroma.produto}</p>
-                    <p class="text-sm text-gray-600">${rankings.highlightAroma.description}</p>
+                    <p class="text-sm text-gray-600">${rankings.highlightAroma.description || 'Sem descrição'}</p>
                     <p class="mt-2 text-sm">
                         <span class="font-semibold text-gray-700">${rankings.highlightAroma.approved}</span> aprovações / 
                         <span class="font-semibold text-gray-700">${rankings.highlightAroma.sent}</span> enviados
@@ -2516,13 +2568,14 @@
             // Render Full Aroma List
             listEl.innerHTML = '';
             if (rankings.aromaRanking.length === 0) {
-                listEl.innerHTML = `<tr><td colspan="3" class="p-3 text-center text-gray-500">${emptyMsg}</td></tr>`;
+                listEl.innerHTML = `<tr><td colspan="4" class="p-3 text-center text-gray-500">${emptyMsg}</td></tr>`;
             } else {
                 rankings.aromaRanking.forEach(aroma => {
                     const tr = document.createElement('tr');
                     tr.className = 'border-b last:border-b-0 hover:bg-gray-50';
                     tr.innerHTML = `
                         <td class="px-3 py-2 font-medium text-gray-800">${aroma.produto}</td>
+                        <td class="px-3 py-2 text-gray-600 text-xs">${aroma.description || ''}</td>
                         <td class="px-3 py-2 font-bold text-center">${aroma.approved}</td>
                         <td class="px-3 py-2 text-center">${aroma.sent}</td>
                     `;
@@ -2619,19 +2672,6 @@
             sellerAromaDetailsModal.classList.remove('hidden');
         }
 
-        // --- Aroma Toggle Function ---
-        function setAromaDetailsVisibility(show) {
-             if (show) {
-                 aromaRankingDetails.classList.remove('hidden');
-                 toggleAromaText.textContent = 'Minimizar';
-                 toggleAromaIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>`; // Chevron Up
-             } else {
-                 aromaRankingDetails.classList.add('hidden');
-                 toggleAromaText.textContent = 'Expandir';
-                 toggleAromaIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>`; // Chevron Down
-             }
-         }
-
 
         // Generate a palette of distinct colors
         function generateColorPalette(numColors) {
@@ -2714,7 +2754,7 @@
              const aromaSelect = document.getElementById('aroma-segment-filter');
              if(!aromaSelect) return;
              const aromaCurrentValue = aromaSelect.value; // Preserve selection
-             aromaSelect.innerHTML = '<option value="">Todos os Segmentos</option>'; // Corrected closing tag
+             aromaSelect.innerHTML = '<option value="">Todos os Segmentos</G>'; // Reset
              currentSegments.forEach(segment => {
                  const option = document.createElement('option');
                  option.value = segment;
@@ -2748,6 +2788,9 @@
     </script>
 </body>
 </html>
+
+
+
 
 
 
