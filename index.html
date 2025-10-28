@@ -128,6 +128,7 @@
                      <div class="flex items-center gap-2">
                          <select id="observation-segment-filter" class="border-gray-300 rounded-lg shadow-sm text-sm">
                              <option value="">Todos os Segmentos</option> <!-- Default option -->
+                             <!-- Options populated by JS -->
                          </select>
                          <input id="observation-search-input" type="text" placeholder="Pesquisar por vendedor..." class="border-gray-300 rounded-lg shadow-sm text-sm">
                      </div>
@@ -155,7 +156,7 @@
                      <!-- Seller cards will be added here by JS -->
                  </div>
              </section>
-             
+
              <!-- Removed Aroma Section and Full Samples Table Section -->
 
         </div>
@@ -271,6 +272,7 @@
 
         const PENDING_STATUSES = ['EM ANÁLISE', 'AMOSTRA SEM FEEDBACK', 'SEM RETORNO DO CLIENTE', 'AMOSTRA NÃO TESTADA', 'PENDENTE'];
         const SEGMENTS = ['CÁRNEOS', 'EXPORTACAO', 'FOOD SERVICE', 'LACTEOS', 'NUTRACEUTICOS', 'NUTRICAO ANIMAL', 'PANIFICACAO', 'SMB', 'SORVETES', 'SUPPLY/FIS'];
+        const AROMA_FILTER_VALUE = 'AROMAS_FILTER'; // Special value for the new filter
 
         // --- DOM Elements ---
         const processBtn = document.getElementById('process-btn');
@@ -347,8 +349,31 @@
 
 
         // --- Utility Functions ---
-        const normalizeText = (text = '') => text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim();
+        // Updated normalizeText to handle potential null/undefined input
+        const normalizeText = (text = '') => text ? text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim() : '';
         const sanitizeForFirebaseId = (text) => normalizeText(text).replace(/\//g, "-"); // Replace slashes
+
+        /**
+         * Checks if a sample is considered an Aroma based on product code or description.
+         * @param {string} produto - The product code/name.
+         * @param {string} descricao - The product description.
+         * @returns {boolean} True if it's an aroma, false otherwise.
+         */
+        function isAroma(produto, descricao) {
+            const normalizedProduto = normalizeText(produto);
+            const normalizedDescricao = normalizeText(descricao);
+
+            // Check product code/name
+            if (normalizedProduto.startsWith('DAR ') || normalizedProduto.startsWith('AROMAS ')) {
+                return true;
+            }
+            // Check description
+            if (normalizedDescricao.includes('AROMA')) { // Checks if 'AROMA' exists anywhere in the description
+                return true;
+            }
+            return false;
+        }
+
 
         // Standardize feedback text
         function getCanonicalFeedback(feedback) {
@@ -375,7 +400,7 @@
 
             // Combine samples for charts and feedback details if historical data exists
             // Uses the listener-populated historicalAromaData
-            const combinedSamplesForStats = [...samples, ...historicalAromaData]; 
+            const combinedSamplesForStats = [...samples, ...historicalAromaData];
 
             // Update historical data indicator based on listener data
             // (Indicator removed from this file, logic remains for reference)
@@ -391,7 +416,7 @@
             renderSegmentCharts(samples); // Segment charts based on LIVE data (segments relate to live config)
             renderSellersList(samples, sessionId, sellerDocs); // Team tracking is only for LIVE session
             renderObservationsFeed(samples); // Feed is only for LIVE session
-            // Removed: renderFullSamplesTable(samples); 
+            // Removed: renderFullSamplesTable(samples);
 
             populateSegmentFilters(); // Update segment dropdowns based on LIVE data segments
 
@@ -1371,43 +1396,49 @@
         // Render Observations Feed (only LIVE data)
         function renderObservationsFeed(samples) {
             const feedContainer = document.getElementById('observations-feed-list');
-            const segmentFilter = observationSegmentFilter.value;
+            const segmentFilter = observationSegmentFilter.value; // Filter value from the dropdown
             const searchTerm = normalizeText(observationSearchInput.value);
 
             // Feed always shows only LIVE data
-            
-            // Filter samples that have an observation (using LIVE samples)
-            let samplesWithObservations = samples.filter(s => s.observation && s.observation.trim() !== '');
 
-            // Apply segment filter if selected
+            // Start with samples that have an observation
+            let filteredSamples = samples.filter(s => s.observation && s.observation.trim() !== '');
+
+            // Apply segment or aroma filter
             if (segmentFilter) {
-                samplesWithObservations = samplesWithObservations.filter(sample => sellerSegmentsCache[sample.sellerName] === segmentFilter);
+                if (segmentFilter === AROMA_FILTER_VALUE) {
+                    // Filter specifically for aromas based on product/description
+                    filteredSamples = filteredSamples.filter(sample => isAroma(sample.produto, sample.descricao));
+                } else {
+                    // Filter by actual seller segment
+                    filteredSamples = filteredSamples.filter(sample => sellerSegmentsCache[sample.sellerName] === segmentFilter);
+                }
             }
 
-            // Apply search term filter if entered
+            // Apply search term filter if entered (filters seller name)
             if (searchTerm) {
-                samplesWithObservations = samplesWithObservations.filter(sample =>
+                filteredSamples = filteredSamples.filter(sample =>
                     normalizeText(sample.sellerName).includes(searchTerm)
                 );
             }
 
             // Sort by the 'lastUpdate' timestamp of the sample itself, DESCENDING (newest first)
-            samplesWithObservations.sort((a, b) => {
+            filteredSamples.sort((a, b) => {
                 const timeA = a.lastUpdate?.toDate ? a.lastUpdate.toDate().getTime() : 0;
                 const timeB = b.lastUpdate?.toDate ? b.lastUpdate.toDate().getTime() : 0;
                 return timeB - timeA;
             });
 
             // Display placeholder if no observations match filters
-            if (samplesWithObservations.length === 0) {
+            if (filteredSamples.length === 0) {
                 feedContainer.innerHTML = '<p class="text-gray-500 placeholder-observation">Nenhuma observação encontrada com os filtros atuais.</p>';
                 return;
             }
 
             feedContainer.innerHTML = ''; // Clear previous content
 
-            // Create card for each observation
-            samplesWithObservations.forEach(sample => {
+            // Create card for each observation in the filtered list
+            filteredSamples.forEach(sample => {
                 const card = document.createElement('div');
                 card.className = 'p-4 rounded-lg border bg-gray-50';
 
@@ -1468,6 +1499,7 @@
                  btn.addEventListener('click', openReplyModal);
              });
         }
+
 
         // Open the modal for replying to an observation
         function openReplyModal(event) {
@@ -1746,7 +1778,7 @@
         function showFeedbackSamples(feedbackText, segmentFilter = '') {
             currentFeedbackFilter = feedbackText;
             // Use COMBINED data source for the modal view (listener-populated historicalAromaData)
-            const dataSource = [...allCurrentSamples, ...historicalAromaData]; 
+            const dataSource = [...allCurrentSamples, ...historicalAromaData];
             if (!dataSource || dataSource.length === 0) return;
 
             // Filter samples by the selected canonical feedback text
@@ -1761,11 +1793,17 @@
                 return getCanonicalFeedback(sample.feedback) === feedbackText;
             });
 
-            // Apply segment filter if selected in the modal
-            if(segmentFilter) {
-                // Use sellerSegmentsCache which is based on LIVE data
-                filteredSamples = filteredSamples.filter(sample => sellerSegmentsCache[sample.sellerName] === segmentFilter);
+            // Apply segment or aroma filter
+            if (segmentFilter) {
+                if (segmentFilter === AROMA_FILTER_VALUE) {
+                    // Filter specifically for aromas based on product/description
+                    filteredSamples = filteredSamples.filter(sample => isAroma(sample.produto, sample.descricao));
+                } else {
+                    // Filter by actual seller segment (using LIVE cache)
+                    filteredSamples = filteredSamples.filter(sample => sellerSegmentsCache[sample.sellerName] === segmentFilter);
+                }
             }
+
 
             // Sort samples within the modal: highlighted first (live only), then by seller/pedido
             filteredSamples.sort((a, b) => {
@@ -1787,7 +1825,7 @@
             feedbackSamplesList.innerHTML = '';
 
             if (filteredSamples.length === 0) {
-                feedbackSamplesList.innerHTML = `<p class="text-gray-500">Nenhuma amostra encontrada ${segmentFilter ? `no segmento ${segmentFilter}` : ''} com este feedback.</p>`;
+                feedbackSamplesList.innerHTML = `<p class="text-gray-500">Nenhuma amostra encontrada ${segmentFilter ? (segmentFilter === AROMA_FILTER_VALUE ? 'do tipo Aroma' : `no segmento ${segmentFilter}`) : ''} com este feedback.</p>`;
             } else {
                 filteredSamples.forEach(sample => {
                     const itemDiv = document.createElement('div');
@@ -1851,8 +1889,8 @@
                  });
             }
              if (feedbackSamplesModal.classList.contains('hidden')) {
-                 populateModalSegmentFilter();
-                 modalSegmentFilter.value = segmentFilter;
+                 populateModalSegmentFilter(); // Populate before setting value
+                 modalSegmentFilter.value = segmentFilter; // Set the value AFTER populating
                  feedbackSamplesModal.classList.remove('hidden');
              }
         }
@@ -1860,9 +1898,22 @@
         // Populate the segment filter dropdown within the feedback samples modal (uses LIVE data segments)
         function populateModalSegmentFilter() {
             const currentSegments = [...new Set(Object.values(sellerSegmentsCache).filter(Boolean))].sort();
-            const currentValue = modalSegmentFilter.value;
+            const currentValue = modalSegmentFilter.value; // Store current value before clearing
 
             modalSegmentFilter.innerHTML = '<option value="">Todos os Segmentos</option>';
+            // Add the special Aroma filter option FIRST
+            const aromaOption = document.createElement('option');
+            aromaOption.value = AROMA_FILTER_VALUE;
+            aromaOption.textContent = 'Aromas (DAR / AROMAS)';
+            modalSegmentFilter.appendChild(aromaOption);
+
+            // Add a separator
+            const separator = document.createElement('option');
+            separator.disabled = true;
+            separator.textContent = '--- Segmentos ---';
+            modalSegmentFilter.appendChild(separator);
+
+            // Add actual segments
             currentSegments.forEach(segment => {
                 const option = document.createElement('option');
                 option.value = segment;
@@ -1870,10 +1921,11 @@
                 modalSegmentFilter.appendChild(option);
             });
 
+            // Try to restore the previous selection
             if (modalSegmentFilter.querySelector(`option[value="${currentValue}"]`)) {
                 modalSegmentFilter.value = currentValue;
             } else {
-                modalSegmentFilter.value = "";
+                modalSegmentFilter.value = ""; // Default to "Todos" if previous value is no longer valid
             }
         }
 
@@ -1987,29 +2039,53 @@
             }
         }
 
-        // Populate segment filters based on LIVE data segments
+        // Populate segment filters based on LIVE data segments, adding the Aroma option
         function populateSegmentFilters() {
              const currentSegments = [...new Set(Object.values(sellerSegmentsCache).filter(Boolean))].sort();
 
              // Populate Observation Filter (main page)
              const obsSelect = document.getElementById('observation-segment-filter');
              if(obsSelect) {
-                 const obsCurrentValue = obsSelect.value;
+                 const obsCurrentValue = obsSelect.value; // Store current value before clearing
                  obsSelect.innerHTML = '<option value="">Todos os Segmentos</option>';
+
+                 // Add the special Aroma filter option FIRST
+                 const aromaOption = document.createElement('option');
+                 aromaOption.value = AROMA_FILTER_VALUE;
+                 aromaOption.textContent = 'Aromas (DAR / AROMAS)';
+                 obsSelect.appendChild(aromaOption);
+
+                 // Add a separator if there are actual segments
+                 if (currentSegments.length > 0) {
+                     const separator = document.createElement('option');
+                     separator.disabled = true;
+                     separator.textContent = '--- Segmentos ---';
+                     obsSelect.appendChild(separator);
+                 }
+
+                 // Add actual segments
                  currentSegments.forEach(segment => {
                      const option = document.createElement('option');
                      option.value = segment;
                      option.textContent = segment;
                      obsSelect.appendChild(option);
                  });
+
+                 // Try to restore the previous selection
                  if (obsSelect.querySelector(`option[value="${obsCurrentValue}"]`)) {
                      obsSelect.value = obsCurrentValue;
                  } else {
-                     obsSelect.value = "";
+                      // If the previous value is no longer valid (e.g., segment removed), default to "Todos"
+                      // Keep the current filter if it's the Aroma filter
+                      if (obsCurrentValue !== AROMA_FILTER_VALUE) {
+                         obsSelect.value = "";
+                      } else {
+                         obsSelect.value = AROMA_FILTER_VALUE;
+                      }
                  }
              }
 
-            // Populate Modal Filter
+            // Populate Modal Filter (calls the specific function for the modal)
              populateModalSegmentFilter();
         }
 
@@ -2031,6 +2107,9 @@
     </script>
 </body>
 </html>
+
+
+
 
 
 
