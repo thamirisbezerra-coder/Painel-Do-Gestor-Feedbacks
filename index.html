@@ -86,6 +86,11 @@
             height: 28px;
             flex-shrink: 0;
          }
+         
+        /* Style for date inputs to make them smaller */
+        input[type="date"] {
+            padding: 0.25rem 0.5rem; /* Reduced padding */
+        }
     </style>
 </head>
 <body class="text-gray-800">
@@ -165,80 +170,6 @@
                 </div>
             </section>
 
-             <!-- MOVED: Aroma Ranking Section -->
-             <section class="mb-10 bg-white p-6 rounded-2xl shadow-sm border">
-                 <div id="aroma-section-container">
-                     <div class="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
-                          <h2 class="text-2xl font-bold text-gray-900">Ranking de Aromas (DAR)</h2>
-                          <div class="flex items-center gap-2">
-                               <span id="aroma-data-view-status" class="text-sm font-semibold text-blue-600">Exibindo Dados Atuais (Live)</span>
-                               <button id="toggle-aroma-data-view-btn" class="text-sm bg-gray-200 text-gray-700 font-semibold py-1 px-3 rounded-lg hover:bg-gray-300">Carregar Dados Históricos</button>
-                          </div>
-                     </div>
-
-                     <!-- NEW: Historical Data Input Section (Hidden by default) -->
-                     <div id="historical-data-section" class="p-4 bg-gray-50 rounded-lg mb-4">
-                          <h4 class="font-bold text-md mb-2">Processar Dados Históricos (Aromas)</h4>
-                          <p class="text-sm text-gray-600 mb-2">Cole os dados da sua planilha (incluindo cabeçalhos "Produto", "Vendedor(a)", "Feedback", "Status") para gerar o ranking histórico de aromas. Isso **não** afetará sua sessão atual.</p>
-                          <textarea id="historical-data-input" rows="5" class="w-full border-gray-300 rounded-lg" placeholder="Cole os dados históricos aqui..."></textarea>
-                          <button id="process-historical-btn" class="mt-2 bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700">Processar Histórico</button>
-                          <p id="historical-info-message" class="text-center text-sm mt-2 h-5"></p>
-                     </div>
-
-                     <!-- NEW: Top Aroma Sellers Preview -->
-                     <div class="mb-4">
-                          <div class="flex justify-between items-center mb-2">
-                             <h3 class="font-bold text-lg text-gray-800">Top Vendedores (Aromas Aprovados c/ Pedido)</h3>
-                             <select id="top-aroma-seller-filter" class="border-gray-300 rounded-lg shadow-sm text-sm">
-                                  <option value="">Todos os Segmentos</option>
-                                  <!-- Options populated by JS -->
-                             </select>
-                          </div>
-                          <ul id="top-aroma-seller-list" class="space-y-2">
-                             <li class="text-gray-500">Calculando ranking...</li>
-                             <!-- JS will populate this list -->
-                          </ul>
-                          <div class="text-center mt-3">
-                             <button id="toggle-aroma-ranking-btn" class="w-full md:w-auto bg-blue-50 text-blue-700 font-semibold py-2 px-5 rounded-lg hover:bg-blue-100">Ver Ranking Completo de Aromas</button>
-                          </div>
-                     </div>
-
-                     <!-- NEW: Collapsible Aroma Ranking Details -->
-                     <div id="aroma-ranking-details">
-                         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6 pt-6 border-t">
-                             <!-- Top Aroma Card -->
-                             <div class="lg:col-span-1 bg-gradient-to-br from-blue-50 to-white border border-blue-200 p-5 rounded-xl shadow-sm">
-                                 <h3 class="font-bold text-lg text-blue-800 mb-3">Aroma Destaque (Aprovado c/ Pedido)</h3>
-                                 <div id="top-aroma-approved-card">
-                                     <p class="text-gray-500">Nenhum aroma aprovado encontrado.</p>
-                                     <!-- JS will populate this -->
-                                 </div>
-                             </div>
-                             <!-- Ordered Aromas List -->
-                             <div class="lg:col-span-2">
-                                 <h3 class="font-bold text-lg text-gray-800 mb-3">Lista de Aromas (Aprovados c/ Pedido)</h3>
-                                 <div class="max-h-80 overflow-y-auto bg-white rounded-lg border">
-                                     <table class="min-w-full text-sm">
-                                         <thead class="bg-gray-50 sticky top-0">
-                                             <tr>
-                                                 <th class="px-4 py-2 text-left font-medium text-gray-500 uppercase">Aroma (Produto)</th>
-                                                 <th class="px-4 py-2 text-left font-medium text-gray-500 uppercase">Aprov. c/ Pedido</th>
-                                                 <th class="px-4 py-2 text-left font-medium text-gray-500 uppercase">Total Enviadas</th>
-                                             </tr>
-                                         </thead>
-                                         <tbody id="aroma-ranking-table-body">
-                                             <tr><td colspan="3" class="px-4 py-3 text-center text-gray-500">Calculando...</td></tr>
-                                             <!-- JS will populate this -->
-                                         </tbody>
-                                     </table>
-                                 </div>
-                             </div>
-                         </div>
-                     </div>
-                 </div>
-             </section>
-             <!-- END: Aroma Ranking Section -->
-
             <!-- Observations Feed -->
             <section id="observations-feed-section" class="mb-10">
                  <div class="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
@@ -263,8 +194,91 @@
                 </div>
             </section>
 
-            <!-- Team Tracking Section (Now only contains seller cards) -->
+            <!-- Team Tracking & Aroma Ranking Section -->
              <section id="team-tracking-section" class="mb-10 bg-white p-6 rounded-2xl shadow-sm border">
+                  
+                  <!-- NEW: Aroma Ranking Section -->
+                  <div id="aroma-section-container" class="mb-6 border-b pb-6">
+                        <div class="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
+                             <h2 class="text-2xl font-bold text-gray-900">Ranking de Aromas (DAR)</h2>
+                             <div class="flex items-center gap-2">
+                                  <span id="aroma-data-view-status" class="text-sm font-semibold text-blue-600">Exibindo Dados Atuais (Live)</span>
+                                  <button id="toggle-aroma-data-view-btn" class="text-sm bg-gray-200 text-gray-700 font-semibold py-1 px-3 rounded-lg hover:bg-gray-300">Carregar Dados Históricos</button>
+                             </div>
+                        </div>
+
+                        <!-- NEW: Date Filter -->
+                        <div class="flex flex-wrap items-center gap-2 mb-4 p-3 bg-gray-50 rounded-lg">
+                             <label for="aroma-date-start" class="text-sm font-medium">Período de:</label>
+                             <input type="date" id="aroma-date-start" class="border-gray-300 rounded-lg shadow-sm text-sm">
+                             <label for="aroma-date-end" class="text-sm font-medium">Até:</label>
+                             <input type="date" id="aroma-date-end" class="border-gray-300 rounded-lg shadow-sm text-sm">
+                             <button id="aroma-date-clear-btn" class="text-xs bg-gray-200 text-gray-700 font-semibold py-1 px-2 rounded-lg hover:bg-gray-300" title="Limpar Período">Limpar</button>
+                        </div>
+                        
+                        <!-- NEW: Historical Data Input Section (Hidden by default) -->
+                        <div id="historical-data-section" class="p-4 bg-gray-50 rounded-lg mb-4">
+                             <h4 class="font-bold text-md mb-2">Processar Dados Históricos (Aromas)</h4>
+                             <p class="text-sm text-gray-600 mb-2">Cole os dados da sua planilha (incluindo "Produto", "Vendedor(a)", "Feedback", "Status" e "Emissão NF") para gerar o ranking histórico de aromas. Isso **não** afetará sua sessão atual.</p>
+                             <textarea id="historical-data-input" rows="5" class="w-full border-gray-300 rounded-lg" placeholder="Cole os dados históricos aqui..."></textarea>
+                             <button id="process-historical-btn" class="mt-2 bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700">Processar Histórico</button>
+                             <p id="historical-info-message" class="text-center text-sm mt-2 h-5"></p>
+                        </div>
+
+                        <!-- NEW: Top Aroma Sellers Preview -->
+                        <div class="mb-4">
+                             <div class="flex justify-between items-center mb-2">
+                                <h3 class="font-bold text-lg text-gray-800">Top Vendedores (Aromas Aprovados c/ Pedido)</h3>
+                                <select id="top-aroma-seller-filter" class="border-gray-300 rounded-lg shadow-sm text-sm">
+                                     <option value="">Todos os Segmentos</option>
+                                     <!-- Options populated by JS -->
+                                </select>
+                             </div>
+                             <ul id="top-aroma-seller-list" class="space-y-2">
+                                <li class="text-gray-500">Calculando ranking...</li>
+                                <!-- JS will populate this list -->
+                             </ul>
+                             <div class="text-center mt-3">
+                                <button id="toggle-aroma-ranking-btn" class="w-full md:w-auto bg-blue-50 text-blue-700 font-semibold py-2 px-5 rounded-lg hover:bg-blue-100">Ver Ranking Completo de Aromas</button>
+                             </div>
+                        </div>
+
+                        <!-- NEW: Collapsible Aroma Ranking Details -->
+                        <div id="aroma-ranking-details">
+                            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6 pt-6 border-t">
+                                <!-- Top Aroma Card -->
+                                <div class="lg:col-span-1 bg-gradient-to-br from-blue-50 to-white border border-blue-200 p-5 rounded-xl shadow-sm">
+                                    <h3 class="font-bold text-lg text-blue-800 mb-3">Aroma Destaque (Aprovado c/ Pedido)</h3>
+                                    <div id="top-aroma-approved-card">
+                                        <p class="text-gray-500">Nenhum aroma aprovado encontrado.</p>
+                                        <!-- JS will populate this -->
+                                    </div>
+                                </div>
+                                <!-- Ordered Aromas List -->
+                                <div class="lg:col-span-2">
+                                    <h3 class="font-bold text-lg text-gray-800 mb-3">Lista de Aromas (Aprovados c/ Pedido)</h3>
+                                    <div class="max-h-80 overflow-y-auto bg-white rounded-lg border">
+                                        <table class="min-w-full text-sm">
+                                            <thead class="bg-gray-50 sticky top-0">
+                                                <tr>
+                                                    <th class="px-4 py-2 text-left font-medium text-gray-500 uppercase">Aroma (Produto)</th>
+                                                    <th class="px-4 py-2 text-left font-medium text-gray-500 uppercase">Aprov. c/ Pedido</th>
+                                                    <th class="px-4 py-2 text-left font-medium text-gray-500 uppercase">Total Enviadas</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="aroma-ranking-table-body">
+                                                <tr><td colspan="3" class="px-4 py-3 text-center text-gray-500">Calculando...</td></tr>
+                                                <!-- JS will populate this -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                  </div>
+                  <!-- END: Aroma Ranking Section -->
+
+
                   <!-- Existing Team Tracking -->
                   <div class="flex justify-between items-center mb-4">
                        <h2 class="text-2xl font-bold text-gray-900">Acompanhamento da Equipe (Sessão)</h2>
@@ -477,6 +491,10 @@
         const historicalDataInput = document.getElementById('historical-data-input');
         const processHistoricalBtn = document.getElementById('process-historical-btn');
         const historicalInfoMessage = document.getElementById('historical-info-message');
+        // --- NEW Date Filter Elements ---
+        const aromaDateStartInput = document.getElementById('aroma-date-start');
+        const aromaDateEndInput = document.getElementById('aroma-date-end');
+        const aromaDateClearBtn = document.getElementById('aroma-date-clear-btn');
 
 
         // --- State Variables ---
@@ -522,6 +540,32 @@
             return mapping[normalized] || normalized;
         }
 
+        /**
+         * Parses a BR date string (dd/mm/YYYY) or ISO string (YYYY-MM-DD) into a Date object
+         */
+        function parseDate(dateStr) {
+            if (!dateStr || typeof dateStr !== 'string') return null;
+            
+            let date = null;
+            // Try YYYY-MM-DD (from <input type="date"> or some data)
+            let parts = dateStr.split('-');
+            if (parts.length === 3 && parts[0].length === 4) {
+                // new Date(year, monthIndex, day)
+                date = new Date(parts[0], parts[1] - 1, parts[2]);
+            } else {
+                // Try dd/mm/YYYY (from NF)
+                parts = dateStr.split('/');
+                if (parts.length === 3 && parts[0].length <= 2 && parts[2].length >= 4) {
+                     // new Date(year, monthIndex, day)
+                    date = new Date(parts[2], parts[1] - 1, parts[0]);
+                }
+            }
+            
+            // Check if date is valid
+            return (date && !isNaN(date.getTime())) ? date : null;
+        }
+
+
         // --- Main Dashboard Rendering Function ---
         // Moved earlier to ensure it's defined before event listeners call it.
         function processAndDisplayDashboard(samples, sessionId, sellerDocs = []) {
@@ -533,21 +577,25 @@
             // Render all dashboard components
             renderCharts(samples);
             renderFeedbackDetails(samples);
-            // --- NEW: Render Aroma Dashboard (before observations feed) ---
-            if (!isHistoricalView) {
-                 renderAromaDashboard(allCurrentSamples); // Use allCurrentSamples for live data
-                 aromaDataViewStatus.textContent = "Exibindo Dados Atuais (Live)";
-            } else {
-                 renderAromaDashboard(historicalAromaData);
-                 aromaDataViewStatus.textContent = "Exibindo Dados Históricos";
-            }
-            // --- END NEW ---
-            renderObservationsFeed(samples); // Now uses allSellerReplies cache
             renderSegmentCharts(samples);
-            renderSellersList(samples, sessionId, sellerDocs); // Seller cards last
+            renderSellersList(samples, sessionId, sellerDocs);
+            renderObservationsFeed(samples); // Now uses allSellerReplies cache
             renderFullSamplesTable(samples);
 
             populateSegmentFilters(); // Update segment dropdowns
+
+            // --- NEW: Render Aroma Dashboard ---
+            // Determine data source based on view
+            const aromaDataSource = isHistoricalView ? historicalAromaData : allCurrentSamples;
+            renderAromaDashboard(aromaDataSource); 
+            
+            // Update status text based on view
+            if (isHistoricalView) {
+                 aromaDataViewStatus.textContent = "Exibindo Dados Históricos";
+            } else {
+                 aromaDataViewStatus.textContent = "Exibindo Dados Atuais (Live)";
+            }
+            // --- END NEW ---
 
             // Re-apply table filter if one was active
             const currentFilteredSeller = samplesTableTitle.dataset.filteredSeller;
@@ -694,34 +742,44 @@
             }
         });
 
-        // Filter top aroma sellers when segment filter changes
-        topAromaSellerFilter.addEventListener('change', () => {
-            // Re-render aroma dashboard using the appropriate data source
+        // Helper function to re-render aroma data
+        function reRenderAromaData() {
             const dataSource = isHistoricalView ? historicalAromaData : allCurrentSamples;
             renderAromaDashboard(dataSource);
+        }
+
+        // Filter top aroma sellers when segment filter changes
+        topAromaSellerFilter.addEventListener('change', reRenderAromaData);
+        
+        // --- NEW Date Filter Listeners ---
+        aromaDateStartInput.addEventListener('change', reRenderAromaData);
+        aromaDateEndInput.addEventListener('change', reRenderAromaData);
+        aromaDateClearBtn.addEventListener('click', () => {
+            aromaDateStartInput.value = '';
+            aromaDateEndInput.value = '';
+            reRenderAromaData();
         });
 
         // Toggle between Live and Historical data views for Aroma Panel
         toggleAromaDataViewBtn.addEventListener('click', () => {
              isHistoricalView = !isHistoricalView; // Toggle the view flag
-             // Toggle the visibility of the historical input section
-             historicalDataSection.classList.toggle('expanded', isHistoricalView);
-
              if (isHistoricalView) {
                  // Switched TO historical view
+                 historicalDataSection.classList.add('expanded');
                  toggleAromaDataViewBtn.textContent = 'Ver Dados Atuais (Live)';
                  aromaDataViewStatus.textContent = 'Exibindo Dados Históricos';
                  // Render with historical data (might be empty initially)
                  renderAromaDashboard(historicalAromaData);
              } else {
                  // Switched TO live view
+                 historicalDataSection.classList.remove('expanded');
                  toggleAromaDataViewBtn.textContent = 'Carregar Dados Históricos';
                  aromaDataViewStatus.textContent = 'Exibindo Dados Atuais (Live)';
                  // Render with live data
                  renderAromaDashboard(allCurrentSamples);
              }
-             // Re-render the entire dashboard to show/hide sections correctly
-             processAndDisplayDashboard(allCurrentSamples, currentSessionId, []); // Pass empty sellerDocs if not needed immediately
+             // Re-render other components that might be affected by the view switch
+             processAndDisplayDashboard(allCurrentSamples, currentSessionId);
         });
 
         // Process pasted historical data
@@ -751,8 +809,7 @@
                          sellerName: String(row['Vendedor(a)'] || ''),
                          feedback: String(row['Feedback'] || ''),
                          originalStatus: String(row['Status'] || ''),
-                         // Add description if available in historical data, otherwise empty
-                         descricao: String(row['Descrição'] || '')
+                         emissaoNF: String(row['Emissão NF'] || '') // Added for date filtering
                      })).filter(s => s.produto && s.sellerName); // Basic validation
 
                      if (mappedData.length === 0) {
@@ -768,7 +825,7 @@
 
                      historicalInfoMessage.textContent = `Sucesso! ${historicalAromaData.length} registros históricos processados.`;
                      processHistoricalBtn.disabled = false;
-                     // Do not clear textarea here, user might want to re-process
+                     historicalDataInput.value = ''; // Clear textarea
                  },
                  error: (err) => {
                       historicalInfoMessage.textContent = `Erro: ${err.message}`;
@@ -829,6 +886,8 @@
 
                     const sessionId = `sessao_${Date.now()}`; // Create unique session ID
                     allCurrentSamples = allSamplesData; // Update local state immediately
+                    isHistoricalView = false; // Ensure we are in live view
+                    historicalAromaData = []; // Clear historical data
 
                     inputSection.classList.add('hidden');
                     connectionSection.classList.add('hidden');
@@ -905,7 +964,7 @@
                 const previousSamples = isInitialDataLoad ? [] : [...allCurrentSamples];
                 // Flatten all samples from all seller documents
                 const allSamples = snapshot.docs.flatMap(doc => doc.data().amostras || []);
-                allCurrentSamples = allSamples;
+                allCurrentSamples = allSamples; // Update live data cache
 
                 // Show dashboard once data is loaded (or if session becomes non-empty)
                 if (!snapshot.empty || !isInitialDataLoad) {
@@ -1041,6 +1100,8 @@
             aromaDataViewStatus.textContent = 'Exibindo Dados Atuais (Live)';
             historicalDataInput.value = '';
             historicalInfoMessage.textContent = '';
+            aromaDateStartInput.value = ''; // Clear date inputs
+            aromaDateEndInput.value = '';
             renderAromaDashboard([]); // Clear aroma panel
 
             if (keepConnectionOptions) {
@@ -1981,20 +2042,21 @@
 
             // Count occurrences of each canonical feedback type
             samples.forEach(sample => {
-                 // Use feedback if available, otherwise skip
+                 // Use feedback if available
                  const feedback = sample.feedback ? sample.feedback.trim() : '';
-                 if (feedback === '') {
-                     // Handle samples that are pending but have no specific feedback text
-                     let isSamplePending = sample.isPending;
-                     if (typeof isSamplePending === 'undefined') {
-                         isSamplePending = PENDING_STATUSES.includes(normalizeText(sample.originalStatus));
-                     }
-                     if(isSamplePending) {
-                          counts.pending['PENDENTE (SISTEMA)'] = (counts.pending['PENDENTE (SISTEMA)'] || 0) + 1;
-                     }
-                     return;
-                 }
 
+                 // Handle samples that are pending based on status
+                 let isSamplePending = sample.isPending;
+                 if (typeof isSamplePending === 'undefined') {
+                     isSamplePending = PENDING_STATUSES.includes(normalizeText(sample.originalStatus));
+                 }
+                 
+                 if (feedback === '' && isSamplePending) {
+                      counts.pending['PENDENTE (SISTEMA)'] = (counts.pending['PENDENTE (SISTEMA)'] || 0) + 1;
+                      return;
+                 }
+                 
+                 if (feedback === '') return; // Skip if no feedback and not pending
 
                 const canonicalFeedback = getCanonicalFeedback(feedback);
                 let category = null;
@@ -2004,6 +2066,13 @@
                 else if (feedback.startsWith('R -') || CANONICAL_REJECTED.includes(canonicalFeedback)) category = 'rejected';
                 else if (feedback.startsWith('E -') || CANONICAL_EVENTS.includes(canonicalFeedback)) category = 'events';
                 else if (feedback.startsWith('P -') || CANONICAL_PENDING.includes(canonicalFeedback)) category = 'pending'; // Check for pending category
+                // If no category matched but it's pending, add to pending
+                else if (isSamplePending) {
+                     category = 'pending';
+                     // Use the feedback text itself if it wasn't a known pending reason
+                     counts[category][canonicalFeedback] = (counts[category][canonicalFeedback] || 0) + 1;
+                     return;
+                }
 
                 if (category) {
                     counts[category][canonicalFeedback] = (counts[category][canonicalFeedback] || 0) + 1;
@@ -2053,14 +2122,24 @@
 
             // Filter samples by the selected canonical feedback text
             let filteredSamples = dataSource.filter(sample => {
+                 let isSamplePending = sample.isPending;
+                 if (typeof isSamplePending === 'undefined') {
+                     isSamplePending = PENDING_STATUSES.includes(normalizeText(sample.originalStatus));
+                 }
+
                  if (feedbackText === 'PENDENTE (SISTEMA)') {
-                     let isSamplePending = sample.isPending;
-                     if (typeof isSamplePending === 'undefined') {
-                         isSamplePending = PENDING_STATUSES.includes(normalizeText(sample.originalStatus));
-                     }
                      return isSamplePending && (!sample.feedback || sample.feedback.trim() === '');
                  }
-                return getCanonicalFeedback(sample.feedback) === feedbackText;
+                 // Check if the canonical feedback matches
+                 if (getCanonicalFeedback(sample.feedback) === feedbackText) {
+                     return true;
+                 }
+                 // Special case: if feedback matches, but it was also pending, it might be in the pending list
+                 if (isSamplePending && getCanonicalFeedback(sample.feedback) === feedbackText) {
+                     return true;
+                 }
+
+                 return false;
             });
 
             // Apply segment filter if selected in the modal
@@ -2384,12 +2463,40 @@
          */
         function calculateAromaRankings(samples) {
             const selectedSegment = topAromaSellerFilter.value;
+            
+            // --- NEW: Date Filtering ---
+            const startDate = aromaDateStartInput.value ? parseDate(aromaDateStartInput.value) : null;
+            const endDate = aromaDateEndInput.value ? parseDate(aromaDateEndInput.value) : null;
+            
+            if(startDate) startDate.setHours(0, 0, 0, 0); // Set to start of day
+            if(endDate) endDate.setHours(23, 59, 59, 999); // Set to end of day
+
+            const filteredSamples = samples.filter(sample => {
+                // We need a date field. Use 'emissaoNF'.
+                // 'emissaoNF' is available in live data. Assume it's in historical.
+                const sampleDate = parseDate(sample.emissaoNF);
+                
+                // If no date range is selected, keep all samples
+                if (!startDate && !endDate) return true;
+                
+                // If a date range is selected, but sample has no valid date, exclude it
+                if (!sampleDate) return false;
+                
+                // Apply filters
+                if (startDate && sampleDate < startDate) return false;
+                if (endDate && sampleDate > endDate) return false;
+                
+                return true; // Sample is within the date range
+            });
+            // --- END: Date Filtering ---
+            
             const sellerRanking = {}; // { sellerName: count }
             const aromaStats = {}; // { aromaCode: { totalSent: 0, totalApproved: 0, description: '' } }
 
             const approvedWithPedido = 'COM PEDIDO';
 
-            samples.forEach(sample => {
+            // IMPORTANT: Use 'filteredSamples' from now on
+            filteredSamples.forEach(sample => {
                  // 1. Check if it's an aroma
                  if (!isAroma(sample.produto)) return;
 
@@ -2415,7 +2522,8 @@
                      aromaStats[aromaCode].totalApproved++;
 
                      // 3b. Increment seller's approved count (respecting segment filter)
-                     const sellerSegment = sellerSegmentsCache[sample.sellerName];
+                     // Use segments from live data cache, even for historical data
+                     const sellerSegment = sellerSegmentsCache[sample.sellerName]; 
                      if (!selectedSegment || sellerSegment === selectedSegment) {
                          sellerRanking[sample.sellerName] = (sellerRanking[sample.sellerName] || 0) + 1;
                      }
@@ -2455,7 +2563,7 @@
             // Ensure samples is an array
             const sampleData = Array.isArray(samples) ? samples : [];
 
-            // 1. Calculate Rankings
+            // 1. Calculate Rankings (now respects date filter)
             const rankings = calculateAromaRankings(sampleData);
 
             // 2. Render Top Sellers
@@ -2541,6 +2649,8 @@
     </script>
 </body>
 </html>
+
+
 
 
 
