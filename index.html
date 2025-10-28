@@ -42,52 +42,13 @@
             padding-bottom: 0.5rem;
             border-top: 1px dashed #fed7aa; /* orange-200 */
         }
-        
-        /* Estilos para o ranking de aromas */
-        .aroma-rank-card {
-            transition: all 0.3s ease;
-        }
-        .aroma-rank-item {
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-        .aroma-rank-item:hover {
-            background-color: #f9fafb; /* bg-gray-50 */
-        }
-        /* Corrigido: Estilo para o primeiro lugar no ranking de vendedores */
-        .aroma-rank-item.first-place {
-            background-color: #fef9c3; /* bg-yellow-100 */
-            border-left: 4px solid #f59e0b; /* border-yellow-500 */
-            font-weight: 600; /* semibold */
-        }
-        .aroma-rank-item.first-place .rank-number {
-            background-color: #f59e0b; /* bg-yellow-500 */
-            color: white;
-        }
-        .aroma-rank-item.second-place .rank-number {
-            background-color: #d1d5db; /* bg-gray-300 */
-            color: #1f2937; /* text-gray-800 */
-        }
-        .aroma-rank-item.third-place .rank-number {
-            background-color: #fca5a5; /* bg-red-300 */
-            color: #1f2937; /* text-gray-800 */
-        }
-        
-        /* Animação para expandir/recolher */
-        .collapse-content {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.5s ease-out;
-        }
-        .collapse-content.expanded {
-            max-height: 5000px; /* Um valor grande para acomodar o conteúdo */
-            transition: max-height 0.7s ease-in;
-        }
-        .rotate-180 {
-            transform: rotate(180deg);
-        }
-        .transition-transform {
+
+        /* Estilo para a seta de expansão */
+        .toggle-arrow {
             transition: transform 0.3s ease;
+        }
+        .toggle-arrow.rotate-180 {
+            transform: rotate(180deg);
         }
 
     </style>
@@ -168,137 +129,148 @@
                     </div>
                 </div>
             </section>
-
+            
             <!-- Aroma Ranking Section -->
             <section id="aroma-ranking-section" class="mb-10 bg-white p-6 rounded-2xl shadow-sm border">
-                <!-- Cabeçalho com Título e Botão de Expandir -->
-                <div class="flex justify-between items-center mb-4">
-                    <div class="flex items-center space-x-3">
-                        <h2 class="text-2xl font-bold text-gray-900">Ranking de Aromas (DAR)</h2>
-                        <button id="toggle-aroma-section-btn" class="p-1 rounded-full hover:bg-gray-200">
-                            <svg class="w-5 h-5 text-gray-600 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Conteúdo Expansível -->
-                <div id="aroma-ranking-content" class="collapse-content space-y-6">
-                    <!-- Filtros e Carregamento Histórico -->
-                    <div class="flex flex-col md:flex-row justify-between items-center gap-4 p-4 bg-gray-50 rounded-lg">
-                        <!-- Filtros de Período -->
-                        <div class="flex flex-wrap items-center gap-2">
-                            <label for="aroma-start-date" class="text-sm font-medium">Período:</label>
-                            <input type="date" id="aroma-start-date" class="border-gray-300 rounded-lg shadow-sm text-sm p-1">
-                            <label for="aroma-end-date" class="text-sm font-medium">até</label>
-                            <input type="date" id="aroma-end-date" class="border-gray-300 rounded-lg shadow-sm text-sm p-1">
-                            <button id="clear-aroma-dates-btn" class="text-xs text-blue-600 hover:underline p-1" title="Limpar datas">Limpar</button>
-                        </div>
-                        
-                        <!-- Filtro de Segmento -->
-                        <div class="flex items-center gap-2">
-                            <label for="aroma-segment-filter" class="text-sm font-medium">Segmento:</label>
-                            <select id="aroma-segment-filter" class="border-gray-300 rounded-lg shadow-sm text-sm p-1 w-full md:w-auto">
-                                <option value="">Todos os Segmentos</option>
-                                <!-- Segmentos populados por JS -->
-                            </select>
-                        </div>
+                <!-- Header -->
+                <div class="flex flex-col md:flex-row justify-between items-center mb-4">
+                    <div class="flex items-center gap-4">
+                         <h2 class="text-2xl font-bold text-gray-900">Ranking de Aromas (DAR)</h2>
+                         <button id="toggle-aroma-section-btn" title="Expandir/Recolher">
+                              <svg class="w-6 h-6 text-gray-500 hover:text-gray-800 toggle-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                         </button>
                     </div>
                     
-                    <!-- Botões de Histórico -->
-                    <div class="flex flex-col md:flex-row justify-start items-center gap-4 p-4 border rounded-lg">
-                         <button id="load-historical-data-btn" class="bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-700 text-sm">Carregar Dados Históricos</button>
-                         <button id="show-live-data-btn" class="bg-gray-200 text-gray-700 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 text-sm hidden">Ver Dados Atuais (Live)</button>
-                         <p id="historical-data-status" class="text-sm text-gray-600"></p>
+                    <!-- Filtros -->
+                    <div class="flex flex-col md:flex-row items-center gap-3 mt-4 md:mt-0 w-full md:w-auto">
+                        <!-- Filtro de Data -->
+                        <div class="flex items-center gap-2">
+                             <label for="aroma-start-date" class="text-sm font-medium">De:</label>
+                             <input type="date" id="aroma-start-date" class="border-gray-300 rounded-lg shadow-sm text-sm p-1">
+                             <label for="aroma-end-date" class="text-sm font-medium">Até:</label>
+                             <input type="date" id="aroma-end-date" class="border-gray-300 rounded-lg shadow-sm text-sm p-1">
+                             <button id="aroma-clear-dates" class="text-xs text-gray-500 hover:text-red-500" title="Limpar datas">✖</button>
+                        </div>
+                        <!-- Filtro de Segmento -->
+                        <select id="aroma-segment-filter" class="border-gray-300 rounded-lg shadow-sm text-sm p-2 w-full md:w-48">
+                            <option value="">Todos os Segmentos</option>
+                            <!-- Segmentos preenchidos por JS -->
+                        </select>
                     </div>
-                    <!-- Área para colar dados históricos (inicialmente oculta) -->
-                    <div id="historical-input-section" class="hidden my-4 p-4 bg-gray-50 rounded-lg">
-                        <textarea id="historical-data-input" rows="6" class="w-full border-gray-300 rounded-lg" placeholder="Copie e cole os dados históricos aqui (incluindo cabeçalho: Pedido, Vendedor(a), Produto, Descrição, Feedback, Emissão NF, etc.)"></textarea>
-                        <button id="add-historical-data-btn" class="mt-2 bg-green-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-700 text-sm">Adicionar Histórico ao Ranking</button>
-                        <button id="cancel-historical-data-btn" class="mt-2 bg-gray-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-gray-600 text-sm">Cancelar</button>
+                </div>
+                
+                <!-- Conteúdo Expansível -->
+                <div id="aroma-ranking-content" class="hidden">
+                    <!-- Botões de Histórico e Live -->
+                    <div class="flex flex-wrap gap-4 justify-between items-center border-b pb-4 mb-6">
+                        <div class="flex gap-2">
+                             <button id="toggle-historical-data-btn" class="bg-gray-200 text-gray-700 text-sm font-semibold py-1 px-3 rounded-lg hover:bg-gray-300">Carregar Dados Históricos</button>
+                             <button id="show-live-data-btn" class="hidden bg-blue-600 text-white text-sm font-semibold py-1 px-3 rounded-lg hover:bg-blue-700">Ver Dados Atuais (Live)</button>
+                        </div>
+                        <span id="aroma-data-source-label" class="text-sm font-medium text-blue-600">Exibindo: Dados Atuais (Live)</span>
                     </div>
 
-                    <!-- Grid com os dois rankings -->
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Input Histórico (Oculto) -->
+                    <div id="historical-data-input-section" class="hidden mb-6 p-4 bg-gray-50 rounded-lg border">
+                         <h4 class="font-semibold mb-2">Adicionar Dados Históricos ao Ranking</h4>
+                         <p class="text-sm text-gray-600 mb-2">Cole os dados da planilha (incluindo cabeçalhos) aqui. Os dados serão salvos permanentemente.</p>
+                         <textarea id="historical-data-input" rows="5" class="w-full border-gray-300 rounded-lg" placeholder="Cole os dados (Pedido, Vendedor(a), Produto, Descrição, Feedback, Emissão NF, etc...)"></textarea>
+                         <button id="add-historical-data-btn" class="mt-3 bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700">Adicionar Histórico ao Ranking</button>
+                    </div>
+
+                    <!-- Grid de Rankings (Com Pedido / Sem Pedido) -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                         
-                        <!-- Coluna: Aprovados c/ Pedido -->
-                        <div class="space-y-6">
-                            <!-- Top Vendedores (Com Pedido) -->
-                            <div class="aroma-rank-card border rounded-lg p-4">
-                                <h3 class="text-lg font-semibold text-gray-800 mb-3">Top Vendedores (Aromas Aprovados c/ Pedido)</h3>
-                                <div id="aroma-seller-ranking-list" class="space-y-2">
-                                    <p class="text-gray-500">Calculando...</p>
-                                </div>
-                                <p id="aroma-seller-ranking-more" class="text-sm text-blue-600 hover:underline cursor-pointer mt-2 hidden"></p>
-                            </div>
-
-                            <!-- Destaque (Com Pedido) -->
-                            <div class="aroma-rank-card border rounded-lg p-4 bg-blue-50">
-                                <h3 class="text-lg font-semibold text-gray-800 mb-3">Aroma Mais Aprovado (c/ Pedido)</h3>
-                                <div id="aroma-highlight" class="text-center p-4">
-                                    <p class="text-gray-500">Calculando...</p>
-                                </div>
-                            </div>
-
-                            <!-- Lista (Com Pedido) -->
-                            <div class="aroma-rank-card border rounded-lg p-4">
-                                <h3 class="text-lg font-semibold text-gray-800 mb-3">Lista de Aromas Aprovados (c/ Pedido)</h3>
-                                <div class="max-h-96 overflow-y-auto">
-                                    <table class="min-w-full text-sm">
-                                        <thead class="bg-gray-100 sticky top-0">
-                                            <tr>
-                                                <th class="px-3 py-2 text-left font-medium text-gray-600">Aroma</th>
-                                                <th class="px-3 py-2 text-left font-medium text-gray-600">Descrição</th>
-                                                <th class="px-3 py-2 text-center font-medium text-gray-600">Aprov.</th>
-                                                <th class="px-3 py-2 text-center font-medium text-gray-600">Enviadas</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="aroma-ranking-table-body">
-                                            <tr><td colspan="4" class="p-4 text-center text-gray-500">Calculando...</td></tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
+                        <!-- Coluna: Aprovados COM Pedido -->
+                        <div id="aromas-com-pedido" class="border-r-0 lg:border-r lg:pr-8 border-gray-200">
+                             <h3 class="text-xl font-bold text-gray-800 mb-4 text-center text-green-600">Aprovados COM Pedido</h3>
+                             
+                             <!-- Top Vendedores (Com Pedido) -->
+                             <div class="mb-6">
+                                  <h4 class="font-semibold mb-3 text-gray-700">Top Vendedores (Aromas c/ Pedido)</h4>
+                                  <div id="aroma-top-sellers-list-com-pedido" class="space-y-2">
+                                       <!-- Lista preenchida por JS -->
+                                       <p class="text-gray-500 text-sm">Calculando...</p>
+                                  </div>
+                                  <p id="aroma-sellers-remainder-com-pedido" class="text-sm text-gray-600 mt-2 cursor-pointer hover:underline"></p>
+                             </div>
+                             
+                             <!-- Destaque Aroma (Com Pedido) -->
+                             <div class="mb-6">
+                                  <h4 class="font-semibold mb-3 text-gray-700">Aroma Destaque (c/ Pedido)</h4>
+                                  <div id="aroma-destaque-com-pedido" class="bg-green-50 p-4 rounded-lg border border-green-200">
+                                       <p class="text-gray-500 text-sm">Calculando...</p>
+                                       <!-- Destaque preenchido por JS -->
+                                  </div>
+                             </div>
+                             
+                             <!-- Lista de Aromas (Com Pedido) -->
+                             <div>
+                                  <h4 class="font-semibold mb-3 text-gray-700">Lista de Aromas (c/ Pedido)</h4>
+                                  <div class="max-h-80 overflow-y-auto pr-2">
+                                       <table class="min-w-full text-sm">
+                                            <thead class="bg-gray-100 sticky top-0">
+                                                 <tr>
+                                                      <th class="px-3 py-2 text-left font-medium text-gray-600 uppercase">Aroma</th>
+                                                      <th class="px-3 py-2 text-left font-medium text-gray-600 uppercase">Descrição</th>
+                                                      <th class="px-3 py-2 text-center font-medium text-gray-600 uppercase">Aprov.</th>
+                                                      <th class="px-3 py-2 text-center font-medium text-gray-600 uppercase">Enviados</th>
+                                                 </tr>
+                                            </thead>
+                                            <tbody id="aroma-list-tbody-com-pedido">
+                                                 <tr><td colspan="4" class="p-4 text-center text-gray-500">Calculando...</td></tr>
+                                                 <!-- Lista preenchida por JS -->
+                                            </tbody>
+                                       </table>
+                                  </div>
+                             </div>
                         </div>
-
-                        <!-- Coluna: Aprovados s/ Pedido -->
-                        <div class="space-y-6">
-                            <!-- Top Vendedores (Sem Pedido) -->
-                            <div class="aroma-rank-card border rounded-lg p-4">
-                                <h3 class="text-lg font-semibold text-gray-800 mb-3">Top Vendedores (Aromas Aprovados s/ Pedido)</h3>
-                                <div id="aroma-seller-ranking-list-sem-pedido" class="space-y-2">
-                                    <p class="text-gray-500">Calculando...</p>
-                                </div>
-                                <p id="aroma-seller-ranking-more-sem-pedido" class="text-sm text-blue-600 hover:underline cursor-pointer mt-2 hidden"></p>
-                            </div>
-
-                            <!-- Destaque (Sem Pedido) -->
-                            <div class="aroma-rank-card border rounded-lg p-4 bg-green-50">
-                                <h3 class="text-lg font-semibold text-gray-800 mb-3">Aroma Mais Aprovado (s/ Pedido)</h3>
-                                <div id="aroma-highlight-sem-pedido" class="text-center p-4">
-                                    <p class="text-gray-500">Calculando...</p>
-                                </div>
-                            </div>
-
-                            <!-- Lista (Sem Pedido) -->
-                            <div class="aroma-rank-card border rounded-lg p-4">
-                                <h3 class="text-lg font-semibold text-gray-800 mb-3">Lista de Aromas Aprovados (s/ Pedido)</h3>
-                                <div class="max-h-96 overflow-y-auto">
-                                    <table class="min-w-full text-sm">
-                                        <thead class="bg-gray-100 sticky top-0">
-                                            <tr>
-                                                <th class="px-3 py-2 text-left font-medium text-gray-600">Aroma</th>
-                                                <th class="px-3 py-2 text-left font-medium text-gray-600">Descrição</th>
-                                                <th class="px-3 py-2 text-center font-medium text-gray-600">Aprov.</th>
-                                                <th class="px-3 py-2 text-center font-medium text-gray-600">Enviadas</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="aroma-ranking-table-body-sem-pedido">
-                                            <tr><td colspan="4" class="p-4 text-center text-gray-500">Calculando...</td></tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
+                        
+                        <!-- Coluna: Aprovados SEM Pedido -->
+                        <div id="aromas-sem-pedido">
+                             <h3 class="text-xl font-bold text-gray-800 mb-4 text-center text-blue-600">Aprovados SEM Pedido</h3>
+                             
+                             <!-- Top Vendedores (Sem Pedido) -->
+                             <div class="mb-6">
+                                  <h4 class="font-semibold mb-3 text-gray-700">Top Vendedores (Aromas s/ Pedido)</h4>
+                                  <div id="aroma-top-sellers-list-sem-pedido" class="space-y-2">
+                                       <!-- Lista preenchida por JS -->
+                                       <p class="text-gray-500 text-sm">Calculando...</p>
+                                  </div>
+                                  <p id="aroma-sellers-remainder-sem-pedido" class="text-sm text-gray-600 mt-2 cursor-pointer hover:underline"></p>
+                             </div>
+                             
+                             <!-- Destaque Aroma (Sem Pedido) -->
+                             <div class="mb-6">
+                                  <h4 class="font-semibold mb-3 text-gray-700">Aroma Destaque (s/ Pedido)</h4>
+                                  <div id="aroma-destaque-sem-pedido" class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                                       <p class="text-gray-500 text-sm">Calculando...</p>
+                                       <!-- Destaque preenchido por JS -->
+                                  </div>
+                             </div>
+                             
+                             <!-- Lista de Aromas (Sem Pedido) -->
+                             <div>
+                                  <h4 class="font-semibold mb-3 text-gray-700">Lista de Aromas (s/ Pedido)</h4>
+                                  <div class="max-h-80 overflow-y-auto pr-2">
+                                       <table class="min-w-full text-sm">
+                                            <thead class="bg-gray-100 sticky top-0">
+                                                 <tr>
+                                                      <th class="px-3 py-2 text-left font-medium text-gray-600 uppercase">Aroma</th>
+                                                      <th class="px-3 py-2 text-left font-medium text-gray-600 uppercase">Descrição</th>
+                                                      <th class="px-3 py-2 text-center font-medium text-gray-600 uppercase">Aprov.</th>
+                                                      <th class="px-3 py-2 text-center font-medium text-gray-600 uppercase">Enviados</th>
+                                                 </tr>
+                                            </thead>
+                                            <tbody id="aroma-list-tbody-sem-pedido">
+                                                 <tr><td colspan="4" class="p-4 text-center text-gray-500">Calculando...</td></tr>
+                                                 <!-- Lista preenchida por JS -->
+                                            </tbody>
+                                       </table>
+                                  </div>
+                             </div>
                         </div>
+                        
                     </div>
                 </div>
             </section>
@@ -454,42 +426,42 @@
      </div>
 
     <!-- Aroma Seller Full Ranking Modal -->
-    <div id="aroma-seller-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 hidden z-30">
-        <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6">
-            <div class="flex justify-between items-center mb-4 border-b pb-3">
-                <h3 id="aroma-seller-modal-title" class="text-xl font-bold">Ranking Completo de Vendedores</h3>
-                <button id="close-aroma-seller-modal-btn" class="text-2xl font-bold text-gray-500 hover:text-gray-800">&times;</button>
-            </div>
-            <div id="aroma-seller-modal-list" class="space-y-2 max-h-[60vh] overflow-y-auto pr-2">
-                <!-- Lista será preenchida por JS -->
-            </div>
-            <div class="mt-6 flex justify-end">
-                <button id="close-aroma-seller-modal-btn-bottom" class="bg-blue-600 text-white font-bold py-2 px-5 rounded-lg">Fechar</button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Aroma Details by Seller Modal -->
-    <div id="aroma-details-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 hidden z-40">
-        <div class="bg-white rounded-2xl shadow-xl w-full max-w-4xl p-6">
-            <div class="flex justify-between items-center mb-4 border-b pb-3">
-                <h3 id="aroma-details-modal-title" class="text-xl font-bold">Aromas Aprovados</h3>
-                <button id="close-aroma-details-modal-btn" class="text-2xl font-bold text-gray-500 hover:text-gray-800">&times;</button>
-            </div>
-            <div id="aroma-details-modal-list" class="space-y-3 max-h-[60vh] overflow-y-auto pr-2">
-                <!-- Detalhes serão preenchidos por JS -->
-            </div>
-            <div class="mt-6 flex justify-end">
-                <button id="close-aroma-details-modal-btn-bottom" class="bg-blue-600 text-white font-bold py-2 px-5 rounded-lg">Fechar</button>
-            </div>
-        </div>
+    <div id="aroma-seller-ranking-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 hidden z-40">
+         <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6">
+              <div class="flex justify-between items-center mb-4">
+                   <h3 class="text-xl font-bold" id="aroma-seller-ranking-modal-title">Ranking Completo de Vendedores</h3>
+                   <button id="close-aroma-seller-ranking-modal" class="text-2xl font-bold text-gray-500 hover:text-gray-800">&times;</button>
+              </div>
+              <div id="aroma-seller-ranking-modal-list" class="space-y-2 max-h-[60vh] overflow-y-auto pr-2">
+                   <!-- Lista preenchida por JS -->
+              </div>
+              <div class="mt-6 flex justify-end">
+                   <button id="close-aroma-seller-ranking-modal-bottom" class="bg-blue-600 text-white font-bold py-2 px-5 rounded-lg">Fechar</button>
+              </div>
+         </div>
     </div>
 
+    <!-- Approved Aromas by Seller Modal -->
+    <div id="seller-approved-aromas-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 hidden z-40">
+         <div class="bg-white rounded-2xl shadow-xl w-full max-w-4xl p-6">
+              <div class="flex justify-between items-center mb-4">
+                   <h3 class="text-xl font-bold" id="seller-approved-aromas-modal-title">Aromas Aprovados</h3>
+                   <button id="close-seller-approved-aromas-modal" class="text-2xl font-bold text-gray-500 hover:text-gray-800">&times;</button>
+              </div>
+              <div id="seller-approved-aromas-modal-list" class="space-y-3 max-h-[60vh] overflow-y-auto pr-2">
+                   <!-- Lista preenchida por JS -->
+                   <p class="text-gray-500">Nenhum aroma aprovado encontrado para este vendedor.</p>
+              </div>
+              <div class="mt-6 flex justify-end">
+                   <button id="close-seller-approved-aromas-modal-bottom" class="bg-blue-600 text-white font-bold py-2 px-5 rounded-lg">Fechar</Mbutton>
+              </div>
+         </div>
+    </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, onSnapshot, doc, writeBatch, setDoc, getDoc, getDocs, updateDoc, query, orderBy, serverTimestamp, addDoc, limit, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"; // Added where
+        import { getFirestore, collection, onSnapshot, doc, writeBatch, setDoc, getDoc, getDocs, updateDoc, query, orderBy, serverTimestamp, addDoc, limit, where, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"; // Added deleteDoc
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
         // IMPORTANT: Replace with your actual Firebase config
@@ -509,6 +481,11 @@
 
         const PENDING_STATUSES = ['EM ANÁLISE', 'AMOSTRA SEM FEEDBACK', 'SEM RETORNO DO CLIENTE', 'AMOSTRA NÃO TESTADA', 'PENDENTE'];
         const SEGMENTS = ['CÁRNEOS', 'EXPORTACAO', 'FOOD SERVICE', 'LACTEOS', 'NUTRACEUTICOS', 'NUTRICAO ANIMAL', 'PANIFICACAO', 'SMB', 'SORVETES', 'SUPPLY/FIS'];
+        
+        // --- Constantes de Aroma ---
+        const AROMA_PREFIX = 'DAR';
+        const FEEDBACK_COM_PEDIDO = 'COM PEDIDO';
+        const FEEDBACK_SEM_PEDIDO = 'APROVADO SEM PEDIDO';
 
         // --- DOM Elements ---
         const processBtn = document.getElementById('process-btn');
@@ -559,42 +536,42 @@
         const cancelReplyBtn = document.getElementById('cancel-reply-btn');
         const sendReplyBtn = document.getElementById('send-reply-btn');
         
-        // Aroma Ranking DOM Elements
-        const aromaRankingContent = document.getElementById('aroma-ranking-content');
+        // --- DOM Elements (Aroma Ranking) ---
+        const aromaRankingSection = document.getElementById('aroma-ranking-section');
         const toggleAromaSectionBtn = document.getElementById('toggle-aroma-section-btn');
+        const aromaRankingContent = document.getElementById('aroma-ranking-content');
         const aromaSegmentFilter = document.getElementById('aroma-segment-filter');
         const aromaStartDate = document.getElementById('aroma-start-date');
         const aromaEndDate = document.getElementById('aroma-end-date');
-        const clearAromaDatesBtn = document.getElementById('clear-aroma-dates-btn');
-        const loadHistoricalDataBtn = document.getElementById('load-historical-data-btn');
+        const aromaClearDates = document.getElementById('aroma-clear-dates');
+        const toggleHistoricalDataBtn = document.getElementById('toggle-historical-data-btn');
         const showLiveDataBtn = document.getElementById('show-live-data-btn');
-        const historicalDataStatus = document.getElementById('historical-data-status');
-        const historicalInputSection = document.getElementById('historical-input-section');
+        const historicalDataInputSection = document.getElementById('historical-data-input-section');
         const historicalDataInput = document.getElementById('historical-data-input');
         const addHistoricalDataBtn = document.getElementById('add-historical-data-btn');
-        const cancelHistoricalDataBtn = document.getElementById('cancel-historical-data-btn');
+        const aromaDataSourceLabel = document.getElementById('aroma-data-source-label');
         
-        const aromaSellerRankingList = document.getElementById('aroma-seller-ranking-list');
-        const aromaSellerRankingMore = document.getElementById('aroma-seller-ranking-more');
-        const aromaHighlight = document.getElementById('aroma-highlight');
-        const aromaRankingTableBody = document.getElementById('aroma-ranking-table-body');
+        // --- DOM Elements (Aroma Modals) ---
+        const aromaSellerRankingModal = document.getElementById('aroma-seller-ranking-modal');
+        const aromaSellerRankingModalTitle = document.getElementById('aroma-seller-ranking-modal-title');
+        const aromaSellerRankingModalList = document.getElementById('aroma-seller-ranking-modal-list');
+        const closeAromaSellerRankingModal = document.getElementById('close-aroma-seller-ranking-modal');
+        const closeAromaSellerRankingModalBottom = document.getElementById('close-aroma-seller-ranking-modal-bottom');
+        const sellerApprovedAromasModal = document.getElementById('seller-approved-aromas-modal');
+        const sellerApprovedAromasModalTitle = document.getElementById('seller-approved-aromas-modal-title');
+        const sellerApprovedAromasModalList = document.getElementById('seller-approved-aromas-modal-list');
+        const closeSellerApprovedAromasModal = document.getElementById('close-seller-approved-aromas-modal');
+        const closeSellerApprovedAromasModalBottom = document.getElementById('close-seller-approved-aromas-modal-bottom');
 
-        const aromaSellerRankingListSemPedido = document.getElementById('aroma-seller-ranking-list-sem-pedido');
-        const aromaSellerRankingMoreSemPedido = document.getElementById('aroma-seller-ranking-more-sem-pedido');
-        const aromaHighlightSemPedido = document.getElementById('aroma-highlight-sem-pedido');
-        const aromaRankingTableBodySemPedido = document.getElementById('aroma-ranking-table-body-sem-pedido');
-
-        const aromaSellerModal = document.getElementById('aroma-seller-modal');
-        const aromaSellerModalTitle = document.getElementById('aroma-seller-modal-title');
-        const aromaSellerModalList = document.getElementById('aroma-seller-modal-list');
-        const closeAromaSellerModalBtn = document.getElementById('close-aroma-seller-modal-btn');
-        const closeAromaSellerModalBtnBottom = document.getElementById('close-aroma-seller-modal-btn-bottom');
-
-        const aromaDetailsModal = document.getElementById('aroma-details-modal');
-        const aromaDetailsModalTitle = document.getElementById('aroma-details-modal-title');
-        const aromaDetailsModalList = document.getElementById('aroma-details-modal-list');
-        const closeAromaDetailsModalBtn = document.getElementById('close-aroma-details-modal-btn');
-        const closeAromaDetailsModalBtnBottom = document.getElementById('close-aroma-details-modal-btn-bottom');
+        // --- DOM Elements (Aroma Lists) ---
+        const aromaTopSellersListComPedido = document.getElementById('aroma-top-sellers-list-com-pedido');
+        const aromaSellersRemainderComPedido = document.getElementById('aroma-sellers-remainder-com-pedido');
+        const aromaDestaqueComPedido = document.getElementById('aroma-destaque-com-pedido');
+        const aromaListTbodyComPedido = document.getElementById('aroma-list-tbody-com-pedido');
+        const aromaTopSellersListSemPedido = document.getElementById('aroma-top-sellers-list-sem-pedido');
+        const aromaSellersRemainderSemPedido = document.getElementById('aroma-sellers-remainder-sem-pedido');
+        const aromaDestaqueSemPedido = document.getElementById('aroma-destaque-sem-pedido');
+        const aromaListTbodySemPedido = document.getElementById('aroma-list-tbody-sem-pedido');
 
 
         // --- State Variables ---
@@ -603,7 +580,7 @@
         let sellerRepliesListenerUnsubscribe = null;
         let sellerRepliesToManagerListenerUnsubscribe = null;
         let destaquesAmostrasListenerUnsubscribe = null;
-        let historicalAromaDataUnsubscribe = null; // Unsubscribe for historical data
+        let historicalAromasListenerUnsubscribe = null; // Listener for historical data
         let currentSessionId = null;
         let chartInstances = {};
         let modalChartInstance = null;
@@ -617,12 +594,9 @@
         let currentSampleForReply = null; // Track which sample is being replied to
         let allNotifications = [];
         let areAllNotificationsVisible = false;
-        
-        let historicalAromaData = []; // Store fetched historical data
-        let isShowingHistoricalData = false; // Flag for aroma ranking data source
-        let currentAromaSellerRankings = { comPedido: [], semPedido: [] }; // Cache for modal
-        let currentAromaDetailsData = []; // Cache for aroma details modal
-
+        let historicalAromaData = []; // Array to store historical data from Firestore
+        let aromaDataMode = 'live'; // 'live' or 'historical'
+        let fullAromaSellerRanking = []; // Store full seller ranking for modal
 
         // --- Utility Functions ---
         const normalizeText = (text = '') => text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim();
@@ -631,20 +605,58 @@
         // Standardize feedback text
         function getCanonicalFeedback(feedback) {
              if (!feedback) return '';
-            const normalized = normalizeText(feedback.replace(/^(A - |R - |E - |P - )/, '').trim()); // Normalize before mapping
+            const normalized = normalizeText(feedback.replace(/^(A - |R - |E - |P - )/, '').trim());
             const mapping = {
-                'APROVADO COM PEDIDO': 'COM PEDIDO',
-                'APROVADA SEM PEDIDO': 'APROVADO SEM PEDIDO', 
+                'APROVADO COM PEDIDO': FEEDBACK_COM_PEDIDO,
+                'APROVADA SEM PEDIDO': FEEDBACK_SEM_PEDIDO,
+                'APROVADO S/ PEDIDO': FEEDBACK_SEM_PEDIDO,
                 'INNOVATION / EVENTOS': 'EVENTO',
                 'AMOSTRA NAO TESTADA': 'AMOSTRA NÃO TESTADA',
                 'EM ANALISE': 'EM ANÁLISE'
-                // Adicione outros mapeamentos se necessário
             };
             return mapping[normalized] || normalized;
         }
 
+        /**
+         * Parses a date string from formats dd/MM/yyyy or yyyy-MM-dd into a Date object.
+         * Returns null if the format is invalid.
+         */
+        function parseDate(dateString) {
+            if (!dateString || typeof dateString !== 'string') return null;
+            
+            let date = null;
+            try {
+                // Try format: YYYY-MM-DD (common in date inputs)
+                if (dateString.includes('-')) {
+                    const parts = dateString.split('-');
+                    if (parts.length === 3) {
+                         // new Date(year, monthIndex, day)
+                        date = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+                    }
+                }
+                // Try format: DD/MM/YYYY (common in spreadsheets)
+                else if (dateString.includes('/')) {
+                    const parts = dateString.split('/');
+                    if (parts.length === 3) {
+                         // new Date(year, monthIndex, day)
+                        date = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+                    }
+                }
+                
+                // Check if the parsed date is valid
+                if (date && !isNaN(date.getTime())) {
+                    // Set time to 00:00:00 to ensure correct date comparison
+                    date.setHours(0, 0, 0, 0); 
+                    return date;
+                }
+            } catch (e) {
+                // Ignore parsing errors
+            }
+            return null; // Return null if parsing failed or date is invalid
+        }
+
+
         // --- Main Dashboard Rendering Function ---
-        // Moved earlier to ensure it's defined before event listeners call it.
         function processAndDisplayDashboard(samples, sessionId, sellerDocs = []) {
             dashboard.classList.remove('hidden');
             inputSection.classList.add('hidden');
@@ -659,8 +671,8 @@
             renderObservationsFeed(samples); // Now uses allSellerReplies cache
             renderFullSamplesTable(samples);
             
-            // Render Aroma Rankings (using live data by default)
-            updateAromaRankings(); 
+            // Render Aroma Rankings (using 'live' data by default)
+            renderAromaRankings(); 
 
             populateSegmentFilters(); // Update segment dropdowns
 
@@ -726,7 +738,7 @@
                      listenForSellerReplies(manualId);
                      listenForSellerRepliesToManager(manualId);
                      listenForDestaquesAmostras(manualId);
-                     listenForHistoricalAromaData(); // Listen for historical data
+                     listenForHistoricalAromas(); // Listen for historical data
 
                  } catch (error) {
                       console.error(`Erro ao verificar ou definir sessão ativa ${manualId}:`, error);
@@ -760,137 +772,6 @@
         });
         cancelReplyBtn.addEventListener('click', () => replyModal.classList.add('hidden'));
         sendReplyBtn.addEventListener('click', sendReplyToSeller);
-        
-        // --- Aroma Ranking Event Listeners ---
-        toggleAromaSectionBtn.addEventListener('click', () => {
-            aromaRankingContent.classList.toggle('expanded');
-            toggleAromaSectionBtn.querySelector('svg').classList.toggle('rotate-180');
-        });
-
-        // Recalculate rankings when filters change
-        aromaSegmentFilter.addEventListener('change', updateAromaRankings);
-        aromaStartDate.addEventListener('change', updateAromaRankings);
-        aromaEndDate.addEventListener('change', updateAromaRankings);
-        clearAromaDatesBtn.addEventListener('click', () => {
-            aromaStartDate.value = '';
-            aromaEndDate.value = '';
-            updateAromaRankings(); // Recalculate
-        });
-
-        // Toggle data source for rankings
-        loadHistoricalDataBtn.addEventListener('click', () => {
-            historicalInputSection.classList.remove('hidden');
-            loadHistoricalDataBtn.classList.add('hidden');
-        });
-
-        cancelHistoricalDataBtn.addEventListener('click', () => {
-             historicalInputSection.classList.add('hidden');
-             loadHistoricalDataBtn.classList.remove('hidden');
-             historicalDataInput.value = ''; // Clear input
-        });
-        
-        // Botão para salvar dados históricos no Firestore
-        addHistoricalDataBtn.addEventListener('click', async () => {
-            const data = historicalDataInput.value.trim();
-            if (!data) {
-                infoMessage.textContent = "Por favor, cole os dados históricos.";
-                setTimeout(() => infoMessage.textContent = '', 3000);
-                return;
-            }
-
-            addHistoricalDataBtn.disabled = true;
-            addHistoricalDataBtn.textContent = "A guardar...";
-
-            Papa.parse(data, {
-                header: true,
-                skipEmptyLines: true,
-                transformHeader: h => h.trim(),
-                complete: async (results) => {
-                    if (results.errors.length > 0) {
-                        infoMessage.textContent = `Erro de formatação: ${results.errors[0].message}`;
-                        addHistoricalDataBtn.disabled = false;
-                        addHistoricalDataBtn.textContent = "Adicionar Histórico ao Ranking";
-                        return;
-                    }
-
-                    // Mapear dados para o formato esperado
-                    const mappedData = results.data.map((row, index) => {
-                        // Usar "Feedback" como fallback se "Feedback Final" não existir
-                        const feedback = row['Feedback Final'] || row['Feedback'] || ''; 
-                        return {
-                            id: `hist_${Date.now()}_${index}`,
-                            sellerName: String(row['Vendedor(a)'] || ''),
-                            produto: String(row['Produto'] || ''),
-                            descricao: String(row['Descrição'] || ''),
-                            feedback: feedback, // Usar a coluna correta
-                            emissaoNF: String(row['Emissão NF'] || ''),
-                            razaoSocial: String(row['Razão Social'] || ''),
-                            pedido: String(row['Pedido'] || ''),
-                            notaFiscal: String(row['Nota Fiscal'] || ''),
-                            // Garantir que é um objeto de amostra válido
-                            isPending: false // Dados históricos são considerados resolvidos
-                        };
-                    }).filter(row => row.sellerName && row.produto && row.feedback); // Filtrar linhas inválidas
-
-                    if (mappedData.length === 0) {
-                        infoMessage.textContent = "Nenhum dado histórico válido encontrado (verifique colunas Vendedor(a), Produto, Feedback).";
-                        addHistoricalDataBtn.disabled = false;
-                        addHistoricalDataBtn.textContent = "Adicionar Histórico ao Ranking";
-                         setTimeout(() => infoMessage.textContent = '', 3000);
-                        return;
-                    }
-                    
-                    try {
-                        // Salvar os dados no Firestore (em vez de variável local)
-                        const batch = writeBatch(db);
-                        const collectionRef = collection(db, "dadosHistoricosAromas");
-                        
-                        mappedData.forEach(item => {
-                            const docRef = doc(collectionRef, item.id); // Usar ID único
-                            batch.set(docRef, item);
-                        });
-                        
-                        await batch.commit();
-                        
-                        // O listener 'listenForHistoricalAromaData' vai pegar esses dados
-                        // e atualizar 'historicalAromaData' automaticamente.
-
-                        infoMessage.textContent = `${mappedData.length} registros históricos salvos com sucesso!`;
-                        historicalDataInput.value = '';
-                        historicalInputSection.classList.add('hidden');
-                        loadHistoricalDataBtn.classList.remove('hidden');
-                        
-                        // Forçar a visualização dos dados históricos
-                        isShowingHistoricalData = true;
-                        updateAromaRankings(); // Atualizar ranking com os novos dados
-                        updateHistoricalDataUI();
-
-                    } catch (error) {
-                         console.error("Erro ao salvar dados históricos:", error);
-                         infoMessage.textContent = "Erro ao salvar dados históricos. Tente novamente.";
-                    } finally {
-                        addHistoricalDataBtn.disabled = false;
-                        addHistoricalDataBtn.textContent = "Adicionar Histórico ao Ranking";
-                         setTimeout(() => infoMessage.textContent = '', 3000);
-                    }
-                }
-            });
-        });
-
-
-        showLiveDataBtn.addEventListener('click', () => {
-            isShowingHistoricalData = false;
-            updateAromaRankings(); // Recalculate with live data
-            updateHistoricalDataUI();
-        });
-        
-        // Modal de Ranking Completo de Vendedores
-        closeAromaSellerModalBtn.addEventListener('click', () => aromaSellerModal.classList.add('hidden'));
-        closeAromaSellerModalBtnBottom.addEventListener('click', () => aromaSellerModal.classList.add('hidden'));
-
-        // Modal de Detalhes de Aromas por Vendedor
-        closeAromaDetailsModalBtn.addEventListener('click', () => aromaDetailsModal.classList.add('hidden'));
-        closeAromaDetailsModalBtnBottom.addEventListener('click', () => aromaDetailsModal.classList.add('hidden'));
 
 
         confirmSegmentBtn.addEventListener('click', async () => {
@@ -930,6 +811,50 @@
         // Filter observations feed when segment or search changes
         observationSegmentFilter.addEventListener('change', () => renderObservationsFeed(allCurrentSamples));
         observationSearchInput.addEventListener('input', () => renderObservationsFeed(allCurrentSamples));
+        
+        // --- Aroma Ranking Event Listeners ---
+        toggleAromaSectionBtn.addEventListener('click', () => {
+            aromaRankingContent.classList.toggle('hidden');
+            toggleAromaSectionBtn.querySelector('svg').classList.toggle('rotate-180');
+        });
+        aromaSegmentFilter.addEventListener('change', renderAromaRankings);
+        aromaStartDate.addEventListener('change', renderAromaRankings);
+        aromaEndDate.addEventListener('change', renderAromaRankings);
+        aromaClearDates.addEventListener('click', () => {
+             aromaStartDate.value = '';
+             aromaEndDate.value = '';
+             renderAromaRankings(); // Re-render with cleared dates
+        });
+        
+        toggleHistoricalDataBtn.addEventListener('click', () => {
+             historicalDataInputSection.classList.toggle('hidden');
+        });
+        
+        showLiveDataBtn.addEventListener('click', () => {
+             aromaDataMode = 'live';
+             aromaDataSourceLabel.textContent = 'Exibindo: Dados Atuais (Live)';
+             showLiveDataBtn.classList.add('hidden');
+             toggleHistoricalDataBtn.classList.remove('hidden');
+             historicalDataInputSection.classList.add('hidden');
+             renderAromaRankings(); // Re-render with live data
+        });
+        
+        addHistoricalDataBtn.addEventListener('click', () => {
+             const data = historicalDataInput.value.trim();
+             if (data) {
+                 parseAndSaveHistoricalData(data);
+             } else {
+                 infoMessage.textContent = "Por favor, cole os dados históricos.";
+                 setTimeout(() => infoMessage.textContent = '', 3000);
+             }
+        });
+        
+        // --- Aroma Modal Listeners ---
+        closeAromaSellerRankingModal.addEventListener('click', () => aromaSellerRankingModal.classList.add('hidden'));
+        closeAromaSellerRankingModalBottom.addEventListener('click', () => aromaSellerRankingModal.classList.add('hidden'));
+        closeSellerApprovedAromasModal.addEventListener('click', () => sellerApprovedAromasModal.classList.add('hidden'));
+        closeSellerApprovedAromasModalBottom.addEventListener('click', () => sellerApprovedAromasModal.classList.add('hidden'));
+
 
         // --- Core Functions ---
 
@@ -955,8 +880,8 @@
                         if (!sellerName || !row['Pedido']) return null; // Basic validation
                         const normalizedStatus = normalizeText(row['Status']);
                         
-                        // Usar "Feedback" como fallback se "Feedback Final" não existir
-                        const feedback = row['Feedback Final'] || row['Feedback'] || '';
+                        // Use "Feedback Final" if available, otherwise fallback to "Feedback"
+                        const feedbackValue = row['Feedback Final'] || row['Feedback'] || '';
                         
                         return {
                             id: `sample_${Date.now()}_${index}`, // Unique ID for each sample
@@ -972,7 +897,7 @@
                             emissaoNF: String(row['Emissão NF'] || ''),
                             originalStatus: String(row['Status'] || ''),
                             // Fields to be updated by vendor/manager
-                            feedback: feedback, // Usar a coluna correta
+                            feedback: feedbackValue, // Use the detected feedback column
                             observation: '',
                             finalizedByVendor: false, // Flag set by vendor app
                             systemStatus: 'pending' // Manager status: pending, baixado
@@ -996,6 +921,90 @@
                 }
             });
         }
+        
+        /**
+         * Parses and SAVES historical data to Firestore
+         */
+        async function parseAndSaveHistoricalData(data) {
+            infoMessage.textContent = "A processar dados históricos...";
+            addHistoricalDataBtn.disabled = true;
+
+            Papa.parse(data, {
+                header: true,
+                skipEmptyLines: true,
+                transformHeader: h => h.trim(),
+                complete: async (results) => {
+                    if (results.errors.length > 0) {
+                        infoMessage.textContent = `Erro de formatação: ${results.errors[0].message}`;
+                        addHistoricalDataBtn.disabled = false;
+                        return;
+                    }
+
+                    // Map parsed rows to a flatter structure for historical analysis
+                    const mappedData = results.data.map((row, index) => {
+                        const sellerName = row['Vendedor(a)'];
+                        const produto = row['Produto'];
+                        // Use "Feedback" column as confirmed by user
+                        const feedback = row['Feedback'] || row['Feedback Final'] || ''; 
+                        const emissaoNF = row['Emissão NF'] || '';
+
+                        if (!sellerName || !produto || !feedback) return null; // Basic validation
+
+                        return {
+                            id: `hist_${Date.now()}_${index}`, // Unique ID
+                            sellerName: String(sellerName),
+                            produto: String(produto),
+                            descricao: String(row['Descrição'] || ''),
+                            feedback: String(feedback),
+                            emissaoNF: String(emissaoNF),
+                            // Add other relevant fields if needed
+                            pedido: String(row['Pedido'] || ''),
+                            razaoSocial: String(row['Razão Social'] || ''),
+                            notaFiscal: String(row['Nota Fiscal'] || '')
+                        };
+                    }).filter(Boolean);
+
+                    if (mappedData.length === 0) {
+                        infoMessage.textContent = "Nenhum dado histórico válido encontrado.";
+                        addHistoricalDataBtn.disabled = false;
+                        return;
+                    }
+                    
+                    // Save data to Firestore collection 'dadosHistoricosAromas'
+                    const batch = writeBatch(db);
+                    const collectionRef = collection(db, "dadosHistoricosAromas");
+                    
+                    mappedData.forEach(item => {
+                        const docRef = doc(collectionRef, item.id); // Use unique ID for doc
+                        batch.set(docRef, item);
+                    });
+                    
+                    try {
+                        await batch.commit();
+                        
+                        infoMessage.textContent = `${mappedData.length} registros históricos salvos com sucesso!`;
+                        historicalDataInput.value = ''; // Clear input
+                        historicalDataInputSection.classList.add('hidden');
+                        
+                        // Switch view to historical data immediately
+                        aromaDataMode = 'historical';
+                        aromaDataSourceLabel.textContent = 'Exibindo: Dados Históricos';
+                        showLiveDataBtn.classList.remove('hidden');
+                        toggleHistoricalDataBtn.classList.add('hidden');
+                        
+                        // The listener `listenForHistoricalAromas` will automatically update
+                        // the local `historicalAromaData` array and trigger a re-render.
+                        
+                    } catch (error) {
+                         console.error("Erro ao salvar dados históricos no Firestore:", error);
+                         infoMessage.textContent = "Erro ao salvar dados históricos.";
+                    } finally {
+                         addHistoricalDataBtn.disabled = false;
+                    }
+                }
+            });
+        }
+
 
         // Save parsed data to Firestore and set as active session
         async function saveDataAndUpdateActiveSession(samples, sessionId) {
@@ -1038,7 +1047,7 @@
              listenForSellerReplies(sessionId);
              listenForSellerRepliesToManager(sessionId);
              listenForDestaquesAmostras(sessionId);
-             listenForHistoricalAromaData(); // Listen for historical data
+             listenForHistoricalAromas(); // Start listening for historical data
         }
 
         // Listen for real-time updates to seller data within a session
@@ -1081,17 +1090,12 @@
                         const newFeedbacks = allSamples.filter(currentSample => {
                             const prevSample = previousSamples.find(p => p.id === currentSample.id);
                             // Check if previous feedback was empty and current is not
-                            const prevFeedback = prevSample ? (prevSample.feedback || prevSample['Feedback Final'] || prevSample['Feedback'] || '') : '';
-                            const currentFeedback = currentSample.feedback || currentSample['Feedback Final'] || currentSample['Feedback'] || '';
-                            
-                            return prevSample && (prevFeedback.trim() === '') && (currentFeedback.trim() !== '');
+                            return prevSample && (!prevSample.feedback || prevSample.feedback.trim() === '') && (currentSample.feedback && currentSample.feedback.trim() !== '');
                         });
-
 
                         if (newFeedbacks.length > 0) {
                             newFeedbacks.forEach(sample => {
-                                const feedback = sample.feedback || sample['Feedback Final'] || sample['Feedback'];
-                                const message = `<strong>${sample.sellerName}</strong> - deu feedback para o produto <strong>${sample.produto}</strong> - ${feedback} (pedido ${sample.pedido})`;
+                                const message = `<strong>${sample.sellerName}</strong> - deu feedback para o produto <strong>${sample.produto}</strong> - ${sample.feedback} (pedido ${sample.pedido})`;
                                 const notifId = sanitizeForFirebaseId(`notif-${sample.id}-${Date.now()}`);
                                 const notifRef = doc(db, "sessoes", currentSessionId, "notificacoes", notifId);
                                 batch.set(notifRef, {
@@ -1150,7 +1154,7 @@
                     if (!sellerRepliesListenerUnsubscribe) listenForSellerReplies(sessionId);
                     if (!sellerRepliesToManagerListenerUnsubscribe) listenForSellerRepliesToManager(sessionId);
                     if (!destaquesAmostrasListenerUnsubscribe) listenForDestaquesAmostras(sessionId);
-                    if (!historicalAromaDataUnsubscribe) listenForHistoricalAromaData(); // Listen for historical data
+                    if (!historicalAromasListenerUnsubscribe) listenForHistoricalAromas(); // Ensure historical listener is active
 
                     // Update the UI with the latest data
                     processAndDisplayDashboard(allSamples, sessionId, sellerDocs);
@@ -1168,6 +1172,33 @@
                  currentSessionId = null;
             });
         }
+        
+        /**
+         * Listen for historical aroma data from Firestore
+         */
+        function listenForHistoricalAromas() {
+            if (historicalAromasListenerUnsubscribe) historicalAromasListenerUnsubscribe(); // Unsubscribe from previous listener
+            
+            const q = collection(db, "dadosHistoricosAromas");
+            
+            historicalAromasListenerUnsubscribe = onSnapshot(q, (snapshot) => {
+                 historicalAromaData = snapshot.docs.map(doc => doc.data());
+                 console.log(`Carregados ${historicalAromaData.length} registros históricos.`);
+                 
+                 // Re-render aroma rankings if dashboard is visible and mode is historical
+                 if (!dashboard.classList.contains('hidden')) {
+                     renderAromaRankings();
+                 }
+                 
+            }, (error) => {
+                 console.error("Erro ao carregar dados históricos:", error);
+                 historicalAromaData = []; // Clear data on error
+                 if (!dashboard.classList.contains('hidden')) {
+                     renderAromaRankings(); // Re-render (will show empty)
+                 }
+            });
+        }
+
 
         // Reset UI state, clear listeners and data
         function resetToInitialState(keepConnectionOptions = false) {
@@ -1177,7 +1208,7 @@
             if (sellerRepliesListenerUnsubscribe) sellerRepliesListenerUnsubscribe();
             if (sellerRepliesToManagerListenerUnsubscribe) sellerRepliesToManagerListenerUnsubscribe();
             if (destaquesAmostrasListenerUnsubscribe) destaquesAmostrasListenerUnsubscribe();
-            if (historicalAromaDataUnsubscribe) historicalAromaDataUnsubscribe(); // Unsubscribe historical
+            if (historicalAromasListenerUnsubscribe) historicalAromasListenerUnsubscribe(); // Unsubscribe historical
 
             // Clear local state
             currentSessionId = null;
@@ -1190,21 +1221,21 @@
             sellerSegmentsCache = {};
             currentSampleForReply = null;
             currentFeedbackFilter = '';
-            
             historicalAromaData = []; // Clear historical data
-            isShowingHistoricalData = false; // Reset flag
-            currentAromaSellerRankings = { comPedido: [], semPedido: [] };
-            currentAromaDetailsData = [];
+            aromaDataMode = 'live'; // Reset data mode
 
             // Reset UI elements
             dashboard.classList.add('hidden');
             sessionIdText.textContent = 'Nenhuma sessão iniciada';
             
-            // Reset historical UI
-            historicalInputSection.classList.add('hidden');
+            // Reset Aroma UI
+            aromaRankingContent.classList.add('hidden');
+            toggleAromaSectionBtn.querySelector('svg').classList.remove('rotate-180');
+            aromaDataSourceLabel.textContent = 'Exibindo: Dados Atuais (Live)';
+            showLiveDataBtn.classList.add('hidden');
+            toggleHistoricalDataBtn.classList.remove('hidden');
+            historicalDataInputSection.classList.add('hidden');
             historicalDataInput.value = '';
-            loadHistoricalDataBtn.classList.remove('hidden');
-            updateHistoricalDataUI();
 
             if (keepConnectionOptions) {
                 // Show connection section if resetting due to error or cleared global session
@@ -1251,7 +1282,7 @@
                         listenForSellerReplies(activeSessionId);
                         listenForSellerRepliesToManager(activeSessionId);
                         listenForDestaquesAmostras(activeSessionId);
-                        listenForHistoricalAromaData(); // Listen for historical data
+                        listenForHistoricalAromas(); // Listen for historical data
                     } else {
                         // Already connected to the correct global session
                         console.log(`Already connected to global session ${activeSessionId}`);
@@ -1435,32 +1466,6 @@
                 highlightedSamplesCache = []; // Clear cache on error
             });
         }
-        
-        // **NOVO: Listen for historical aroma data from Firestore**
-        function listenForHistoricalAromaData() {
-            if (historicalAromaDataUnsubscribe) historicalAromaDataUnsubscribe();
-            
-            const q = collection(db, "dadosHistoricosAromas");
-            
-            historicalAromaDataUnsubscribe = onSnapshot(q, (snapshot) => {
-                historicalAromaData = snapshot.docs.map(doc => doc.data());
-                console.log(`Carregados ${historicalAromaData.length} registros históricos de aromas.`);
-                
-                // Atualiza a UI se o dashboard já estiver visível
-                if(!dashboard.classList.contains('hidden')) {
-                    updateAromaRankings(); 
-                    updateHistoricalDataUI();
-                }
-            }, (error) => {
-                console.error("Erro ao carregar dados históricos de aromas:", error);
-                historicalAromaData = [];
-                 if(!dashboard.classList.contains('hidden')) {
-                    updateAromaRankings();
-                    updateHistoricalDataUI();
-                 }
-            });
-        }
-
 
         // Toggle the highlight status of a specific sample ID
         async function toggleDestaqueAmostra(e) {
@@ -1499,20 +1504,19 @@
             const feedbackCounts = {}; // Counts for specific feedback reasons
 
             // Define canonical feedback types for categorization
-            const APPROVED_WITHOUT_PREFIX = ['COM PEDIDO', 'APROVADO SEM PEDIDO'];
+            const APPROVED_WITHOUT_PREFIX = [FEEDBACK_COM_PEDIDO, FEEDBACK_SEM_PEDIDO];
             const REJECTED_WITHOUT_PREFIX = ['APRESENTAÇÃO PRÓ ATIVA', 'CALIBRE', 'EXTRAVIADA', 'FORA DA ESPECIFICAÇÃO DO CLIENTE', 'FORA DO PERFIL DO CLIENTE', 'FRACA / ESTOURANDO / COM CHUVEIRO', 'PRODUTO DESCONTINUADO', 'QUANTIDADE INSUFICIENTE', 'REPRESENTAÇÃO / DISTRIBUIDOR', 'SEM RETORNO DO CLIENTE', 'EXPORTACAO'];
             const EVENTS_WITHOUT_PREFIX = ['INNOVATION / EVENTOS', 'EVENTO'];
 
             // Categorize samples
             samples.forEach(s => {
-                const feedbackKey = s.feedback || s['Feedback Final'] || s['Feedback'] || '';
-                
                 if (s.isPending) {
                     pending++;
                 } else {
                     resolved++;
-                    if (feedbackKey.trim() !== '') {
-                        const normalizedFeedback = getCanonicalFeedback(feedbackKey); // Use canonical feedback
+                    if (s.feedback && s.feedback.trim() !== '') {
+                        const feedbackKey = s.feedback.trim();
+                        const normalizedFeedback = getCanonicalFeedback(feedbackKey); // Use normalization
                         feedbackCounts[normalizedFeedback] = (feedbackCounts[normalizedFeedback] || 0) + 1; // Count specific reasons
 
                         // Categorize into Approved, Rejected, Events
@@ -1661,8 +1665,7 @@
                 }
 
                 const card = document.createElement('div');
-                // Remover o clique direto do card
-                card.className = `p-4 rounded-lg shadow bg-white border-l-4 border-${statusColor}-500`;
+                card.className = `seller-card p-4 rounded-lg shadow bg-white border-l-4 border-${statusColor}-500`;
                 card.dataset.sellerName = sellerName; // Store seller name for filtering
 
                 const segment = sellerSegmentsCache[sellerName] || 'Sem Segmento'; // Get segment from cache
@@ -1685,10 +1688,9 @@
                 // Card inner HTML
                 card.innerHTML = `
                     <div class="flex justify-between items-start mb-2">
-                         <!-- O nome do vendedor não é mais um botão aqui -->
-                         <div class="font-bold text-lg flex items-center">
+                        <div class="font-bold text-lg flex items-center">
                            ${sellerName}
-                         </div>
+                        </div>
                         <button class="config-seller-btn text-gray-400 hover:text-gray-600" data-seller-name="${sellerName}" title="Definir Segmento">
                             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M5 4a1 1 0 00-2 0v2.28a1 1 0 00.9 1.42A7.48 7.48 0 0110 8a7.48 7.48 0 015.1 2.7.999.999 0 00.9-1.42V4a1 1 0 10-2 0v1.588A5.502 5.502 0 0010 5.03 5.502 5.502 0 005 5.588V4zM10 12a2 2 0 100 4 2 2 0 000-4z"></path></svg>
                         </button>
@@ -1702,15 +1704,12 @@
                          </div>
                     </div>`;
 
-                // Clique para filtrar a tabela principal (agora no card todo, exceto botões)
+                // Click card (not buttons/labels) to filter main table
                 card.addEventListener('click', (e) => {
-                    if(!e.target.closest('button') && !e.target.closest('label')) {
-                        filterSamplesTable(sellerName);
-                    }
+                    if(!e.target.closest('button') && !e.target.closest('label')) filterSamplesTable(sellerName);
                 });
                 sellersListContainer.appendChild(card);
             });
-
 
             // Add event listeners for copy buttons
             document.querySelectorAll('.copy-code-btn').forEach(btn => {
@@ -1774,345 +1773,6 @@
                  });
              });
         }
-        
-        // --- Aroma Ranking UI Functions ---
-
-        // Atualiza a UI dos botões de dados históricos
-        function updateHistoricalDataUI() {
-             if (isShowingHistoricalData) {
-                 historicalDataStatus.textContent = `Exibindo ${historicalAromaData.length} registros históricos.`;
-                 showLiveDataBtn.classList.remove('hidden');
-                 loadHistoricalDataBtn.classList.add('hidden');
-                 historicalInputSection.classList.add('hidden'); // Esconder input
-             } else {
-                 historicalDataStatus.textContent = 'Exibindo dados da sessão atual (Live).';
-                 showLiveDataBtn.classList.add('hidden');
-                 loadHistoricalDataBtn.classList.remove('hidden');
-             }
-        }
-        
-        // Função principal para recalcular e renderizar todos os rankings de aromas
-        function updateAromaRankings() {
-            const segment = aromaSegmentFilter.value;
-            const startDate = aromaStartDate.value ? new Date(aromaStartDate.value + 'T00:00:00') : null;
-            const endDate = aromaEndDate.value ? new Date(aromaEndDate.value + 'T23:59:59') : null;
-
-            // 1. Escolher a fonte dos dados
-            const sourceData = isShowingHistoricalData ? historicalAromaData : allCurrentSamples;
-            
-            // 2. Filtrar dados por data e segmento
-            const filteredData = filterAromaData(sourceData, segment, startDate, endDate);
-            
-            // 3. Calcular os rankings
-            const { rankingsComPedido, rankingsSemPedido } = calculateAromaRankings(filteredData);
-            
-            // 4. Renderizar tudo
-            renderAromaSellerRanking(rankingsComPedido.sellerRanking, 'com-pedido');
-            renderAromaHighlight(rankingsComPedido.aromaRanking[0], 'com-pedido');
-            renderAromaList(rankingsComPedido.aromaRanking, 'com-pedido');
-            
-            renderAromaSellerRanking(rankingsSemPedido.sellerRanking, 'sem-pedido');
-            renderAromaHighlight(rankingsSemPedido.aromaRanking[0], 'sem-pedido');
-            renderAromaList(rankingsSemPedido.aromaRanking, 'sem-pedido');
-
-            // 5. Cache dos rankings de vendedores para o modal
-            currentAromaSellerRankings.comPedido = rankingsComPedido.sellerRanking;
-            currentAromaSellerRankings.semPedido = rankingsSemPedido.sellerRanking;
-            // 6. Cache dos dados filtrados para o modal de detalhes do aroma
-            currentAromaDetailsData = filteredData;
-        }
-
-        // Helper: Filtra os dados de origem (live ou histórico)
-        function filterAromaData(data, segment, startDate, endDate) {
-            return data.filter(sample => {
-                // Filtro de Segmento
-                if (segment && sellerSegmentsCache[sample.sellerName] !== segment) {
-                    return false;
-                }
-                
-                // Filtro de Data (usa 'emissaoNF')
-                if (startDate || endDate) {
-                    if (!sample.emissaoNF) return false; // Precisa da data
-                    
-                    // Tenta parsear datas nos formatos dd/MM/yyyy ou yyyy-MM-dd
-                    let sampleDate;
-                    if (sample.emissaoNF.includes('/')) {
-                        const parts = sample.emissaoNF.split(' ')[0].split('/'); // Pega só a data
-                        if(parts.length === 3) {
-                             sampleDate = new Date(`${parts[2]}-${parts[1]}-${parts[0]}T00:00:00`);
-                        }
-                    } else if (sample.emissaoNF.includes('-')) {
-                         sampleDate = new Date(sample.emissaoNF + 'T00:00:00');
-                    }
-
-                    if (!sampleDate || isNaN(sampleDate.getTime())) return false; // Data inválida
-
-                    if (startDate && sampleDate < startDate) return false;
-                    if (endDate && sampleDate > endDate) return false;
-                }
-                
-                return true; // Passou em todos os filtros
-            });
-        }
-        
-        // Helper: Calcula os rankings
-        function calculateAromaRankings(filteredData) {
-            const aromaPrefix = 'DAR';
-            const feedbackComPedido = 'COM PEDIDO';
-            const feedbackSemPedido = 'APROVADO SEM PEDIDO';
-
-            const statsComPedido = { sellers: {}, aromas: {} };
-            const statsSemPedido = { sellers: {}, aromas: {} };
-            const allAromasSent = {}; // Contagem total de envios de cada aroma
-
-            filteredData.forEach(sample => {
-                const produto = normalizeText(sample.produto);
-                if (!produto.startsWith(aromaPrefix)) return; // Só aromas DAR
-                
-                const canonicalFeedback = getCanonicalFeedback(sample.feedback);
-                const seller = sample.sellerName;
-                const aromaKey = produto; // Usar o código do produto como chave
-                
-                // Contar envios totais do aroma
-                if (!allAromasSent[aromaKey]) {
-                    allAromasSent[aromaKey] = { count: 0, description: sample.descricao || 'Sem Descrição' };
-                }
-                allAromasSent[aromaKey].count++;
-
-                // Contar "Com Pedido"
-                if (canonicalFeedback === feedbackComPedido) {
-                    // Contagem por Vendedor
-                    statsComPedido.sellers[seller] = (statsComPedido.sellers[seller] || 0) + 1;
-                    // Contagem por Aroma
-                    if (!statsComPedido.aromas[aromaKey]) {
-                         statsComPedido.aromas[aromaKey] = { count: 0, description: sample.descricao || 'Sem Descrição' };
-                    }
-                    statsComPedido.aromas[aromaKey].count++;
-                }
-                
-                // Contar "Sem Pedido"
-                else if (canonicalFeedback === feedbackSemPedido) {
-                    // Contagem por Vendedor
-                    statsSemPedido.sellers[seller] = (statsSemPedido.sellers[seller] || 0) + 1;
-                    // Contagem por Aroma
-                    if (!statsSemPedido.aromas[aromaKey]) {
-                        statsSemPedido.aromas[aromaKey] = { count: 0, description: sample.descricao || 'Sem Descrição' };
-                    }
-                    statsSemPedido.aromas[aromaKey].count++;
-                }
-            });
-
-            // Formatar e ordenar rankings
-            const formatRanking = (stats, type) => {
-                 const sellerRanking = Object.entries(stats.sellers)
-                    .map(([name, count]) => ({ name, count }))
-                    .sort((a, b) => b.count - a.count); // Ordenar por contagem
-
-                 const aromaRanking = Object.entries(stats.aromas)
-                    .map(([aroma, data]) => ({
-                        aroma,
-                        description: data.description,
-                        approved: data.count,
-                        sent: allAromasSent[aroma]?.count || 0 // Pegar total enviado
-                    }))
-                    .sort((a, b) => b.approved - a.approved); // Ordenar por aprovações
-                
-                return { sellerRanking, aromaRanking };
-            };
-            
-            return {
-                rankingsComPedido: formatRanking(statsComPedido, 'com-pedido'),
-                rankingsSemPedido: formatRanking(statsSemPedido, 'sem-pedido')
-            };
-        }
-
-        // Helper: Renderiza o Top 3 Vendedores
-        function renderAromaSellerRanking(sellerRanking, type) {
-            const listEl = (type === 'com-pedido') ? aromaSellerRankingList : aromaSellerRankingListSemPedido;
-            const moreEl = (type === 'com-pedido') ? aromaSellerRankingMore : aromaSellerRankingMoreSemPedido;
-            
-            listEl.innerHTML = ''; // Limpar
-            moreEl.classList.add('hidden'); // Esconder "ver mais"
-
-            if (sellerRanking.length === 0) {
-                listEl.innerHTML = '<p class="text-gray-500 text-sm">Nenhum vendedor encontrado.</p>';
-                return;
-            }
-
-            // Renderizar o Top 3
-            sellerRanking.slice(0, 3).forEach((seller, index) => {
-                const item = document.createElement('div');
-                let itemClass = 'aroma-rank-item flex justify-between items-center p-2 rounded';
-                let rankDisplay;
-
-                if (index === 0) {
-                    // Estilo de troféu para o primeiro lugar
-                    itemClass += ' first-place'; // Classe para fundo amarelo e borda
-                    rankDisplay = `
-                        <div class="flex items-center gap-3">
-                            <span class="rank-number flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">
-                                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M11.21 2.5a.5.5 0 01.39.81L9.12 7H13a1 1 0 01.99 1.13l-.71 4.23a1 1 0 01-1 .87H10.28l-.3 1.8a.5.5 0 01-.95.1L7.1 10.23A1 1 0 018 9h2.38l1.7-3.4-3.13 1.56a.5.5 0 01-.64-.64L11.21 2.5zM4.5 5a.5.5 0 00-.5.5v3a.5.5 0 00.5.5h3a.5.5 0 00.5-.5v-3a.5.5 0 00-.5-.5h-3zM8 5.5a.5.5 0 01.5-.5h3a.5.5 0 01.5.5v3a.5.5 0 01-.5.5h-3a.5.5 0 01-.5-.5v-3zM4.5 10a.5.5 0 00-.5.5v3a.5.5 0 00.5.5h3a.5.5 0 00.5-.5v-3a.5.5 0 00-.5-.5h-3zM8 10.5a.5.5 0 01.5-.5h3a.5.5 0 01.5.5v3a.5.5 0 01-.5.5h-3a.5.5 0 01-.5-.5v-3z" clip-rule="evenodd"></path></svg>
-                            </span>
-                            <div>
-                                <span class="aroma-seller-name-btn font-semibold text-gray-900 cursor-pointer hover:underline" data-seller-name="${seller.name}" data-type="${type}">${seller.name}</span>
-                                <p class="text-xs text-yellow-700">Maior nº de aprovações</p>
-                            </div>
-                        </div>`;
-                } else {
-                    itemClass += (index === 1) ? ' second-place' : ' third-place';
-                    rankDisplay = `
-                        <div class="flex items-center gap-3">
-                            <span class="rank-number flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">${index + 1}</span>
-                            <span class="aroma-seller-name-btn font-medium text-gray-700 cursor-pointer hover:underline" data-seller-name="${seller.name}" data-type="${type}">${seller.name}</span>
-                        </div>`;
-                }
-                
-                item.className = itemClass;
-                item.innerHTML = `
-                    ${rankDisplay}
-                    <span class="font-bold text-gray-800">${seller.count}</span>
-                `;
-                listEl.appendChild(item);
-            });
-
-            // Mostrar "ver mais" se houver mais de 3
-            if (sellerRanking.length > 3) {
-                const remaining = sellerRanking.length - 3;
-                moreEl.textContent = `... e mais ${remaining} vendedor(es)`;
-                moreEl.classList.remove('hidden');
-                moreEl.onclick = () => showAromaSellerModal(type); // Abre o modal
-            }
-            
-            // Adicionar eventos de clique aos nomes
-            listEl.querySelectorAll('.aroma-seller-name-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const sellerName = e.target.dataset.sellerName;
-                    const rankingType = e.target.dataset.type;
-                    showAromaDetailsModal(sellerName, rankingType);
-                });
-            });
-        }
-
-        // Helper: Renderiza o Destaque
-        function renderAromaHighlight(topAroma, type) {
-            const highlightEl = (type === 'com-pedido') ? aromaHighlight : aromaHighlightSemPedido;
-            if (!topAroma) {
-                highlightEl.innerHTML = '<p class="text-gray-500">Nenhum aroma aprovado encontrado.</p>';
-                return;
-            }
-            highlightEl.innerHTML = `
-                <p class="text-xl font-bold text-gray-900">${topAroma.aroma}</p>
-                <p class="text-sm text-gray-600 mb-2">${topAroma.description}</p>
-                <p class="text-lg">
-                    <span class="font-bold text-blue-600">${topAroma.approved}</span> aprovações (de <span class="font-bold">${topAroma.sent}</span> enviadas)
-                </p>
-            `;
-        }
-
-        // Helper: Renderiza a Lista de Aromas
-        function renderAromaList(aromaRanking, type) {
-            const tableBodyEl = (type === 'com-pedido') ? aromaRankingTableBody : aromaRankingTableBodySemPedido;
-            tableBodyEl.innerHTML = ''; // Limpar
-            
-            if (aromaRanking.length === 0) {
-                tableBodyEl.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-gray-500">Nenhum aroma aprovado encontrado.</td></tr>';
-                return;
-            }
-
-            aromaRanking.forEach(aroma => {
-                const row = document.createElement('tr');
-                row.className = 'border-b border-gray-100 hover:bg-gray-50';
-                row.innerHTML = `
-                    <td class="px-3 py-2 font-medium text-gray-800">${aroma.aroma}</td>
-                    <td class="px-3 py-2 text-gray-600">${aroma.description}</td>
-                    <td class="px-3 py-2 text-center font-bold text-blue-600">${aroma.approved}</td>
-                    <td class="px-3 py-2 text-center font-medium text-gray-700">${aroma.sent}</td>
-                `;
-                tableBodyEl.appendChild(row);
-            });
-        }
-
-        // Helper: Abre o modal com o ranking completo de VENDEDORES
-        function showAromaSellerModal(type) {
-            const ranking = (type === 'com-pedido') ? currentAromaSellerRankings.comPedido : currentAromaSellerRankings.semPedido;
-            const title = (type === 'com-pedido') ? 'Ranking Vendedores (c/ Pedido)' : 'Ranking Vendedores (s/ Pedido)';
-            
-            aromaSellerModalTitle.textContent = title;
-            aromaSellerModalList.innerHTML = ''; // Limpar
-            
-            if (ranking.length === 0) {
-                aromaSellerModalList.innerHTML = '<p class="text-gray-500">Nenhum vendedor encontrado.</p>';
-            } else {
-                ranking.forEach((seller, index) => {
-                    const item = document.createElement('div');
-                    item.className = 'flex justify-between items-center p-2 border-b';
-                    item.innerHTML = `
-                        <div class="flex items-center gap-3">
-                            <span class="font-medium text-gray-500 w-6 text-right">${index + 1}.</span>
-                            <span class="aroma-seller-name-btn font-medium text-gray-700 cursor-pointer hover:underline" data-seller-name="${seller.name}" data-type="${type}">${seller.name}</span>
-                        </div>
-                        <span class="font-bold text-gray-800">${seller.count}</span>
-                    `;
-                    aromaSellerModalList.appendChild(item);
-                });
-            }
-            
-            // Adicionar eventos de clique aos nomes no modal
-            aromaSellerModalList.querySelectorAll('.aroma-seller-name-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const sellerName = e.target.dataset.sellerName;
-                    const rankingType = e.target.dataset.type;
-                    showAromaDetailsModal(sellerName, rankingType);
-                });
-            });
-            
-            aromaSellerModal.classList.remove('hidden');
-        }
-
-        // Helper: Abre o modal com os DETALHES de aromas daquele vendedor
-        function showAromaDetailsModal(sellerName, type) {
-            const feedbackType = (type === 'com-pedido') ? 'COM PEDIDO' : 'APROVADO SEM PEDIDO';
-            const title = `Aromas Aprovados (${type.replace('-', ' ')}) - ${sellerName}`;
-            
-            aromaDetailsModalTitle.textContent = title;
-            aromaDetailsModalList.innerHTML = ''; // Limpar
-
-            // Usar os dados já filtrados (por data/segmento) do `currentAromaDetailsData`
-            const approvedAromas = currentAromaDetailsData.filter(sample => {
-                const produto = normalizeText(sample.produto);
-                const canonicalFeedback = getCanonicalFeedback(sample.feedback);
-                
-                return sample.sellerName === sellerName &&
-                       produto.startsWith('DAR') &&
-                       canonicalFeedback === feedbackType;
-            });
-
-            if (approvedAromas.length === 0) {
-                aromaDetailsModalList.innerHTML = '<p class="text-gray-500">Nenhum aroma aprovado encontrado para este vendedor nos filtros atuais.</p>';
-            } else {
-                // Ordenar por produto
-                approvedAromas.sort((a, b) => a.produto.localeCompare(b.produto));
-                
-                approvedAromas.forEach(sample => {
-                    const item = document.createElement('div');
-                    item.className = 'p-3 border rounded-lg bg-gray-50';
-                    item.innerHTML = `
-                        <p class="font-bold text-gray-800">${sample.produto}</p>
-                        <p class="text-sm text-gray-600 mb-2">${sample.descricao || 'Sem Descrição'}</p>
-                        <div class="text-xs text-gray-700 space-y-1">
-                            <p><strong>Cliente:</strong> ${sample.razaoSocial || 'N/A'}</p>
-                            <p><strong>Pedido:</strong> ${sample.pedido || 'N/A'}</p>
-                            <p><strong>NF:</strong> ${sample.notaFiscal || 'N/A'}</p>
-                            <p><strong>Faturamento:</strong> ${sample.emissaoNF || 'N/A'}</p>
-                        </div>
-                    `;
-                    aromaDetailsModalList.appendChild(item);
-                });
-            }
-            
-            aromaDetailsModal.classList.remove('hidden');
-        }
-
 
         // Render the main table showing all samples
         function renderFullSamplesTable(samples) {
@@ -2121,12 +1781,10 @@
             samples.sort((a, b) => a.sellerName.localeCompare(b.sellerName) || a.pedido.localeCompare(b.pedido)).forEach(sample => {
                 let feedbackDisplay = '<span class="text-gray-400">Pendente</span>';
                 let rowClass = 'border-b hover:bg-gray-50'; // Add hover effect
-                
-                const feedback = sample.feedback || sample['Feedback Final'] || sample['Feedback'] || '';
 
                 // Format feedback display if not pending
                 if (!sample.isPending) {
-                    feedbackDisplay = `<span class="font-semibold">${feedback || 'N/A'}</span>`;
+                    feedbackDisplay = `<span class="font-semibold">${sample.feedback || 'N/A'}</span>`;
                     if (sample.observation) {
                         feedbackDisplay += `<p class="text-xs text-gray-500">${sample.observation}</p>`;
                     }
@@ -2479,15 +2137,16 @@
             const counts = { approved: {}, rejected: {}, events: {}, pending: {} }; // Counters for each category
 
             // Canonical feedback types for categorization
-            const CANONICAL_APPROVED = ['COM PEDIDO', 'APROVADO SEM PEDIDO'];
+            const CANONICAL_APPROVED = [FEEDBACK_COM_PEDIDO, FEEDBACK_SEM_PEDIDO];
             const CANONICAL_REJECTED = ['APRESENTAÇÃO PRÓ ATIVA', 'CALIBRE', 'EXTRAVIADA', 'FORA DA ESPECIFICAÇÃO DO CLIENTE', 'FORA DO PERFIL DO CLIENTE', 'FRACA / ESTOURANDO / COM CHUVEIRO', 'PRODUTO DESCONTINUADO', 'QUANTIDADE INSUFICIENTE', 'REPRESENTAÇÃO / DISTRIBUIDOR', 'SEM RETORNO DO CLIENTE', 'EXPORTACAO'];
             const CANONICAL_EVENTS = ['EVENTO'];
             const CANONICAL_PENDING = ['AMOSTRA NÃO TESTADA', 'EM ANÁLISE', 'AMOSTRA SEM FEEDBACK']; // Added pending types
 
             // Count occurrences of each canonical feedback type
             samples.forEach(sample => {
-                 const feedback = sample.feedback || sample['Feedback Final'] || sample['Feedback'] || '';
-                 if (feedback.trim() === '') return; // Skip if no feedback
+                 // Use "Feedback Final" if available, fallback to "Feedback"
+                 const feedback = sample.feedback; // Already determined during parsing/loading
+                 if (!feedback || feedback.trim() === '') return; // Skip if no feedback
 
                 const canonicalFeedback = getCanonicalFeedback(feedback);
                 let category = null;
@@ -2544,8 +2203,8 @@
 
             // Filter samples by the selected canonical feedback text
             let filteredSamples = allCurrentSamples.filter(sample => {
-                 const feedback = sample.feedback || sample['Feedback Final'] || sample['Feedback'] || '';
-                return getCanonicalFeedback(feedback) === feedbackText;
+                 // Use "Feedback Final" or "Feedback"
+                return getCanonicalFeedback(sample.feedback) === feedbackText;
             });
 
             // Apply segment filter if selected in the modal
@@ -2675,11 +2334,9 @@
             // Group non-pending, categorized feedback by segment
             samples.forEach(sample => {
                 const segment = sellerSegmentsCache[sample.sellerName];
-                const feedback = sample.feedback || sample['Feedback Final'] || sample['Feedback'] || '';
-                
                 // Process only if segment exists, sample is resolved, and has feedback
-                if (segment && !sample.isPending && feedback.trim() !== '') {
-                     const canonicalFeedback = getCanonicalFeedback(feedback);
+                if (segment && !sample.isPending && sample.feedback && sample.feedback.trim() !== '') {
+                     const canonicalFeedback = getCanonicalFeedback(sample.feedback);
                      // Exclude "pending" type feedbacks from these charts
                      const CANONICAL_PENDING = ['AMOSTRA NÃO TESTADA', 'EM ANÁLISE', 'AMOSTRA SEM FEEDBACK'];
                      if (CANONICAL_PENDING.includes(canonicalFeedback)) return;
@@ -2728,6 +2385,330 @@
                 });
             });
         }
+        
+        // --- Aroma Ranking Functions ---
+        
+        /**
+         * Main function to render the entire aroma ranking section
+         */
+        function renderAromaRankings() {
+            // 1. Get the correct data source (live or historical)
+            let sourceData = [];
+            if (aromaDataMode === 'live') {
+                // Map live data (allCurrentSamples) to the historical format for consistent processing
+                sourceData = allCurrentSamples.map(s => ({
+                     sellerName: s.sellerName,
+                     produto: s.produto,
+                     descricao: s.descricao,
+                     feedback: s.feedback,
+                     emissaoNF: s.emissaoNF,
+                     pedido: s.pedido,
+                     razaoSocial: s.razaoSocial,
+                     notaFiscal: s.notaFiscal
+                }));
+            } else {
+                sourceData = [...historicalAromaData];
+            }
+            
+            // 2. Get filters
+            const segment = aromaSegmentFilter.value;
+            const startDate = parseDate(aromaStartDate.value);
+            const endDate = parseDate(aromaEndDate.value);
+            
+            // 3. Filter data
+            const filteredData = sourceData.filter(sample => {
+                 // Filter by Aroma Prefix
+                 if (!sample.produto || !normalizeText(sample.produto).startsWith(AROMA_PREFIX)) {
+                     return false;
+                 }
+                 
+                 // Filter by Segment
+                 if (segment && sellerSegmentsCache[sample.sellerName] !== segment) {
+                     return false;
+                 }
+                 
+                 // Filter by Date
+                 if (startDate || endDate) {
+                     const sampleDate = parseDate(sample.emissaoNF);
+                     if (!sampleDate) return false; // Exclude if date is invalid/missing
+                     if (startDate && sampleDate < startDate) return false;
+                     if (endDate && sampleDate > endDate) return false;
+                 }
+                 
+                 return true;
+            });
+            
+            // 4. Calculate Rankings
+            const rankings = calculateAromaRankings(filteredData);
+            
+            // 5. Render Components
+            renderAromaTopSellers(rankings.vendedoresComPedido, aromaTopSellersListComPedido, aromaSellersRemainderComPedido, 'com-pedido', filteredData);
+            renderAromaTopSellers(rankings.vendedoresSemPedido, aromaTopSellersListSemPedido, aromaSellersRemainderSemPedido, 'sem-pedido', filteredData);
+            
+            renderAromaDestaque(rankings.destaqueComPedido, aromaDestaqueComPedido);
+            renderAromaDestaque(rankings.destaqueSemPedido, aromaDestaqueSemPedido);
+            
+            renderAromaList(rankings.listaAromasComPedido, aromaListTbodyComPedido);
+            renderAromaList(rankings.listaAromasSemPedido, aromaListTbodySemPedido);
+        }
+        
+        /**
+         * Calculates all aroma statistics from the filtered data
+         */
+        function calculateAromaRankings(filteredData) {
+            const aromaStats = {}; // { "DAR...": { produto, descricao, enviados: 0, comPedido: 0, semPedido: 0 } }
+            const sellerStats = {}; // { "Vendedor": { comPedido: 0, semPedido: 0 } }
+
+            filteredData.forEach(sample => {
+                const canonicalFeedback = getCanonicalFeedback(sample.feedback);
+                const produtoKey = normalizeText(sample.produto);
+                const sellerName = sample.sellerName;
+                
+                // Init stats if not present
+                if (!aromaStats[produtoKey]) {
+                     aromaStats[produtoKey] = {
+                         produto: sample.produto,
+                         descricao: sample.descricao || '---',
+                         enviados: 0,
+                         comPedido: 0,
+                         semPedido: 0
+                     };
+                }
+                if (!sellerStats[sellerName]) {
+                     sellerStats[sellerName] = { comPedido: 0, semPedido: 0 };
+                }
+
+                // Increment counts
+                aromaStats[produtoKey].enviados++;
+                
+                if (canonicalFeedback === FEEDBACK_COM_PEDIDO) {
+                    aromaStats[produtoKey].comPedido++;
+                    sellerStats[sellerName].comPedido++;
+                } else if (canonicalFeedback === FEEDBACK_SEM_PEDIDO) {
+                    aromaStats[produtoKey].semPedido++;
+                    sellerStats[sellerName].semPedido++;
+                }
+            });
+            
+            // --- Process Vendedores ---
+            const sortedVendedoresComPedido = Object.entries(sellerStats)
+                .map(([name, counts]) => ({ name, count: counts.comPedido }))
+                .filter(s => s.count > 0)
+                .sort((a, b) => b.count - a.count);
+                
+            const sortedVendedoresSemPedido = Object.entries(sellerStats)
+                .map(([name, counts]) => ({ name, count: counts.semPedido }))
+                .filter(s => s.count > 0)
+                .sort((a, b) => b.count - a.count);
+
+            // --- Process Lista de Aromas ---
+            const listaAromasComPedido = Object.values(aromaStats)
+                 .filter(a => a.comPedido > 0)
+                 .sort((a, b) => b.comPedido - a.comPedido);
+                 
+            const listaAromasSemPedido = Object.values(aromaStats)
+                 .filter(a => a.semPedido > 0)
+                 .sort((a, b) => b.semPedido - a.semPedido);
+
+            return {
+                vendedoresComPedido: sortedVendedoresComPedido,
+                vendedoresSemPedido: sortedVendedoresSemPedido,
+                destaqueComPedido: listaAromasComPedido[0] || null,
+                destaqueSemPedido: listaAromasSemPedido[0] || null,
+                listaAromasComPedido: listaAromasComPedido,
+                listaAromasSemPedido: listaAromasSemPedido
+            };
+        }
+        
+        /**
+         * Renders the Top 3 Sellers list
+         */
+        function renderAromaTopSellers(sellerList, listElement, remainderElement, type, filteredData) {
+            listElement.innerHTML = ''; // Clear
+            remainderElement.innerHTML = ''; // Clear
+            
+            // Store the full list for the modal
+            fullAromaSellerRanking = sellerList;
+            
+            if (sellerList.length === 0) {
+                listElement.innerHTML = `<p class="text-gray-500 text-sm">Nenhum vendedor encontrado.</p>`;
+                return;
+            }
+
+            const top3 = sellerList.slice(0, 3);
+            const remainderCount = sellerList.length - 3;
+            
+            top3.forEach((seller, index) => {
+                 let itemHtml;
+                 const sellerName = seller.name;
+                 const count = seller.count;
+                 
+                 // Template Clicável
+                 const clickableTemplate = (content) => `
+                    <button class="w-full text-left seller-aroma-details-btn" data-seller-name="${sellerName}" data-type="${type}">
+                         ${content}
+                    </button>`;
+                 
+                 if (index === 0) {
+                      // 1st Place
+                      itemHtml = clickableTemplate(`
+                           <div class="flex items-center justify-between p-3 bg-yellow-100 rounded-lg border border-yellow-300">
+                                <div class="flex items-center gap-3">
+                                     <span class="flex-shrink-0 w-8 h-8 rounded-full bg-yellow-400 flex items-center justify-center text-white font-bold">
+                                         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                                     </span>
+                                     <div>
+                                          <span class="font-bold text-yellow-800">${sellerName}</span>
+                                          <p class="text-xs text-yellow-700">Maior nº de aprovações</p>
+                                     </div>
+                                </div>
+                                <span class="font-bold text-lg text-yellow-800">${count}</span>
+                           </div>
+                      `);
+                 } else {
+                      // 2nd and 3rd Place
+                      const rankColor = index === 1 ? 'gray' : 'orange';
+                      itemHtml = clickableTemplate(`
+                           <div class="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
+                                <div class="flex items-center gap-3">
+                                     <span class="flex-shrink-0 w-8 h-8 rounded-full bg-${rankColor}-200 text-${rankColor}-700 flex items-center justify-center font-bold">${index + 1}</span>
+                                     <span class="font-semibold text-gray-700">${sellerName}</span>
+                                </div>
+                                <span class="font-bold text-lg text-gray-800">${count}</span>
+                           </div>
+                      `);
+                 }
+                 listElement.innerHTML += itemHtml;
+            });
+            
+            // Remainder text
+            if (remainderCount > 0) {
+                 remainderElement.textContent = `... e mais ${remainderCount} vendedor(es).`;
+                 remainderElement.dataset.type = type; // Store type for modal
+                 remainderElement.addEventListener('click', () => openAromaSellerRankingModal(type));
+            }
+            
+            // Add click listeners
+            listElement.querySelectorAll('.seller-aroma-details-btn').forEach(btn => {
+                 btn.addEventListener('click', (e) => {
+                     const sellerName = e.currentTarget.dataset.sellerName;
+                     const type = e.currentTarget.dataset.type;
+                     openSellerApprovedAromasModal(sellerName, type, filteredData);
+                 });
+            });
+        }
+        
+        /**
+         * Renders the Destaque Aroma card
+         */
+        function renderAromaDestaque(destaque, element) {
+            if (!destaque) {
+                element.innerHTML = `<p class="text-gray-500 text-sm">Nenhum aroma destaque encontrado.</p>`;
+                return;
+            }
+            
+            const count = destaque.comPedido > 0 ? destaque.comPedido : destaque.semPedido;
+            
+            element.innerHTML = `
+                <p class="font-bold text-lg text-gray-800">${destaque.produto}</p>
+                <p class="text-sm text-gray-600 mb-2">${destaque.descricao}</p>
+                <div class="flex justify-between items-baseline">
+                    <span class="text-3xl font-bold text-gray-900">${count}</span>
+                    <span class="text-sm text-gray-600">Total Enviados: ${destaque.enviados}</span>
+                </div>
+            `;
+        }
+        
+        /**
+         * Renders the full list of approved aromas
+         */
+        function renderAromaList(aromaList, tbodyElement) {
+            tbodyElement.innerHTML = ''; // Clear
+            if (aromaList.length === 0) {
+                tbodyElement.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-gray-500">Nenhum aroma aprovado encontrado.</td></tr>`;
+                return;
+            }
+            
+            aromaList.forEach(aroma => {
+                 const count = aroma.comPedido > 0 ? aroma.comPedido : aroma.semPedido;
+                 const row = document.createElement('tr');
+                 row.className = 'border-b hover:bg-gray-50';
+                 row.innerHTML = `
+                      <td class="px-3 py-2 font-medium">${aroma.produto}</td>
+                      <td class="px-3 py-2 text-gray-600">${aroma.descricao}</td>
+                      <td class="px-3 py-2 text-center font-bold">${count}</td>
+                      <td class="px-3 py-2 text-center text-gray-600">${aroma.enviados}</td>
+                 `;
+                 tbodyElement.appendChild(row);
+            });
+        }
+        
+        /**
+         * Opens the modal showing the full seller ranking
+         */
+        function openAromaSellerRankingModal(type) {
+            const title = type === 'com-pedido' ? 'Ranking (Aprovados c/ Pedido)' : 'Ranking (Aprovados s/ Pedido)';
+            aromaSellerRankingModalTitle.textContent = title;
+            aromaSellerRankingModalList.innerHTML = ''; // Clear
+            
+            if (fullAromaSellerRanking.length === 0) {
+                 aromaSellerRankingModalList.innerHTML = '<p class="text-gray-500">Nenhum vendedor para classificar.</p>';
+            } else {
+                 fullAromaSellerRanking.forEach((seller, index) => {
+                     const item = document.createElement('div');
+                     item.className = 'flex justify-between items-center p-2 border-b';
+                     item.innerHTML = `
+                         <div class="flex items-center gap-3">
+                              <span class="text-sm font-semibold w-6 text-center">${index + 1}.</span>
+                              <span class="text-gray-700">${seller.name}</span>
+                         </div>
+                         <span class="font-bold text-gray-800">${seller.count}</span>
+                     `;
+                     aromaSellerRankingModalList.appendChild(item);
+                 });
+            }
+            
+            aromaSellerRankingModal.classList.remove('hidden');
+        }
+        
+        /**
+         * Opens the modal showing approved aromas for a specific seller
+         */
+        function openSellerApprovedAromasModal(sellerName, type, filteredData) {
+             const feedbackType = type === 'com-pedido' ? FEEDBACK_COM_PEDIDO : FEEDBACK_SEM_PEDIDO;
+             const title = `Aromas: ${sellerName} (${type.replace('-', ' ')})`;
+             
+             sellerApprovedAromasModalTitle.textContent = title;
+             sellerApprovedAromasModalList.innerHTML = ''; // Clear
+             
+             const approvedAromas = filteredData.filter(sample => {
+                 return sample.sellerName === sellerName &&
+                        getCanonicalFeedback(sample.feedback) === feedbackType;
+             });
+             
+             if (approvedAromas.length === 0) {
+                  sellerApprovedAromasModalList.innerHTML = `<p class="text-gray-500">Nenhum aroma aprovado (${type}) encontrado para este vendedor.</p>`;
+             } else {
+                  approvedAromas.forEach(sample => {
+                      const item = document.createElement('div');
+                      item.className = 'p-3 border rounded-lg bg-gray-50';
+                      item.innerHTML = `
+                           <p class="font-bold">${sample.produto}</p>
+                           <p class="text-sm text-gray-600 mb-1">${sample.descricao || '---'}</p>
+                           <p class="text-xs text-gray-500">
+                                <strong>Cliente:</strong> ${sample.razaoSocial || 'N/A'} |
+                                <strong>Pedido:</strong> ${sample.pedido || 'N/A'} |
+                                <strong>NF:</strong> ${sample.notaFiscal || 'N/A'} |
+                                <strong>Data:</strong> ${sample.emissaoNF || 'N/A'}
+                           </p>
+                      `;
+                      sellerApprovedAromasModalList.appendChild(item);
+                  });
+             }
+             
+             sellerApprovedAromasModal.classList.remove('hidden');
+        }
+
 
         // Generate a palette of distinct colors
         function generateColorPalette(numColors) {
@@ -2784,32 +2765,44 @@
             }
         }
 
-        // Populate all segment filter dropdowns
+        // Populate both main observation filter and modal segment filter
         function populateSegmentFilters() {
              const currentSegments = [...new Set(Object.values(sellerSegmentsCache).filter(Boolean))].sort();
-             
-             const selects = [
-                 document.getElementById('observation-segment-filter'),
-                 document.getElementById('aroma-segment-filter')
-             ];
 
-             selects.forEach(select => {
-                 if(!select) return;
-                 const currentValue = select.value; // Preserve selection
-                 select.innerHTML = '<option value="">Todos os Segmentos</option>'; // Reset
-                 currentSegments.forEach(segment => {
-                     const option = document.createElement('option');
-                     option.value = segment;
-                     option.textContent = segment;
-                     select.appendChild(option);
-                 });
-                 // Restore selection
-                 if (select.querySelector(`option[value="${currentValue}"]`)) {
-                      select.value = currentValue;
-                 } else {
-                      select.value = ""; // Default to "All"
-                 }
+             // Populate Observation Filter (main page)
+             const obsSelect = document.getElementById('observation-segment-filter');
+             if(!obsSelect) return;
+             const obsCurrentValue = obsSelect.value; // Preserve selection
+             obsSelect.innerHTML = '<option value="">Todos os Segmentos</option>'; // Reset
+             currentSegments.forEach(segment => {
+                 const option = document.createElement('option');
+                 option.value = segment;
+                 option.textContent = segment;
+                 obsSelect.appendChild(option);
              });
+             // Restore selection
+             if (obsSelect.querySelector(`option[value="${obsCurrentValue}"]`)) {
+                  obsSelect.value = obsCurrentValue;
+             } else {
+                  obsSelect.value = ""; // Default to "All"
+             }
+
+             // Populate Aroma Segment Filter
+             const aromaSelect = document.getElementById('aroma-segment-filter');
+             if(!aromaSelect) return;
+             const aromaCurrentValue = aromaSelect.value; // Preserve selection
+             aromaSelect.innerHTML = '<option value="">Todos os Segmentos</option>'; // Reset
+             currentSegments.forEach(segment => {
+                 const option = document.createElement('option');
+                 option.value = segment;
+                 option.textContent = segment;
+                 aromaSelect.appendChild(option);
+             });
+             if (aromaSelect.querySelector(`option[value="${aromaCurrentValue}"]`)) {
+                  aromaSelect.value = aromaCurrentValue;
+             } else {
+                  aromaSelect.value = "";
+             }
 
              // Populate Modal Filter (uses separate function)
              populateModalSegmentFilter();
@@ -2830,6 +2823,8 @@
     </script>
 </body>
 </html>
+
+
 
 
 
