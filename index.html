@@ -41,7 +41,7 @@
             padding-bottom: 0.5rem;
             border-top: 1px dashed #fed7aa; /* orange-200 */
         }
-         /* Removed Aroma and Full Table specific styles */
+        /* Removed Aroma and Full Table specific styles */
     </style>
 </head>
 <body class="text-gray-800">
@@ -83,6 +83,54 @@
 
         <!-- Dashboard Section -->
         <div id="dashboard" class="hidden">
+            
+            <!-- INÍCIO DA SEÇÃO DE ACESSO RÁPIDO (NOVO) -->
+            <section id="acesso-rapido-section" class="mb-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- 1. Painel de Resultados (Destaque) -->
+                <a href="https://thamirisbezerra-coder.github.io/Painel-de-Resultados/" target="_blank" 
+                   class="block bg-blue-600 text-white p-6 rounded-2xl shadow-lg border border-blue-700 hover:bg-blue-700 transition transform hover:-translate-y-1">
+                    <div class="flex items-center mb-3">
+                        <!-- Icon: Gráfico (Chart) -->
+                        <svg class="w-8 h-8 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                        <h3 class="text-xl font-bold">Resultados 2023x2024x2025</h3>
+                    </div>
+                    <p class="text-sm text-blue-100">Contém o <strong>Ranking de Aromas (DAR)</strong>:</p>
+                    <ul class="list-disc list-inside text-sm text-blue-100 mt-2 space-y-1">
+                        <li>Aroma com maior índice de aprovação.</li>
+                        <li>Vendedor com mais aromas aprovados.</li>
+                    </ul>
+                    <div class="text-right mt-2 text-sm font-semibold text-blue-200">Clique para abrir &rarr;</div>
+                </a>
+
+                <!-- 2. Painel Gerentes -->
+                <a href="https://thamirisbezerra-coder.github.io/PainelGerencia/" target="_blank"
+                   class="block bg-white p-6 rounded-2xl shadow-sm border hover:shadow-md transition hover:-translate-y-1">
+                    <div class="flex items-center mb-3">
+                        <!-- Icon: Usuário (User) -->
+                        <svg class="w-8 h-8 mr-3 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                        <h3 class="text-xl font-bold text-gray-800">Painel Gerentes</h3>
+                    </div>
+                    <p class="text-sm text-gray-600">Sua senha de Gestor para este painel é:</p>
+                    <p class="text-lg font-mono font-bold text-red-600 my-2 bg-gray-100 p-2 rounded text-center">admin123</p>
+                    <p class="text-xs text-gray-500 mt-1">As senhas dos vendedores são os códigos no "Acompanhamento da Equipe".</p>
+                    <div class="text-right mt-2 text-sm font-semibold text-blue-600">Clique para abrir &rarr;</div>
+                </a>
+
+                <!-- 3. Painel Vendedores -->
+                <a href="https://thamirisbezerra-coder.github.io/Tela-do-Vendedor/" target="_blank"
+                   class="block bg-white p-6 rounded-2xl shadow-sm border hover:shadow-md transition hover:-translate-y-1">
+                    <div class="flex items-center mb-3">
+                        <!-- Icon: Usuários (Users) -->
+                        <svg class="w-8 h-8 mr-3 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M12 12a4 4 0 110-8 4 4 0 010 8z"></path></svg>
+                        <h3 class="text-xl font-bold text-gray-800">Tela do Vendedor</h3>
+                    </div>
+                    <p class="text-sm text-gray-600">Este é o link que os vendedores acessarão para inserir seus feedbacks.</p>
+                    <p class="text-xs text-gray-500 mt-1">Eles usarão o código individual de 6 dígitos.</p>
+                    <div class="text-right mt-3 text-sm font-semibold text-blue-600">Clique para abrir &rarr;</div>
+                </a>
+            </section>
+            <!-- FIM DA SEÇÃO DE ACESSO RÁPIDO -->
+
             <!-- Notifications -->
             <section id="notifications-section" class="mb-8 max-w-4xl mx-auto">
                  <div class="flex justify-between items-center mb-4">
@@ -157,7 +205,7 @@
                  </div>
              </section>
 
-             <!-- Removed Aroma Section and Full Samples Table Section -->
+              <!-- Removed Aroma Section and Full Samples Table Section -->
 
         </div>
     </div>
@@ -203,15 +251,15 @@
      <div id="feedback-samples-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 hidden z-30">
          <div class="bg-white rounded-2xl shadow-xl w-full max-w-3xl p-6">
              <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 border-b pb-3 gap-2">
-                <h3 id="feedback-samples-title" class="text-xl font-bold">Amostras com Feedback:</h3>
-                <div class="flex items-center gap-2">
-                    <label for="modal-segment-filter" class="text-sm font-medium">Segmento:</label>
-                    <select id="modal-segment-filter" class="border-gray-300 rounded-lg shadow-sm text-sm p-1">
-                        <option value="">Todos os Segmentos</option>
-                        <!-- Options will be populated by JS -->
-                    </select>
-                </div>
-                <button id="close-feedback-samples-btn" class="text-2xl font-bold text-gray-500 hover:text-gray-800 sm:ml-4">&times;</button>
+                 <h3 id="feedback-samples-title" class="text-xl font-bold">Amostras com Feedback:</h3>
+                 <div class="flex items-center gap-2">
+                     <label for="modal-segment-filter" class="text-sm font-medium">Segmento:</label>
+                     <select id="modal-segment-filter" class="border-gray-300 rounded-lg shadow-sm text-sm p-1">
+                         <option value="">Todos os Segmentos</option>
+                         <!-- Options will be populated by JS -->
+                     </select>
+                 </div>
+                 <button id="close-feedback-samples-btn" class="text-2xl font-bold text-gray-500 hover:text-gray-800 sm:ml-4">&times;</button>
              </div>
              <div id="feedback-samples-list" class="space-y-3 max-h-[60vh] overflow-y-auto pr-2">
                  <p class="text-gray-500">A carregar detalhes...</p>
@@ -237,8 +285,8 @@
                      <input type="text" id="manager-name-input" class="mt-1 w-full border-gray-300 rounded-lg shadow-sm" placeholder="Digite seu nome">
                  </div>
                  <div>
-                    <label for="reply-message-input" class="block text-sm font-medium text-gray-700">Sua Resposta</label>
-                    <textarea id="reply-message-input" rows="3" class="mt-1 w-full border-gray-300 rounded-lg shadow-sm" placeholder="Digite sua resposta aqui..."></textarea>
+                   <label for="reply-message-input" class="block text-sm font-medium text-gray-700">Sua Resposta</label>
+                   <textarea id="reply-message-input" rows="3" class="mt-1 w-full border-gray-300 rounded-lg shadow-sm" placeholder="Digite sua resposta aqui..."></textarea>
                  </div>
              </div>
              <div class="mt-6 flex justify-end space-x-3">
@@ -389,7 +437,7 @@
                  // Add more mappings if needed
              };
              return mapping[normalized] || normalized;
-        }
+         }
 
         // --- Main Dashboard Rendering Function ---
         function processAndDisplayDashboard(samples, sessionId, sellerDocs = []) {
@@ -405,9 +453,9 @@
             // Update historical data indicator based on listener data
             // (Indicator removed from this file, logic remains for reference)
             // if (historicalAromaData && historicalAromaData.length > 0) {
-            //      // historicalDataIndicator.classList.remove('hidden'); // Removed element
+            //     // historicalDataIndicator.classList.remove('hidden'); // Removed element
             // } else {
-            //      // historicalDataIndicator.classList.add('hidden'); // Removed element
+            //     // historicalDataIndicator.classList.add('hidden'); // Removed element
             // }
 
             // Render all dashboard components
@@ -488,10 +536,10 @@
                  }
 
             } else {
-                infoMessage.textContent = 'ID de sessão inválido. Deve começar com "sessao_".';
-                setTimeout(() => {
-                   if (!currentSessionId) infoMessage.textContent = 'Nenhuma sessão ativa. Conecte-se manualmente ou inicie uma nova.';
-                }, 3000);
+                 infoMessage.textContent = 'ID de sessão inválido. Deve começar com "sessao_".';
+                 setTimeout(() => {
+                    if (!currentSessionId) infoMessage.textContent = 'Nenhuma sessão ativa. Conecte-se manualmente ou inicie uma nova.';
+                 }, 3000);
             }
         });
 
@@ -530,7 +578,7 @@
                 // Re-render dashboard which calls sub-render functions (excluding aroma panel)
                 processAndDisplayDashboard(allCurrentSamples, currentSessionId); // Use current samples for re-render
 
-                setTimeout(() => infoMessage.textContent = '', 3000);
+                 setTimeout(() => infoMessage.textContent = '', 3000);
             } catch (error) {
                 console.error("Erro ao atualizar segmento:", error);
                 infoMessage.textContent = "Erro ao guardar segmento.";
@@ -1259,7 +1307,7 @@
                      if (sample.systemStatus !== 'baixado') isBaixado = false;
                  });
                  if (isBaixado) sellers[s.sellerName].systemStatus = 'baixado';
-            });
+             });
 
              // Add access codes from the separate sellerDocs array (relates to LIVE session)
              sellerDocs.forEach(doc => {
@@ -1494,10 +1542,10 @@
                 feedContainer.appendChild(card);
             });
 
-             // Add event listeners for reply buttons in the feed
-             feedContainer.querySelectorAll('.reply-observation-btn').forEach(btn => {
-                 btn.addEventListener('click', openReplyModal);
-             });
+              // Add event listeners for reply buttons in the feed
+              feedContainer.querySelectorAll('.reply-observation-btn').forEach(btn => {
+                  btn.addEventListener('click', openReplyModal);
+              });
         }
 
 
@@ -1567,9 +1615,9 @@
 
            } catch (error) {
                console.error("Erro ao enviar resposta:", error);
-                // Using custom message display instead of alert
-                infoMessage.textContent = "Ocorreu um erro ao enviar a resposta. Tente novamente.";
-                setTimeout(() => infoMessage.textContent = '', 3000);
+               // Using custom message display instead of alert
+               infoMessage.textContent = "Ocorreu um erro ao enviar a resposta. Tente novamente.";
+               setTimeout(() => infoMessage.textContent = '', 3000);
            } finally {
                sendReplyBtn.disabled = false;
                sendReplyBtn.textContent = 'Enviar Resposta';
@@ -1750,8 +1798,8 @@
                  if (!listElement) return;
                  const sortedData = Object.entries(data).sort(([, a], [, b]) => b - a);
                 if (sortedData.length === 0) {
-                    listElement.innerHTML = '<li>Nenhum feedback nesta categoria.</li>';
-                    return;
+                     listElement.innerHTML = '<li>Nenhum feedback nesta categoria.</li>';
+                     return;
                 }
                 listElement.innerHTML = sortedData.map(([text, count]) => `
                     <li>
@@ -1860,23 +1908,23 @@
                      const highlightButtonHtml = (sample.id && !sample.isHistorical) ? `<button class="highlight-sample-btn p-1 rounded-full hover:bg-gray-200" data-sample-id="${sample.id}" title="Destacar Amostra">${starIcon}</button>` : '';
 
                      itemDiv.innerHTML = `
-                          <div class="flex justify-between items-start">
-                               <div>
-                                   <p class="font-semibold">${sample.produto}</p>
-                                   ${sample.descricao ? `<p class="text-xs text-gray-600">${sample.descricao}</p>` : ''}
-                                   <p>Pedido: ${sample.pedido || 'N/A'} <span class="text-gray-600">(${sample.razaoSocial || 'N/A'})</span></p>
-                                   <p class="text-xs text-gray-500 mt-1">
-                                        Vendedor: ${sample.sellerName} ${sample.emissaoNF ? `| NF: ${sample.emissaoNF}` : ''} ${sample.qtde ? `| Qtde: ${sample.qtde}` : ''}
-                                        ${sample.isHistorical ? '<span class="font-bold text-blue-600 ml-1">(Histórico)</span>' : ''}
-                                   </p>
-                               </div>
-                               <div class="flex items-center gap-1 flex-shrink-0">
-                                   ${replyButtonHtml}
-                                   ${highlightButtonHtml}
-                               </div>
-                          </div>
-                          ${sample.observation ? `<p class="text-xs text-gray-600 mt-1 italic">Obs: ${sample.observation}</p>` : ''}
-                          ${repliesHtml}
+                         <div class="flex justify-between items-start">
+                             <div>
+                                 <p class="font-semibold">${sample.produto}</p>
+                                 ${sample.descricao ? `<p class="text-xs text-gray-600">${sample.descricao}</p>` : ''}
+                                 <p>Pedido: ${sample.pedido || 'N/A'} <span class="text-gray-600">(${sample.razaoSocial || 'N/A'})</span></p>
+                                 <p class="text-xs text-gray-500 mt-1">
+                                     Vendedor: ${sample.sellerName} ${sample.emissaoNF ? `| NF: ${sample.emissaoNF}` : ''} ${sample.qtde ? `| Qtde: ${sample.qtde}` : ''}
+                                     ${sample.isHistorical ? '<span class="font-bold text-blue-600 ml-1">(Histórico)</span>' : ''}
+                                 </p>
+                             </div>
+                             <div class="flex items-center gap-1 flex-shrink-0">
+                                 ${replyButtonHtml}
+                                 ${highlightButtonHtml}
+                             </div>
+                         </div>
+                         ${sample.observation ? `<p class="text-xs text-gray-600 mt-1 italic">Obs: ${sample.observation}</p>` : ''}
+                         ${repliesHtml}
                      `;
                     feedbackSamplesList.appendChild(itemDiv);
                 });
@@ -2075,17 +2123,17 @@
                  if (obsSelect.querySelector(`option[value="${obsCurrentValue}"]`)) {
                      obsSelect.value = obsCurrentValue;
                  } else {
-                      // If the previous value is no longer valid (e.g., segment removed), default to "Todos"
-                      // Keep the current filter if it's the Aroma filter
-                      if (obsCurrentValue !== AROMA_FILTER_VALUE) {
+                     // If the previous value is no longer valid (e.g., segment removed), default to "Todos"
+                     // Keep the current filter if it's the Aroma filter
+                     if (obsCurrentValue !== AROMA_FILTER_VALUE) {
                          obsSelect.value = "";
-                      } else {
+                     } else {
                          obsSelect.value = AROMA_FILTER_VALUE;
-                      }
+                     }
                  }
              }
 
-            // Populate Modal Filter (calls the specific function for the modal)
+           // Populate Modal Filter (calls the specific function for the modal)
              populateModalSegmentFilter();
         }
 
@@ -2107,6 +2155,8 @@
     </script>
 </body>
 </html>
+
+
 
 
 
