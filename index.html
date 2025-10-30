@@ -857,7 +857,7 @@
                                 const isAllFinalizedNow = currentSellerSamples.every(s => !s.isPending);
 
                                 // If they had pending samples before, but none now
-                                if (wasPendingBefore && isAllFinali.zedNow) {
+                                if (wasPendingBefore && isAllFinalizedNow) {
                                     const message = `<strong>${sellerName}</strong> finalizou TODAS as suas amostras.`;
                                     const notifId = sanitizeForFirebaseId(`finished-${sellerName}-${Date.now()}`);
                                     const notifRef = doc(db, "sessoes", currentSessionId, "notificacoes", notifId);
@@ -1483,14 +1483,33 @@
                 };
             });
 
+            // *** CÓDIGO CORRIGIDO AQUI ***
             // Add event listeners for 'Dar Baixa' checkboxes
             document.querySelectorAll('.system-check-btn').forEach(checkbox => {
                 checkbox.addEventListener('change', async (e) => {
-                    if (e.target.checked) {
-                        e.target.disabled = true; // Prevent multiple clicks
-                        const sellerName = e.target.dataset.sellerName;
+                    const checkbox = e.target;
+                    if (checkbox.checked) {
+                        checkbox.disabled = true; // Prevent multiple clicks
+                        
+                        const sellerName = checkbox.dataset.sellerName;
                         const sellerId = sanitizeForFirebaseId(sellerName);
                         const docRef = doc(db, "sessoes", currentSessionId, "vendedores", sellerId);
+                        
+                        // Elementos da UI para feedback otimista
+                        const label = checkbox.closest('label');
+                        const card = checkbox.closest('.seller-card');
+                        const originalLabelText = label ? label.querySelector('span').textContent : 'Dar Baixa';
+                        
+                        // --- Atualização Otimista da UI ---
+                        if (label) {
+                            label.querySelector('span').textContent = 'A guardar...';
+                            label.classList.add('text-purple-600', 'font-semibold');
+                        }
+                        if (card) {
+                            card.classList.remove('border-green-500');
+                            card.classList.add('border-purple-500');
+                        }
+                        // --- Fim da Atualização Otimista ---
 
                         try {
                             const sellerDocSnap = await getDoc(docRef);
@@ -1500,15 +1519,28 @@
                                 const updatedSamples = sellerData.amostras.map(s => ({ ...s, systemStatus: 'baixado' }));
                                 await updateDoc(docRef, { amostras: updatedSamples });
                                 // Listener will automatically re-render the card
+                                // O listener irá atualizar o texto para "✓ Baixado em Sistema"
                             }
                         } catch (error) {
                             console.error("Error updating system status:", error);
-                            e.target.checked = false; // Uncheck on error
-                            e.target.disabled = false;
+                            // --- Reverter UI em caso de erro ---
+                            checkbox.checked = false; // Uncheck on error
+                            checkbox.disabled = false;
+                            if (label) {
+                                label.querySelector('span').textContent = originalLabelText;
+                                label.classList.remove('text-purple-600', 'font-semibold');
+                            }
+                            if (card) {
+                                card.classList.remove('border-purple-500');
+                                card.classList.add('border-green-500');
+                            }
+                            // --- Fim da Reversão ---
                         }
                     }
                 });
             });
+            // *** FIM DA CORREÇÃO ***
+
 
             // Add event listeners for config (segment) buttons
              document.querySelectorAll('.config-seller-btn').forEach(btn => {
@@ -1983,8 +2015,8 @@
 
                      // Highlight (star) button HTML (only if sample has an ID and it's LIVE data)
                      const starIcon = isHighlighted ?
-                         `<svg class="w-5 h-5 text-amber-500" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>` :
-                         `<svg class="w-5 h-5 text-gray-400 hover:text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.524 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.524 4.674c.3.921-.755 1.688-1.54 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.784.57-1.838-.197-1.539-1.118l1.524-4.674a1 1 0 00-.363-1.118L2.98 10.1c-.783-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.524-4.674z"></path></svg>`;
+                         `<svg class="w-5 h-5 text-amber-500" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588 1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>` :
+                         `<svg class="w-5 h-5 text-gray-400 hover:text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.524 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.524 4.674c.3.921-.755 1.688-1.54 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.784.57-1.838-.197-1.539-1.118l1.524-4.674a1 1 0 00-.363-1.118L2.98 10.1c-.783-.57-.38-1.81.588 1.81h4.914a1 1 0 00.951-.69l1.524-4.674z"></path></svg>`;
                      const highlightButtonHtml = (sample.id && !sample.isHistorical) ? `<button class="highlight-sample-btn p-1 rounded-full hover:bg-gray-200" data-sample-id="${sample.id}" title="Destacar Amostra">${starIcon}</button>` : '';
 
                      itemDiv.innerHTML = `
@@ -2235,6 +2267,8 @@
     </script>
 </body>
 </html>
+
+
 
 
 
