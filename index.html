@@ -84,25 +84,9 @@
         <!-- Dashboard Section -->
         <div id="dashboard" class="hidden">
             
-            <!-- INÍCIO DA SEÇÃO DE ACESSO RÁPIDO (NOVO) -->
+            <!-- INÍCIO DA SEÇÃO DE ACESSO RÁPIDO (MODIFICADA) -->
             <section id="acesso-rapido-section" class="mb-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-                <!-- 1. Painel de Resultados (Destaque) -->
-                <a href="https://thamirisbezerra-coder.github.io/Painel-de-Resultados/" target="_blank" 
-                   class="block bg-blue-600 text-white p-6 rounded-2xl shadow-lg border border-blue-700 hover:bg-blue-700 transition transform hover:-translate-y-1">
-                    <div class="flex items-center mb-3">
-                        <!-- Icon: Gráfico (Chart) -->
-                        <svg class="w-8 h-8 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-                        <h3 class="text-xl font-bold">Resultados 2023x2024x2025</h3>
-                    </div>
-                    <p class="text-sm text-blue-100">Contém o <strong>Ranking de Aromas (DAR)</strong>:</p>
-                    <ul class="list-disc list-inside text-sm text-blue-100 mt-2 space-y-1">
-                        <li>Aroma com maior índice de aprovação.</li>
-                        <li>Vendedor com mais aromas aprovados.</li>
-                    </ul>
-                    <div class="text-right mt-2 text-sm font-semibold text-blue-200">Clique para abrir &rarr;</div>
-                </a>
-
-                <!-- 2. Painel Gerentes -->
+                <!-- 1. Painel Gerentes -->
                 <a href="https://thamirisbezerra-coder.github.io/PainelGerencia/" target="_blank"
                    class="block bg-white p-6 rounded-2xl shadow-sm border hover:shadow-md transition hover:-translate-y-1">
                     <div class="flex items-center mb-3">
@@ -119,7 +103,7 @@
                     <div class="text-right mt-2 text-sm font-semibold text-blue-600">Clique para abrir &rarr;</div>
                 </a>
 
-                <!-- 3. Painel Vendedores -->
+                <!-- 2. Painel Vendedores -->
                 <a href="https://thamirisbezerra-coder.github.io/Tela-do-Vendedor/" target="_blank"
                    class="block bg-white p-6 rounded-2xl shadow-sm border hover:shadow-md transition hover:-translate-y-1">
                     <div class="flex items-center mb-3">
@@ -131,8 +115,46 @@
                     <p class="text-xs text-gray-500 mt-1">Eles usarão o código individual de 6 dígitos.</p>
                     <div class="text-right mt-3 text-sm font-semibold text-blue-600">Clique para abrir &rarr;</div>
                 </a>
+                
+                <!-- 3. Painel P&D (NOVO) -->
+                <a href="https://thamirisbezerra-coder.github.io/Painel-Pesquisa-e-Desenvolvimento/" target="_blank"
+                   class="block bg-white p-6 rounded-2xl shadow-sm border hover:shadow-md transition hover:-translate-y-1">
+                    <div class="flex items-center mb-3">
+                        <!-- Icon: Lupa de Pesquisa (ALTERADO) -->
+                         <svg class="w-8 h-8 mr-3 text-blue-600 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                           <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                         </svg>
+                        <h3 class="text-xl font-bold text-gray-800">Painel P&D</h3>
+                    </div>
+                    <p class="text-sm text-gray-600">Sua senha de Gestor para este painel é:</p>
+                    <p class="text-lg font-mono font-bold text-red-600 my-2 bg-gray-100 p-2 rounded text-center">admin123</p>
+                    <!-- Texto alterado AQUI -->
+                    <p class="text-xs text-gray-500 mt-1">Senhas de P&D estão disponíveis abaixo. 
+                        <button type="button" id="open-senhas-pd-btn" class="text-blue-600 font-semibold hover:underline focus:outline-none">Clique aqui para verificar</button>
+                    </p>
+                    <div class="text-right mt-2 text-sm font-semibold text-blue-600">Clique para abrir &rarr;</div>
+                </a>
             </section>
             <!-- FIM DA SEÇÃO DE ACESSO RÁPIDO -->
+            
+            <!-- INÍCIO PAINEL DE RESULTADOS (MOVIDO) -->
+            <section id="painel-resultados-section" class="mb-8">
+                <a href="https://thamirisbezerra-coder.github.io/Painel-de-Resultados/" target="_blank" 
+                   class="block bg-blue-600 text-white p-6 rounded-2xl shadow-lg border border-blue-700 hover:bg-blue-700 transition transform hover:-translate-y-1 md:max-w-4xl mx-auto">
+                    <div class="flex items-center mb-3">
+                        <!-- Icon: Gráfico (Chart) -->
+                        <svg class="w-8 h-8 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                        <h3 class="text-xl font-bold">Resultados 2023x2024x2025</h3>
+                    </div>
+                    <p class="text-sm text-blue-100">Contém o <strong>Ranking de Aromas (DAR)</strong>:</p>
+                    <ul class="list-disc list-inside text-sm text-blue-100 mt-2 space-y-1">
+                        <li>Aroma com maior índice de aprovação.</li>
+                        <li>Vendedor com mais aromas aprovados.</li>
+                    </ul>
+                    <div class="text-right mt-2 text-sm font-semibold text-blue-200">Clique para abrir &rarr;</div>
+                </a>
+            </section>
+            <!-- FIM PAINEL DE RESULTADOS (MOVIDO) -->
 
             <!-- Notifications -->
             <section id="notifications-section" class="mb-8 max-w-4xl mx-auto">
@@ -299,7 +321,7 @@
          </div>
      </div>
 
-    <!-- Senhas Gerentes Modal (NOVO) -->
+    <!-- Senhas Gerentes Modal -->
     <div id="senhas-gerentes-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 hidden z-50">
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl p-6">
             <div class="flex justify-between items-center mb-4">
@@ -351,6 +373,60 @@
             </div>
             <div class="mt-8 flex justify-end">
                 <button class="close-senhas-gerentes-btn bg-blue-600 text-white font-bold py-2 px-5 rounded-lg">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Senhas P&D Modal (NOVO) -->
+    <div id="senhas-pd-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 hidden z-50">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-2xl font-bold">Acessos de P&D</h3>
+                <button class="close-senhas-pd-btn text-3xl font-bold text-gray-500 hover:text-gray-800">&times;</button>
+            </div>
+            <div class="max-h-96 overflow-y-auto">
+                <table class="w-full min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Área / Segmento</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Senha</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <!-- Dados da imagem image_d77442.png -->
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Panificação</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">pd_adriana5</td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Cárneos</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">pd_anderson3</td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Aromas Doces, Salgados e Molhos</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">pd_carlos1</td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Nutracêuticos</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">pd_daise4</td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Lácteos</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">pd_flavia2</td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Sorvetes</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">pd_margarida7</td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Nutrição Animal</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">pd_rebeca6</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="mt-8 flex justify-end">
+                <button class="close-senhas-pd-btn bg-blue-600 text-white font-bold py-2 px-5 rounded-lg">Fechar</button>
             </div>
         </div>
     </div>
@@ -432,6 +508,11 @@
         const senhasGerentesModal = document.getElementById('senhas-gerentes-modal');
         const openSenhasGerentesBtn = document.getElementById('open-senhas-gerentes-btn');
         const closeSenhasGerentesBtns = document.querySelectorAll('.close-senhas-gerentes-btn');
+
+        // NOVO P&D: Elementos do Modal de Senhas P&D
+        const senhasPdModal = document.getElementById('senhas-pd-modal');
+        const openSenhasPdBtn = document.getElementById('open-senhas-pd-btn');
+        const closeSenhasPdBtns = document.querySelectorAll('.close-senhas-pd-btn');
 
 
         // Removed Aroma Ranking DOM Elements
@@ -603,7 +684,7 @@
             } else {
                  infoMessage.textContent = 'ID de sessão inválido. Deve começar com "sessao_".';
                  setTimeout(() => {
-                    if (!currentSessionId) infoMessage.textContent = 'Nenhuma sessão ativa. Conecte-se manualmente ou inicie uma nova.';
+                    if (!currentSessionId) infoMessage.textContent = 'Nenhuma sessão ativa. Conecte-se manually ou inicie uma nova.';
                  }, 3000);
             }
         });
@@ -638,6 +719,21 @@
         closeSenhasGerentesBtns.forEach(btn => {
             btn.addEventListener('click', () => {
                 senhasGerentesModal.classList.add('hidden');
+            });
+        });
+
+        // NOVO P&D: Listeners do Modal de Senhas P&D
+        if (openSenhasPdBtn) {
+            openSenhasPdBtn.addEventListener('click', (e) => {
+                e.preventDefault(); 
+                e.stopPropagation(); 
+                senhasPdModal.classList.remove('hidden');
+            });
+        }
+
+        closeSenhasPdBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                senhasPdModal.classList.add('hidden');
             });
         });
 
@@ -2267,6 +2363,8 @@
     </script>
 </body>
 </html>
+
+
 
 
 
