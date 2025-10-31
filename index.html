@@ -41,6 +41,16 @@
             padding-bottom: 0.5rem;
             border-top: 1px dashed #fed7aa; /* orange-200 */
         }
+        
+        /* *** NOVO: Estilo Post-it P&D *** */
+        .pd-postit-card {
+            background-color: #fffbeb; /* bg-amber-50 */
+            border: 1px solid #fde68a; /* border-amber-200 */
+            padding: 0.75rem; /* p-3 */
+            border-radius: 0.5rem; /* rounded-lg */
+            box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); /* shadow-sm */
+        }
+
          /* Removed Aroma and Full Table specific styles */
     </style>
 </head>
@@ -91,7 +101,7 @@
                    class="block bg-white p-6 rounded-2xl shadow-sm border hover:shadow-md transition hover:-translate-y-1">
                     <div class="flex items-center mb-3">
                         <!-- Icon: Pasta (Folder) -->
-                        <svg class="w-8 h-8 mr-3 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
+                        <svg class="w-8 h-8 mr-3 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002 2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
                         <h3 class="text-xl font-bold text-gray-800">Painel Gerentes</h3>
                     </div>
                     <p class="text-sm text-gray-600">Sua senha de Gestor para este painel é:</p>
@@ -194,22 +204,49 @@
                 </div>
             </section>
 
-            <!-- Observations Feed -->
-            <section id="observations-feed-section" class="mb-10">
-                 <div class="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
-                     <h2 class="text-2xl font-bold text-gray-900">Feed de Observações dos Vendedores</h2>
-                     <div class="flex items-center gap-2">
-                         <select id="observation-segment-filter" class="border-gray-300 rounded-lg shadow-sm text-sm">
+            <!-- *** INÍCIO: FEEDS LADO A LADO *** -->
+            <section class="grid grid-cols-1 md:grid-cols-2 md:items-start gap-6 mb-10">
+                <!-- Coluna Feed Vendedores -->
+                <section id="observations-feed-section">
+                     <!-- Título -->
+                     <h2 class="text-2xl font-bold text-gray-900 mb-4">Feed de Observações (Vendedores)</h2>
+                     <!-- Filtros (empilhados abaixo do título) -->
+                     <!-- *** CORREÇÃO: Adicionada altura mínima min-h-24 *** -->
+                     <div class="mb-4 space-y-2 min-h-24">
+                         <select id="observation-segment-filter" class="border-gray-300 rounded-lg shadow-sm text-sm w-full">
                              <option value="">Todos os Segmentos</option> <!-- Default option -->
                              <!-- Options populated by JS -->
                          </select>
-                         <input id="observation-search-input" type="text" placeholder="Pesquisar por vendedor..." class="border-gray-300 rounded-lg shadow-sm text-sm">
+                         <input id="observation-search-input" type="text" placeholder="Pesquisar por vendedor..." class="border-gray-300 rounded-lg shadow-sm text-sm w-full">
                      </div>
-                 </div>
-                 <div id="observations-feed-list" class="space-y-4 max-h-96 overflow-y-auto bg-white p-4 rounded-2xl shadow-sm border">
-                     <p class="text-gray-500 placeholder-observation">Nenhuma observação de vendedor encontrada.</p>
-                 </div>
+                     <!-- Lista -->
+                     <div id="observations-feed-list" class="space-y-4 h-96 overflow-y-auto bg-white p-4 rounded-2xl shadow-sm border">
+                         <p class="text-gray-500 placeholder-observation">Nenhuma observação encontrada com os filtros atuais.</p>
+                     </div>
+                </section>
+
+                <!-- *** Coluna Post-its P&D (COM FILTRO) *** -->
+                <section id="pd-postits-section">
+                     <!-- Título -->
+                     <h2 class="text-2xl font-bold text-gray-900 mb-4">Post-its do P&D (Notas Internas)</h2>
+                     <!-- Filtros (empilhados abaixo do título) -->
+                     <!-- *** CORREÇÃO: Adicionada altura mínima min-h-24 e removido div fantasma *** -->
+                     <div class="mb-4 space-y-2 min-h-24">
+                         <select id="pd-postit-segment-filter" class="border-gray-300 rounded-lg shadow-sm text-sm w-full">
+                             <option value="">Todos os Segmentos</option>
+                             <!-- Options populated by JS -->
+                         </select>
+                         <!-- Este div fantasma ocupa o espaço do input de pesquisa, alinhando as caixas de lista -->
+                         <!-- <div class="h-[42px]"></div>  REMOVIDO -->
+                     </div>
+                     <!-- Lista -->
+                     <div id="pd-postits-list" class="space-y-3 h-96 overflow-y-auto bg-gray-50 p-4 rounded-2xl shadow-sm border border-gray-200">
+                         <p class="text-gray-500 placeholder-pd-postit">Nenhum post-it do P&D encontrado.</p>
+                     </div>
+                </section>
             </section>
+            <!-- *** FIM: FEEDS LADO A LADO *** -->
+
 
             <!-- Segment Charts -->
             <section id="segment-charts-section" class="mb-10">
@@ -346,7 +383,7 @@
                         <tr>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">LACTEOS</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">VITOR MACHADO</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">lacteospass456</td>
+                            <td classD="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">lacteospass456</td>
                         </tr>
                         <tr>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">NUTRICAO ANIMAL</td>
@@ -531,6 +568,11 @@
         const customAlertMessage = document.getElementById('custom-alert-message');
         const customAlertOkBtn = document.getElementById('custom-alert-ok-btn');
 
+        // *** NOVO: Elementos do Post-it P&D ***
+        const pdPostitsList = document.getElementById('pd-postits-list');
+        // *** NOVO: Filtro de Post-it P&D ***
+        const pdPostitSegmentFilter = document.getElementById('pd-postit-segment-filter');
+
 
         // Removed Aroma Ranking DOM Elements
 
@@ -542,6 +584,7 @@
         let sellerRepliesToManagerListenerUnsubscribe = null;
         let destaquesAmostrasListenerUnsubscribe = null;
         let historicalAromaDataUnsubscribe = null; // Listener for historical data
+        let pdPostitsListenerUnsubscribe = null; // *** NOVO: Listener Post-it P&D ***
         let currentSessionId = null;
         let chartInstances = {};
         let modalChartInstance = null;
@@ -552,6 +595,7 @@
         let allSellerReplies = []; // Cache for manager replies TO sellers (LIVE data)
         let allSellerRepliesToManager = []; // Cache for seller replies TO manager (LIVE data)
         let highlightedSamplesCache = []; // Cache for highlighted sample IDs (LIVE data)
+        let allPdPostits = []; // *** NOVO: Cache Post-it P&D ***
         let currentSampleForReply = null; // Track which sample is being replied to (LIVE data)
         let allNotifications = []; // LIVE notifications
         let areAllNotificationsVisible = false;
@@ -608,6 +652,21 @@
              };
              return mapping[normalized] || normalized;
          }
+         
+        // *** NOVO: Função para extrair nome do vendedor do contexto P&D ***
+        function getSellerNameFromPdContext(context = '') {
+            if (!context || !context.includes('(')) return null;
+            try {
+                // Pega "FELIPE LOPES BARBOSA)"
+                let name = context.split('(').pop(); 
+                // Remove ")" e espaços
+                return normalizeText(name.replace(')', '')); // Normalizar para garantir a correspondência
+            } catch (e) {
+                console.warn("Could not parse seller name from context:", context, e);
+                return null;
+            }
+        }
+
 
         // --- Main Dashboard Rendering Function ---
         function processAndDisplayDashboard(samples, sessionId, sellerDocs = []) {
@@ -634,6 +693,7 @@
             renderSegmentCharts(samples); // Segment charts based on LIVE data (segments relate to live config)
             renderSellersList(samples, sessionId, sellerDocs); // Team tracking is only for LIVE session
             renderObservationsFeed(samples); // Feed is only for LIVE session
+            renderPdPostits(); // *** NOVO: Renderiza Post-its P&D ***
             // Removed: renderFullSamplesTable(samples);
 
             populateSegmentFilters(); // Update segment dropdowns based on LIVE data segments
@@ -697,6 +757,7 @@
                      listenForSellerRepliesToManager(manualId);
                      listenForDestaquesAmostras(manualId);
                      listenForHistoricalAromaData(manualId); // Start listening for historical data
+                     listenForPdPostits(manualId); // *** NOVO: Inicia listener Post-it P&D ***
 
                  } catch (error) {
                       console.error(`Erro ao verificar ou definir sessão ativa ${manualId}:`, error);
@@ -772,7 +833,7 @@
             try {
                 // Usar setDoc com merge para não sobrescrever outros campos
                 await setDoc(docRef, { segmento: newSegment }, { merge: true }); 
-                sellerSegmentsCache[currentSellerForSegment] = newSegment; // Update local cache
+                sellerSegmentsCache[normalizeText(currentSellerForSegment)] = newSegment; // *** CORREÇÃO: Usar nome normalizado como chave do cache ***
 
                 infoMessage.textContent = `Segmento de ${currentSellerForSegment} atualizado.`;
                 segmentModal.classList.add('hidden');
@@ -816,6 +877,12 @@
         // Filter observations feed when segment or search changes
         observationSegmentFilter.addEventListener('change', () => renderObservationsFeed(allCurrentSamples));
         observationSearchInput.addEventListener('input', () => renderObservationsFeed(allCurrentSamples));
+        
+        // *** NOVO: Listener para filtro de Post-it P&D ***
+        if (pdPostitSegmentFilter) {
+            pdPostitSegmentFilter.addEventListener('change', () => renderPdPostits());
+        }
+
 
         // Removed Aroma Ranking Listeners
 
@@ -925,6 +992,7 @@
              listenForSellerRepliesToManager(sessionId);
              listenForDestaquesAmostras(sessionId);
              listenForHistoricalAromaData(sessionId); // Start listening for historical data
+             listenForPdPostits(sessionId); // *** NOVO: Inicia listener Post-it P&D ***
         }
 
         // Listen for real-time updates to seller data within a session
@@ -1034,6 +1102,7 @@
                     if (!sellerRepliesToManagerListenerUnsubscribe) listenForSellerRepliesToManager(sessionId);
                     if (!destaquesAmostrasListenerUnsubscribe) listenForDestaquesAmostras(sessionId);
                     if (!historicalAromaDataUnsubscribe) listenForHistoricalAromaData(sessionId); // Ensure historical listener is active
+                    if (!pdPostitsListenerUnsubscribe) listenForPdPostits(sessionId); // *** NOVO: Garantir que o listener P&D está ativo ***
 
                     // Update the UI with the latest LIVE data (processAndDisplayDashboard handles combining for aroma)
                     processAndDisplayDashboard(allSamples, sessionId, sellerDocs);
@@ -1061,6 +1130,7 @@
             if (sellerRepliesToManagerListenerUnsubscribe) sellerRepliesToManagerListenerUnsubscribe();
             if (destaquesAmostrasListenerUnsubscribe) destaquesAmostrasListenerUnsubscribe();
             if (historicalAromaDataUnsubscribe) historicalAromaDataUnsubscribe(); // Unsubscribe historical listener
+            if (pdPostitsListenerUnsubscribe) pdPostitsListenerUnsubscribe(); // *** NOVO: Parar listener Post-it P&D ***
 
             // Clear local state
             currentSessionId = null;
@@ -1069,6 +1139,7 @@
             allSellerReplies = [];
             allSellerRepliesToManager = [];
             highlightedSamplesCache = [];
+            allPdPostits = []; // *** NOVO: Limpar cache Post-it P&D ***
             areAllNotificationsVisible = false;
             sellerSegmentsCache = {};
             currentSampleForReply = null;
@@ -1106,6 +1177,7 @@
              }
 
             updateNotificationDisplay(); // Clear notifications list
+            renderPdPostits(); // *** NOVO: Limpar lista de Post-its P&D ***
         }
 
         // Listen for changes to the globally active session ID
@@ -1130,6 +1202,7 @@
                         listenForSellerRepliesToManager(activeSessionId);
                         listenForDestaquesAmostras(activeSessionId);
                         listenForHistoricalAromaData(activeSessionId); // Start listening for historical data
+                        listenForPdPostits(activeSessionId); // *** NOVO: Inicia listener Post-it P&D ***
                     } else {
                         // Already connected to the correct global session
                         console.log(`Already connected to global session ${activeSessionId}`);
@@ -1249,13 +1322,17 @@
                                 }
 
                                 // 2. Se ainda não foi lido, criar a notificação
-                                const message = `<strong>${replyData.sellerName}</strong> respondeu à sua observação sobre <strong>${replyData.produto}</strong>: "${replyData.replyMessage}"`;
+                                // *** ATUALIZAÇÃO: Diferenciar P&D de Vendedor ***
+                                const isPDReply = replyData.originalManagerName === "P&D";
+                                const senderName = isPDReply ? `${replyData.sellerName} (P&D)` : replyData.sellerName;
+                                const message = `<strong>${senderName}</strong> respondeu à sua observação sobre <strong>${replyData.produto}</strong>: "${replyData.replyMessage}"`;
+                                
                                 const notifId = sanitizeForFirebaseId(`seller-reply-${replyDocRef.id}`);
                                 const notifRef = doc(db, "sessoes", currentSessionId, "notificacoes", notifId);
 
                                 transaction.set(notifRef, {
                                     message,
-                                    color: 'orange', // Cor para respostas do vendedor
+                                    color: isPDReply ? 'purple' : 'orange', // Cor Roxa para P&D, Laranja para Vendedor
                                     timestamp: serverTimestamp(),
                                     triggerPopup: true // Acionar popup
                                 });
@@ -1363,6 +1440,32 @@
                         };
                     });
                     processAndDisplayDashboard(allCurrentSamples, currentSessionId, sellerDocs);
+                }
+            });
+        }
+        
+        // *** NOVO: Listener para Post-its P&D ***
+        function listenForPdPostits(sessionId) {
+            if (!sessionId) return;
+            if (pdPostitsListenerUnsubscribe) pdPostitsListenerUnsubscribe();
+
+            // Query para TODOS os post-its, ordenados por data
+            const q = query(
+                collection(db, "sessoes", sessionId, "pdPostits"),
+                orderBy("timestamp", "desc")
+            );
+
+            pdPostitsListenerUnsubscribe = onSnapshot(q, (snapshot) => {
+                allPdPostits = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                console.log(`[Gestor] Post-its P&D carregados: ${allPdPostits.length}`);
+                if (!dashboard.classList.contains('hidden')) {
+                    renderPdPostits(); // Chamar a nova função de renderização
+                }
+            }, (error) => {
+                console.error("Erro ao carregar post-its P&D:", error);
+                allPdPostits = [];
+                if (!dashboard.classList.contains('hidden')) {
+                    renderPdPostits(); // Limpar a lista em caso de erro
                 }
             });
         }
@@ -1593,7 +1696,7 @@
                 card.className = `p-4 rounded-lg shadow bg-white border-l-4 border-${statusColor}-500 seller-card`; // Adicionei 'seller-card' aqui para o filtro
                 card.dataset.sellerName = sellerName; // Store seller name for filtering
 
-                const segment = sellerSegmentsCache[sellerName] || 'Sem Segmento'; // Get segment from cache
+                const segment = sellerSegmentsCache[normalizeText(sellerName)] || 'Sem Segmento'; // *** CORREÇÃO: Usar nome normalizado para buscar no cache ***
 
                 // Determine status display HTML
                 let statusHTML = `<span class="text-xs text-gray-500">${isFinalizedByVendor ? 'Finalizado' : `${totalPending} pendente(s)`}</span>`;
@@ -1758,7 +1861,7 @@
                     filteredSamples = filteredSamples.filter(sample => isAroma(sample.produto, sample.descricao));
                 } else {
                     // Filter by actual seller segment
-                    filteredSamples = filteredSamples.filter(sample => sellerSegmentsCache[sample.sellerName] === segmentFilter);
+                    filteredSamples = filteredSamples.filter(sample => sellerSegmentsCache[normalizeText(sample.sellerName)] === segmentFilter);
                 }
             }
 
@@ -1805,16 +1908,21 @@
                      `;
 
                      // Find the latest seller reply *to this manager's reply*
-                     const sellerReply = allSellerRepliesToManager
+                     // *** ATUALIZAÇÃO: Incluir respostas do P&D ***
+                     const sellerOrPdReply = allSellerRepliesToManager
                          .filter(r => r.originalManagerMessage === managerReply.replyMessage && r.pedido === sample.pedido && r.produto === sample.produto)
                          .sort((a, b) => (b.timestamp?.toDate() ?? 0) - (a.timestamp?.toDate() ?? 0))[0];
 
-                     if (sellerReply) {
-                         const sellerTime = sellerReply.timestamp?.toDate() ? sellerReply.timestamp.toDate().toLocaleString('pt-BR') : '';
+                     if (sellerOrPdReply) {
+                         const time = sellerOrPdReply.timestamp?.toDate() ? sellerOrPdReply.timestamp.toDate().toLocaleString('pt-BR') : '';
+                         const isPDReply = sellerOrPdReply.originalManagerName === "P&D";
+                         const senderName = isPDReply ? `${sellerOrPdReply.sellerName} (P&D)` : sellerOrPdReply.sellerName;
+                         const replyClass = isPDReply ? 'pd-reply' : 'seller-reply'; // pd-reply precisa ser estilizado, usar seller-reply por enquanto
+                         
                          repliesHtml += `
-                             <div class="seller-reply">
-                                 <p><strong>${sellerReply.sellerName} respondeu:</strong> ${sellerReply.replyMessage}</p>
-                                 <p class="text-xs text-gray-400 text-right">${sellerTime}</p>
+                             <div class="seller-reply"> <!-- Usando seller-reply style por enquanto -->
+                                 <p><strong>${senderName} respondeu:</strong> ${sellerOrPdReply.replyMessage}</p>
+                                 <p class="text-xs text-gray-400 text-right">${time}</p>
                              </div>
                          `;
                      }
@@ -1869,6 +1977,66 @@
 
              replyModal.classList.remove('hidden'); // Show modal
         }
+        
+        // *** NOVO: Renderiza a lista de Post-its do P&D (com filtro e novos dados) ***
+        function renderPdPostits() {
+            const feedContainer = document.getElementById('pd-postits-list');
+            if (!feedContainer) return;
+            
+            const segmentFilter = pdPostitSegmentFilter ? pdPostitSegmentFilter.value : ''; // Ler o filtro
+
+            // Filtrar a lista
+            let filteredNotes = allPdPostits;
+            if (segmentFilter) {
+                if (segmentFilter === AROMA_FILTER_VALUE) {
+                    // Filtrar por Aroma (baseado no código do produto no 'context')
+                    filteredNotes = allPdPostits.filter(note => {
+                        const contextProduct = note.context ? note.context.split('(')[0].trim() : '';
+                        return isAroma(contextProduct, ''); // Checar se o código do produto é de aroma
+                    });
+                } else {
+                    // Filtrar por Segmento
+                    filteredNotes = allPdPostits.filter(note => {
+                        const sellerName = getSellerNameFromPdContext(note.context);
+                        if (!sellerName) return false;
+                        // Usar sellerSegmentsCache[NORMALIZED_SELLER_NAME]
+                        return sellerSegmentsCache[sellerName] === segmentFilter;
+                    });
+                }
+            }
+            
+            // Limpar
+            if (filteredNotes.length === 0) {
+                feedContainer.innerHTML = '<p class="text-gray-500 placeholder-pd-postit">Nenhum post-it encontrado com os filtros atuais.</p>';
+                return;
+            }
+
+            feedContainer.innerHTML = ''; 
+            filteredNotes.forEach(note => {
+                const card = document.createElement('div');
+                card.className = 'pd-postit-card'; // Usar a nova classe CSS
+
+                const time = note.timestamp?.toDate() ? note.timestamp.toDate().toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '';
+                
+                // **NOVA ESTRUTURA DO CARD**
+                card.innerHTML = `
+                    <p class="text-sm text-gray-800">${note.message}</p>
+                    <div class="mt-2 pt-2 border-t border-amber-200">
+                        <p class="text-xs text-gray-600 font-semibold">Pedido: <span class="font-normal">${note.pedido || 'N/A'}</span></p>
+                        <p class="text-xs text-gray-600 font-semibold">Fat.: <span class="font-normal">${note.dataFaturamento || 'N/A'}</span></p>
+                    </div>
+                    <div class="flex justify-between items-center mt-2 text-xs">
+                        <div>
+                            <p class="font-semibold text-purple-700">${note.pdManagerName || 'P&D'}</p>
+                            <p class="text-gray-500">${note.context || ''}</p>
+                        </div>
+                        <span class="text-gray-400">${time}</span>
+                    </div>
+                `;
+                feedContainer.appendChild(card);
+            });
+        }
+
 
        // Send manager's reply to the seller
        async function sendReplyToSeller() {
@@ -1898,7 +2066,8 @@
                    pedido: currentSampleForReply.pedido,
                    produto: currentSampleForReply.produto,
                    timestamp: serverTimestamp(),
-                   read: false // Flag for vendor app to track read status
+                   read: false, // Flag for vendor app to track read status
+                   readByPd: false // *** NOVO: Flag para P&D ler ***
                };
 
                // Add reply to the seller's notification collection
@@ -2009,16 +2178,18 @@
             currentSellerForSegment = sellerName;
             segmentModal.classList.remove('hidden');
             segmentModalSellerName.textContent = `Definir segmento para: ${sellerName}`;
-            const currentSegment = sellerSegmentsCache[sellerName] || ""; // Get current segment from cache
+            const currentSegment = sellerSegmentsCache[normalizeText(sellerName)] || ""; // *** CORREÇÃO: Usar nome normalizado para buscar no cache ***
             // Populate select options
             segmentSelect.innerHTML = `<option value="">Selecione...</option>` + SEGMENTS.map(s => `<option value="${s}" ${currentSegment === s ? 'selected' : ''}>${s}</option>`).join('');
         }
 
         // Load segment configurations for sellers from Firestore (based on LIVE data sellers)
         async function loadAllSellerSegments(sellerNames) {
-            const uniqueSellers = [...new Set(sellerNames)];
-            // Only fetch segments for sellers not already in the cache
-            const sellersToFetch = uniqueSellers.filter(name => !sellerSegmentsCache.hasOwnProperty(name));
+            const uniqueSellers = [...new Set(sellerNames.map(name => normalizeText(name)))]; // *** CORREÇÃO: Normalizar nomes ao carregar ***
+            
+            // A chave do cache DEVE ser o nome normalizado
+            const sellersToFetch = uniqueSellers.filter(normalizedName => !sellerSegmentsCache.hasOwnProperty(normalizedName));
+            
             if (sellersToFetch.length === 0) {
                  populateSegmentFilters(); // Populate filters even if no fetch needed
                  return; // Already have all segments
@@ -2030,7 +2201,7 @@
                 const q = collection(db, "vendedorConfig");
                 const snapshot = await getDocs(q);
                 snapshot.forEach(doc => {
-                    // Store fetched configs using sanitized ID as key
+                    // O ID do documento é o nome normalizado
                     fetchedConfigs[doc.id] = doc.data().segmento;
                 });
             } catch (error) {
@@ -2039,9 +2210,9 @@
             }
 
             // Update cache for all sellers (fetched or not)
-            uniqueSellers.forEach(name => {
-                const sellerId = sanitizeForFirebaseId(name);
-                sellerSegmentsCache[name] = fetchedConfigs[sellerId] || null; // Use fetched or null
+            uniqueSellers.forEach(normalizedName => {
+                // O ID do doc é o nome normalizado
+                sellerSegmentsCache[normalizedName] = fetchedConfigs[normalizedName] || null; // Use fetched or null
             });
 
             populateSegmentFilters(); // Populate/update filter dropdowns
@@ -2145,7 +2316,7 @@
                     filteredSamples = filteredSamples.filter(sample => isAroma(sample.produto, sample.descricao));
                 } else {
                     // Filter by actual seller segment (using LIVE cache)
-                    filteredSamples = filteredSamples.filter(sample => sellerSegmentsCache[sample.sellerName] === segmentFilter);
+                    filteredSamples = filteredSamples.filter(sample => sellerSegmentsCache[normalizeText(sample.sellerName)] === segmentFilter);
                 }
             }
 
@@ -2187,12 +2358,17 @@
                      if (managerReply) {
                          const managerTime = managerReply.timestamp?.toDate() ? managerReply.timestamp.toDate().toLocaleString('pt-BR') : '';
                          repliesHtml += `<div class="manager-reply"><p><strong>${managerReply.managerName} respondeu:</strong> ${managerReply.replyMessage}</p><p class="text-xs text-gray-400 text-right">${managerTime}</p></div>`;
-                         const sellerReply = !sample.isHistorical ? allSellerRepliesToManager
+                         
+                         const sellerOrPdReply = !sample.isHistorical ? allSellerRepliesToManager
                              .filter(r => r.originalManagerMessage === managerReply.replyMessage && r.pedido === sample.pedido && r.produto === sample.produto)
                              .sort((a, b) => (b.timestamp?.toDate() ?? 0) - (a.timestamp?.toDate() ?? 0))[0] : null;
-                         if (sellerReply) {
-                             const sellerTime = sellerReply.timestamp?.toDate() ? sellerReply.timestamp.toDate().toLocaleString('pt-BR') : '';
-                             repliesHtml += `<div class="seller-reply"><p><strong>${sellerReply.sellerName} respondeu:</strong> ${sellerReply.replyMessage}</p><p class="text-xs text-gray-400 text-right">${sellerTime}</p></div>`;
+                         
+                         if (sellerOrPdReply) {
+                             const time = sellerOrPdReply.timestamp?.toDate() ? sellerOrPdReply.timestamp.toDate().toLocaleString('pt-BR') : '';
+                             const isPDReply = sellerOrPdReply.originalManagerName === "P&D";
+                             const senderName = isPDReply ? `${sellerOrPdReply.sellerName} (P&D)` : sellerOrPdReply.sellerName;
+                             
+                             repliesHtml += `<div class="seller-reply"><p><strong>${senderName} respondeu:</strong> ${sellerOrPdReply.replyMessage}</p><p class="text-xs text-gray-400 text-right">${time}</p></div>`;
                          }
                      }
                      // Reply button (only if there's an observation and it's LIVE data)
@@ -2284,7 +2460,7 @@
 
             // Group non-pending, categorized feedback by segment (using LIVE samples)
             samples.forEach(sample => {
-                const segment = sellerSegmentsCache[sample.sellerName];
+                const segment = sellerSegmentsCache[normalizeText(sample.sellerName)]; // *** CORREÇÃO: Usar nome normalizado para buscar no cache ***
                 if (segment && !sample.isPending && sample.feedback && sample.feedback.trim() !== '') {
                      const canonicalFeedback = getCanonicalFeedback(sample.feedback);
                      const CANONICAL_PENDING = ['AMOSTRA NÃO TESTADA', 'EM ANÁLISE', 'AMOSTRA SEM FEEDBACK', 'PENDENTE (SISTEMA)'];
@@ -2384,53 +2560,55 @@
             }
         }
 
-        // Populate segment filters based on LIVE data segments, adding the Aroma option
+        // *** CORREÇÃO: Função atualizada para popular AMBOS os filtros ***
         function populateSegmentFilters() {
              const currentSegments = [...new Set(Object.values(sellerSegmentsCache).filter(Boolean))].sort();
 
-             // Populate Observation Filter (main page)
+             // Popular Filtro de Observação (página principal)
              const obsSelect = document.getElementById('observation-segment-filter');
-             if(obsSelect) {
-                 const obsCurrentValue = obsSelect.value; // Store current value before clearing
-                 obsSelect.innerHTML = '<option value="">Todos os Segmentos</option>';
+             // **NOVO: Popular Filtro de Post-it P&D**
+             const pdSelect = document.getElementById('pd-postit-segment-filter');
 
-                 // Add the special Aroma filter option FIRST
+             // Função auxiliar para popular um select
+             const populateSelect = (selectEl) => {
+                 if (!selectEl) return;
+                 const currentValue = selectEl.value; 
+                 selectEl.innerHTML = '<option value="">Todos os Segmentos</option>';
+
                  const aromaOption = document.createElement('option');
                  aromaOption.value = AROMA_FILTER_VALUE;
                  aromaOption.textContent = 'Aromas (DAR / AROMAS)';
-                 obsSelect.appendChild(aromaOption);
+                 selectEl.appendChild(aromaOption);
 
-                 // Add a separator if there are actual segments
                  if (currentSegments.length > 0) {
                      const separator = document.createElement('option');
                      separator.disabled = true;
                      separator.textContent = '--- Segmentos ---';
-                     obsSelect.appendChild(separator);
+                     selectEl.appendChild(separator);
                  }
 
-                 // Add actual segments
                  currentSegments.forEach(segment => {
                      const option = document.createElement('option');
                      option.value = segment;
                      option.textContent = segment;
-                     obsSelect.appendChild(option);
+                     selectEl.appendChild(option);
                  });
 
-                 // Try to restore the previous selection
-                 if (obsSelect.querySelector(`option[value="${obsCurrentValue}"]`)) {
-                     obsSelect.value = obsCurrentValue;
+                 if (selectEl.querySelector(`option[value="${currentValue}"]`)) {
+                     selectEl.value = currentValue;
                  } else {
-                     // If the previous value is no longer valid (e.g., segment removed), default to "Todos"
-                     // Keep the current filter if it's the Aroma filter
-                     if (obsCurrentValue !== AROMA_FILTER_VALUE) {
-                         obsSelect.value = "";
+                     if (currentValue !== AROMA_FILTER_VALUE) {
+                         selectEl.value = "";
                      } else {
-                         obsSelect.value = AROMA_FILTER_VALUE;
+                         selectEl.value = AROMA_FILTER_VALUE;
                      }
                  }
-             }
+             };
 
-           // Populate Modal Filter (calls the specific function for the modal)
+             populateSelect(obsSelect); // Popular filtro de observação
+             populateSelect(pdSelect); // Popular filtro de post-it
+
+           // A função de popular o modal já é chamada separadamente
              populateModalSegmentFilter();
         }
 
@@ -2452,6 +2630,12 @@
     </script>
 </body>
 </html>
+
+
+
+
+
+
 
 
 
