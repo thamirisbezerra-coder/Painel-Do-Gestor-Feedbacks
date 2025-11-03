@@ -322,7 +322,7 @@
                         <tr>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Segmento</th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gerente</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Senha</th>
+                            <th scope="col" classs="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Senha</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
@@ -512,8 +512,7 @@
         const pdPostitSegmentFilter = document.getElementById('pd-postit-segment-filter');
 
         // --- State Variables ---
-        // *** CORREÇÃO: Alterado 'samplesListenerUnsubscribe' para uma lista ***
-        let samplesListenersUnsubscribe = []; // Lista de unsubscribers, um por vendedor
+        let samplesListenersUnsubscribe = [];
         let notificationListenerUnsubscribe = null;
         let sellerRepliesListenerUnsubscribe = null;
         let sellerRepliesToManagerListenerUnsubscribe = null;
@@ -535,9 +534,14 @@
         let allNotifications = [];
         let areAllNotificationsVisible = false;
         let historicalAromaData = [];
-        let sellerDataCache = {}; // Cache para { sellerId: { originalName, accessCode } }
-        // *** NOVO: Cache para armazenar amostras por vendedor ***
-        let samplesBySellerCache = {}; // { sellerId: [amostra1, amostra2] }
+        let sellerDataCache = {};
+        let samplesBySellerCache = {};
+        
+        // *** NOVO: Controlo de Carga Inicial ***
+        let initialLoadComplete = false;
+        let sellersLoadedCount = 0;
+        let totalSellersToLoad = 0;
+        let sellersWithActiveListeners = new Set();
 
 
         // --- Utility Functions ---
@@ -546,26 +550,26 @@
 
         function showAlert(message, title = "Erro na Operação", color = "text-red-600") {
             customAlertTitle.textContent = title;
-            customAlertMessage.innerHTML = message;
+            customAlertMessage.innerHTML = message; // Usar innerHTML para o <br>
             customAlertTitle.className = `text-xl font-bold mb-4 ${color}`;
             customAlert.classList.remove('hidden');
         }
+        customAlertOkBtn.addEventListener('click', () => customAlert.classList.add('hidden'));
 
+        // *** CORREÇÃO: Função de erro de sintaxe corrigida ***
         function handleFirestoreError(error, operationContext) {
             console.error(`Erro em "${operationContext}":`, error);
-            if (error.code === 'resource-exhausted' || error.message.includes('Quota exceeded')) {
-                showAlert(
-                    "O limite diário de uso do banco de dados foi atingido (Quota Exceeded). Novas alterações não serão salvas hoje.<br><br>Por favor, tente novamente amanhã ou contate o suporte.", 
-                    "Limite da Plataforma Atingido", 
-                    "text-amber-600"
-                );
-            } else {
-                showAlert(
-                    `Não foi possível completar a operação: ${operationContext}.<br><br>Erro: ${error.message}`, 
-                    "Erro na Operação",
-                    "text-red-600"
-                );
+            let message = `Não foi possível completar a operação: ${operationContext}.<br><br>Erro: ${error.message}`;
+            let title = "Erro na Operação";
+            let color = "text-red-600";
+
+            if (error.code === 'resource-exhausted' || (error.message && error.message.includes('Quota exceeded'))) {
+                message = "O limite diário de uso do banco de dados foi atingido (Quota Exceeded). Novas alterações não serão salvas hoje.<br><br>Por favor, tente novamente amanhã ou contate o suporte.";
+                title = "Limite da Plataforma Atingido";
+                color = "text-amber-600";
             }
+            // Chama a função showAlert com os argumentos corretos
+            showAlert(message, title, color);
         }
 
         function isAroma(produto, descricao) {
@@ -606,25 +610,29 @@
 
 
         // --- Main Dashboard Rendering Function ---
-        // *** CORREÇÃO: Não precisa mais de parâmetros, usa caches globais ***
         function processAndDisplayDashboard() {
-            dashboard.classList.remove('hidden');
-            connectionSection.classList.remove('hidden');
-            sessionIdText.innerHTML = `Sessão Ativa: <strong>${currentSessionId}</strong>`;
-            infoMessage.textContent = "Dados carregados. Ouvindo atualizações em tempo real.";
-
-            // Combina amostras de todos os vendedores do cache
-            allCurrentSamples = Object.values(samplesBySellerCache).flat();
+            // *** CORREÇÃO: Só mostra o dashboard se a carga inicial estiver completa ***
+            if (!initialLoadComplete) {
+                 console.log(`A aguardar carregamento. ${sellersLoadedCount}/${totalSellersToLoad} vendedores carregados.`);
+                 infoMessage.textContent = `A carregar dados... (${sellersLoadedCount}/${totalSellersToLoad})`;
+                 return;
+            }
             
+            console.log("Carga inicial completa. A renderizar painel...");
+            dashboard.classList.remove('hidden');
+            connectionSection.classList.remove('hidden'); // Manter visível para o status
+            sessionIdText.innerHTML = `Sessão Ativa: <strong>${currentSessionId}</strong>`;
+            infoMessage.textContent = "Dados carregados. A ouvir atualizações em tempo real.";
+
+            allCurrentSamples = Object.values(samplesBySellerCache).flat();
             const combinedSamplesForStats = [...allCurrentSamples, ...historicalAromaData];
 
             renderCharts(combinedSamplesForStats);
             renderFeedbackDetails(combinedSamplesForStats);
             renderSegmentCharts(allCurrentSamples);
-            renderSellersList(); // Usa caches globais (sellerDataCache, samplesBySellerCache)
+            renderSellersList();
             renderObservationsFeed(allCurrentSamples);
             renderPdPostits();
-
             populateSegmentFilters();
         }
 
@@ -681,12 +689,11 @@
                 await setDoc(docRef, { segmento: newSegment }, { merge: true }); 
                 sellerSegmentsCache[normalizeText(currentSellerForSegment)] = newSegment;
                 
-                infoMessage.textContent = `Segmento de ${currentSellerForSegment} atualizado.`;
+                showAlert(`Segmento de ${currentSellerForSegment} atualizado.`, "Sucesso", "text-green-600");
                 segmentModal.classList.add('hidden');
                 
-                processAndDisplayDashboard();
+                processAndDisplayDashboard(); // Re-renderiza com novo segmento
 
-                 setTimeout(() => infoMessage.textContent = 'Dados carregados. Ouvindo atualizações.', 3000);
             } catch (error) {
                 handleFirestoreError(error, `atualizar segmento de ${currentSellerForSegment}`);
             }
@@ -711,7 +718,6 @@
         // --- Core Functions ---
 
         function resetToInitialState() {
-            // *** CORREÇÃO: Limpa a lista de listeners de amostras ***
             samplesListenersUnsubscribe.forEach(unsub => unsub());
             samplesListenersUnsubscribe = [];
             
@@ -735,7 +741,13 @@
             currentFeedbackFilter = '';
             historicalAromaData = [];
             sellerDataCache = {};
-            samplesBySellerCache = {}; // Limpa cache de amostras
+            samplesBySellerCache = {};
+            
+            // *** NOVO: Reseta controlo de carga ***
+            initialLoadComplete = false;
+            sellersLoadedCount = 0;
+            totalSellersToLoad = 0;
+            sellersWithActiveListeners.clear();
 
             dashboard.classList.add('hidden');
             sessionIdText.textContent = 'A conectar...';
@@ -760,11 +772,14 @@
                         currentSessionId = activeSessionId;
                         infoMessage.textContent = `Sessão ativa: ${activeSessionId}. A carregar dados...`;
                         
+                        // Carrega dados estáticos primeiro
                         await loadAllSellerData();
                         await loadAllSellerSegments();
-                        // *** CORREÇÃO: Inicia o listener de amostras (que agora itera) ***
+                        
+                        // Inicia listeners de amostras (agora controla a carga inicial)
                         listenForSamples();
                         
+                        // Inicia outros listeners
                         listenForNotifications();
                         listenForSellerReplies();
                         listenForSellerRepliesToManager();
@@ -800,24 +815,27 @@
             }
         }
 
-        // *** CORREÇÃO: Nova lógica para ouvir amostras sem collectionGroup ***
         function listenForSamples() {
-            // Limpa listeners antigos
             samplesListenersUnsubscribe.forEach(unsub => unsub());
             samplesListenersUnsubscribe = [];
-            samplesBySellerCache = {}; // Limpa cache de amostras
+            samplesBySellerCache = {};
             allCurrentSamples = [];
+            
+            // *** NOVO: Reseta controlo de carga ***
+            initialLoadComplete = false;
+            sellersLoadedCount = 0;
+            totalSellersToLoad = Object.keys(sellerDataCache).length;
+            sellersWithActiveListeners.clear();
 
-            if (Object.keys(sellerDataCache).length === 0) {
+            if (totalSellersToLoad === 0) {
                 console.warn("Nenhum vendedor encontrado no cache. Não é possível ouvir amostras.");
-                processAndDisplayDashboard(); // Renderiza o painel (vazio)
+                initialLoadComplete = true; // Marca como completo para permitir renderização
+                processAndDisplayDashboard();
                 return;
             }
             
-            let sellersProcessed = 0;
-            const totalSellers = Object.keys(sellerDataCache).length;
+            console.log(`A iniciar listeners para ${totalSellersToLoad} vendedores...`);
 
-            // Para cada vendedor no cache, cria um listener para suas amostras
             Object.keys(sellerDataCache).forEach(sellerId => {
                 const samplesQuery = query(
                     collection(db, "sessoes", currentSessionId, "vendedores", sellerId, "amostras")
@@ -826,29 +844,50 @@
                 const unsubscribe = onSnapshot(samplesQuery, (snapshot) => {
                     const previousSamples = [...allCurrentSamples];
                     
-                    // Atualiza o cache de amostras para este vendedor
                     samplesBySellerCache[sellerId] = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     
-                    // Reconstrói a lista 'allCurrentSamples' a partir do cache
-                    allCurrentSamples = Object.values(samplesBySellerCache).flat();
-                    
-                    // Se não for a carga inicial, processa notificações
-                    if (sellersProcessed >= totalSellers) { // Só processa updates após todos carregarem 1x
-                         processSampleUpdates(allCurrentSamples, previousSamples);
+                    // *** NOVO: Lógica de Controlo de Carga Inicial ***
+                    if (!initialLoadComplete) {
+                        // Se este vendedor ainda não foi contado na carga inicial
+                        if (!sellersWithActiveListeners.has(sellerId)) {
+                            sellersWithActiveListeners.add(sellerId);
+                            sellersLoadedCount++;
+                            console.log(`Vendedor ${sellerId} carregado (${sellersLoadedCount}/${totalSellersToLoad})`);
+                        }
+                        
+                        // Reconstrói amostras totais para o status
+                        allCurrentSamples = Object.values(samplesBySellerCache).flat();
+                        
+                        // Se todos os vendedores carregaram pela primeira vez
+                        if (sellersLoadedCount >= totalSellersToLoad) {
+                            initialLoadComplete = true;
+                            processAndDisplayDashboard(); // Renderiza o painel COMPLETO
+                        } else {
+                            // Atualiza a mensagem de progresso
+                            infoMessage.textContent = `A carregar dados... (${sellersLoadedCount}/${totalSellersToLoad})`;
+                        }
+                        
+                    } else {
+                        // Carga inicial já terminou, isto é uma atualização em tempo real
+                        allCurrentSamples = Object.values(samplesBySellerCache).flat();
+                        processSampleUpdates(allCurrentSamples, previousSamples);
+                        processAndDisplayDashboard(); // Re-renderiza o painel com a atualização
                     }
-                    
-                    // Re-renderiza o dashboard completo
-                    processAndDisplayDashboard();
 
                 }, (error) => {
                     handleFirestoreError(error, `ouvir amostras do vendedor ${sellerId}`);
+                    // Se um vendedor falhar, contamos mesmo assim para não bloquear a carga
+                    if (!initialLoadComplete && !sellersWithActiveListeners.has(sellerId)) {
+                         sellersWithActiveListeners.add(sellerId);
+                         sellersLoadedCount++;
+                         if (sellersLoadedCount >= totalSellersToLoad) {
+                            initialLoadComplete = true;
+                            processAndDisplayDashboard();
+                         }
+                    }
                 });
 
-                samplesListenersUnsubscribe.push(unsubscribe); // Adiciona à lista para limpeza
-                
-                // Marca como processado APÓS o primeiro callback (idealmente)
-                // Mas para UI, marcamos aqui
-                sellersProcessed++;
+                samplesListenersUnsubscribe.push(unsubscribe);
             });
         }
 
@@ -912,6 +951,7 @@
 
         // (Todas as outras funções 'listenFor...' permanecem as mesmas da v2)
         function listenForNotifications() {
+            if (!currentSessionId) return;
             if (notificationListenerUnsubscribe) notificationListenerUnsubscribe();
             const q = query(collection(db, "sessoes", currentSessionId, "notificacoes"), orderBy("timestamp", "desc"));
 
@@ -951,7 +991,7 @@
             sellerRepliesListenerUnsubscribe = onSnapshot(q, (snapshot) => {
                  allSellerReplies = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                  console.log(`[v2] Loaded/Updated ${allSellerReplies.length} manager replies.`);
-                 if(!dashboard.classList.contains('hidden')) {
+                 if(initialLoadComplete) { // Só renderiza se a carga inicial estiver completa
                      renderObservationsFeed(allCurrentSamples);
                      if (!feedbackSamplesModal.classList.contains('hidden') && currentFeedbackFilter) {
                          showFeedbackSamples(currentFeedbackFilter, modalSegmentFilter.value);
@@ -1004,7 +1044,7 @@
                     }
                 }
 
-                if(!dashboard.classList.contains('hidden')) {
+                if(initialLoadComplete) { // Só atualiza UI se a carga inicial estiver completa
                      const fullQuery = query(collection(db, "sessoes", currentSessionId, "respostasVendedor"));
                      const fullSnapshot = await getDocs(fullQuery);
                      allSellerRepliesToManager = fullSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -1027,7 +1067,7 @@
 
             destaquesAmostrasListenerUnsubscribe = onSnapshot(destaquesRef, (docSnap) => {
                 highlightedSamplesCache = docSnap.exists() ? (docSnap.data().lista || []) : [];
-                if (!feedbackSamplesModal.classList.contains('hidden') && currentFeedbackFilter) {
+                if (initialLoadComplete && !feedbackSamplesModal.classList.contains('hidden') && currentFeedbackFilter) {
                     showFeedbackSamples(currentFeedbackFilter, modalSegmentFilter.value);
                 }
             }, (error) => {
@@ -1049,7 +1089,7 @@
                      console.log(`Dados históricos de aroma atualizados. Registros: ${newData.length}`);
                      historicalAromaData = newData;
                      
-                     if (!dashboard.classList.contains('hidden') && currentSessionId) {
+                     if (initialLoadComplete && currentSessionId) {
                          processAndDisplayDashboard(); 
                      }
                 }
@@ -1070,7 +1110,7 @@
 
             pdPostitsListenerUnsubscribe = onSnapshot(q, (snapshot) => {
                 allPdPostits = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                if (!dashboard.classList.contains('hidden')) {
+                if (initialLoadComplete) {
                     renderPdPostits();
                 }
             }, (error) => {
@@ -1236,18 +1276,15 @@
         function renderSellersList() {
             sellersListContainer.innerHTML = '';
             
-            // Itera sobre o cache de dados dos vendedores (carregado no início)
             Object.keys(sellerDataCache).sort((a,b) => sellerDataCache[a].originalName.localeCompare(sellerDataCache[b].originalName)).forEach(sellerId => {
                 const sellerData = sellerDataCache[sellerId];
                 const sellerName = sellerData.originalName;
                 
-                // Pega as amostras deste vendedor do cache de amostras
                 const sellerSamples = samplesBySellerCache[sellerId] || [];
                 
                 const totalPending = sellerSamples.filter(s => s.isPending).length;
                 const isFinalizedByVendor = totalPending === 0;
                 
-                // Verifica o status 'baixado'
                 let systemStatus = 'pending';
                 if (sellerSamples.length > 0 && sellerSamples.every(s => s.systemStatus === 'baixado')) {
                     systemStatus = 'baixado';
@@ -1681,7 +1718,6 @@
 
         // 'loadAllSellerSegments' permanece a mesma
         async function loadAllSellerSegments() {
-            // Agora usa sellerDataCache
             const uniqueSellers = [...new Set(Object.values(sellerDataCache).map(data => normalizeText(data.originalName)))];
             const sellersToFetch = uniqueSellers.filter(normalizedName => !sellerSegmentsCache.hasOwnProperty(normalizedName));
             
@@ -2086,6 +2122,9 @@
     </script>
 </body>
 </html>
+
+
+
 
 
 
