@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel de Gestão de Feedbacks (v2.2 - 13 Colunas)</title>
+    <title>Painel de Gestão de Feedbacks (v2.6)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
@@ -26,9 +26,8 @@
     <header class="bg-white shadow-sm sticky top-0 z-10">
         <div class="container mx-auto px-4 md:px-8 py-3 flex justify-between items-center">
             <div class="flex items-center space-x-4">
-                <div class="p-2 bg-blue-100 rounded-full">
-                    <svg class="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-                </div>
+                <!-- LOGO -->
+                <img src="https://i.postimg.cc/76mXWMJh/as-02.png" alt="Doremus Logo" class="h-12 w-auto object-contain">
                 <h1 class="text-xl font-bold text-gray-800">Painel de Gestão de Feedbacks</h1>
             </div>
             <div class="flex items-center space-x-4">
@@ -44,7 +43,7 @@
         <!-- Input Section -->
         <div id="input-section" class="max-w-4xl mx-auto bg-white p-6 rounded-2xl shadow-sm border border-gray-200 mb-8 hidden">
             <h2 class="text-lg font-bold mb-2">Importar Dados (13 Colunas)</h2>
-            <p class="text-sm text-gray-600 mb-4">Cole seus dados do Excel abaixo. O sistema identificará automaticamente as colunas de Vendedor, Pedido e Produto.</p>
+            <p class="text-sm text-gray-600 mb-4">Cole seus dados do Excel abaixo. O sistema identificará automaticamente as colunas.</p>
             <textarea id="data-input" rows="8" class="w-full border-gray-300 rounded-lg p-2" placeholder="Cole aqui os dados (com cabeçalho)"></textarea>
             <button id="process-btn" class="mt-4 w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition-opacity disabled:opacity-50" disabled>Aguarde a conexão...</button>
             <p id="info-message" class="text-center text-sm mt-3 h-5 text-blue-600 font-medium"></p>
@@ -61,7 +60,6 @@
 
         <!-- Dashboard Section -->
         <div id="dashboard" class="hidden">
-            
             <!-- Acesso Rápido -->
             <section id="acesso-rapido-section" class="mb-8 grid grid-cols-1 md:grid-cols-3 gap-6">
                 <a href="https://thamirisbezerra-coder.github.io/PainelGerencia/" target="_blank" class="block bg-white p-6 rounded-2xl shadow-sm border hover:shadow-md transition hover:-translate-y-1">
@@ -574,14 +572,11 @@
             infoMessage.textContent = "A processar...";
             processBtn.disabled = true;
 
-            // CORREÇÃO: Usar 'skipEmptyLines: greedy' para ignorar linhas vazias extras
-            // e NÃO usar 'strict: true' para permitir flexibilidade
             Papa.parse(data, {
                 header: true,
                 skipEmptyLines: 'greedy', 
                 transformHeader: h => h.trim(),
                 complete: (results) => {
-                    // Ignorar erros de "TooManyFields" se houver dados úteis
                     const fatalErrors = results.errors.filter(e => e.code !== 'TooManyFields');
                     if (fatalErrors.length > 0) {
                         infoMessage.textContent = `Erro crítico: ${fatalErrors[0].message}`;
@@ -589,24 +584,19 @@
                         return;
                     }
 
-                    if (results.errors.length > 0) {
-                        console.warn("Avisos de importação (ignorados):", results.errors);
-                    }
-
                     const allSamplesData = results.data.map((row, index) => {
                         const sellerName = row['Vendedor(a)'];
                         if (!sellerName || !row['Pedido']) return null;
                         
-                        // CORREÇÃO: Leitura das 13 colunas específicas
                         const statusRaw = row['Status'] || 'PENDENTE';
                         const normalizedStatus = normalizeText(statusRaw);
                         const isPending = PENDING_STATUSES.includes(normalizedStatus);
-                        const existingFeedback = row['Feedback'] || ''; // Importar histórico se houver
+                        const existingFeedback = row['Feedback'] || ''; 
                         
                         return {
                             id: `sample_${Date.now()}_${index}`,
                             sellerName: String(sellerName),
-                            isPending: isPending && !existingFeedback, // Se tiver feedback histórico, não é pendente
+                            isPending: isPending && !existingFeedback, 
                             pedido: String(row['Pedido'] || ''),
                             codCliente: String(row['Cód. Cliente'] || ''),
                             razaoSocial: String(row['Razão Social'] || ''),
@@ -618,10 +608,10 @@
                             emissaoNF: String(row['Emissão NF'] || ''),
                             divPD: String(row['Divisão P&D'] || ''),
                             originalStatus: statusRaw,
-                            feedback: existingFeedback, // Usar o feedback do CSV
+                            feedback: existingFeedback, 
                             observation: '',
-                            finalizedByVendor: !!existingFeedback, // Se já tem feedback, vendedor já "finalizou"
-                            systemStatus: existingFeedback ? 'baixado' : 'pending',
+                            finalizedByVendor: !!existingFeedback, 
+                            systemStatus: 'pending', // FORÇADO PENDENTE PARA O GESTOR
                             lastUpdate: Timestamp.now()
                         };
                     }).filter(Boolean);
@@ -1073,7 +1063,7 @@
                 let statusColor = isFinalizedByVendor && seller.systemStatus === 'pending' ? 'green' : (seller.systemStatus === 'baixado' ? 'purple' : 'yellow');
                 const segment = sellerSegmentsCache[normalizeText(sellerName)] || 'Sem Segmento';
 
-                let statusHTML = `<span class="text-xs text-gray-500">${isFinalizedByVendor ? 'Finalizado' : `${totalPending} pendente(s)`}</span>`;
+                let statusHTML = `<span class="text-xs text-gray-500">${isFinalizedByVendor ? 'Aguardando Confirmação' : `${totalPending} pendente(s)`}</span>`;
                 if (isFinalizedByVendor && seller.systemStatus === 'pending') {
                     statusHTML = `<label class="flex items-center space-x-2 cursor-pointer text-sm"><input type="checkbox" class="system-check-btn rounded" data-seller-name="${sellerName}"><span>Dar Baixa</span></label>`;
                 } else if (seller.systemStatus === 'baixado') {
@@ -1090,7 +1080,30 @@
                 sellersListContainer.appendChild(card);
             });
 
-            document.querySelectorAll('.copy-code-btn').forEach(btn => { btn.onclick = (e) => { e.stopPropagation(); navigator.clipboard.writeText(e.currentTarget.dataset.code); const original = btn.textContent; btn.textContent = 'Copiado!'; setTimeout(() => btn.textContent = original, 2000); }; });
+            document.querySelectorAll('.copy-code-btn').forEach(btn => {
+                btn.onclick = (e) => {
+                    e.stopPropagation();
+                    const text = e.currentTarget.dataset.code;
+                    // Fallback para restrições de iframe
+                    const textArea = document.createElement("textarea");
+                    textArea.value = text;
+                    textArea.style.position = "fixed";
+                    textArea.style.left = "-9999px";
+                    textArea.style.top = "0";
+                    document.body.appendChild(textArea);
+                    textArea.focus();
+                    textArea.select();
+                    try {
+                        const successful = document.execCommand('copy');
+                        if(successful) {
+                            const original = btn.textContent;
+                            btn.textContent = 'Copiado!';
+                            setTimeout(() => btn.textContent = original, 2000);
+                        } else { console.error('Fallback copy failed.'); }
+                    } catch (err) { console.error('Fallback copy error', err); }
+                    document.body.removeChild(textArea);
+                };
+            });
             document.querySelectorAll('.system-check-btn').forEach(checkbox => {
                 checkbox.addEventListener('change', async (e) => {
                     const sellerId = sanitizeForFirebaseId(e.target.dataset.sellerName);
@@ -1330,6 +1343,7 @@
     </script>
 </body>
 </html>
+
 
 
 
