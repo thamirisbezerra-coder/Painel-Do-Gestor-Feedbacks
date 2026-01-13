@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel de Gestão de Feedbacks (v2)</title>
-    <!-- Scripts e Estilos permanecem os mesmos -->
+    <title>Painel de Gestão de Feedbacks</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
@@ -14,6 +13,7 @@
         .notification-card { animation: slideIn 0.5s ease-out; }
         @keyframes slideIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
         canvas { cursor: pointer; }
+        /* Add styles for the new modal */
         .feedback-sample-item {
             border-bottom: 1px solid #e5e7eb;
             padding-bottom: 0.75rem;
@@ -21,9 +21,12 @@
             transition: background-color: 0.2s;
         }
         .feedback-sample-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        /* Style for highlighted sample in modal */
         .feedback-sample-item.highlight {
             background-color: #fffbeb; /* bg-amber-50 */
         }
+
+        /* Style for manager reply in observation feed */
         .manager-reply, .seller-reply {
             margin-top: 0.5rem;
             padding-top: 0.5rem;
@@ -38,6 +41,8 @@
             padding-bottom: 0.5rem;
             border-top: 1px dashed #fed7aa; /* orange-200 */
         }
+        
+        /* *** NOVO: Estilo Post-it P&D *** */
         .pd-postit-card {
             background-color: #fffbeb; /* bg-amber-50 */
             border: 1px solid #fde68a; /* border-amber-200 */
@@ -45,15 +50,8 @@
             border-radius: 0.5rem; /* rounded-lg */
             box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); /* shadow-sm */
         }
-         .label-saving {
-            color: #a78bfa; /* text-purple-600 */
-            font-weight: 600; /* font-semibold */
-            animation: pulse 1.5s infinite;
-         }
-         @keyframes pulse {
-             0%, 100% { opacity: 1; }
-             50% { opacity: 0.6; }
-         }
+
+         /* Removed Aroma and Full Table specific styles */
     </style>
 </head>
 <body class="text-gray-800">
@@ -61,13 +59,18 @@
     <header class="bg-white shadow-sm sticky top-0 z-10">
         <div class="container mx-auto px-4 md:px-8 py-3 flex justify-between items-center">
             <div class="flex items-center space-x-4">
-                <div class="p-2 bg-blue-100 rounded-full">
-                    <svg class="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" xmlns="http://www.w3.org/2000/svg"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-                </div>
-                <h1 class="text-xl font-bold text-gray-800">Painel de Gestão (v2)</h1>
+                <!-- LOGO ADICIONADO AQUI -->
+                <img src="https://i.postimg.cc/76mXWMJh/as-02.png" alt="Logo" class="h-12 w-auto object-contain">
+                <h1 class="text-xl font-bold text-gray-800 hidden md:block">Painel de Gestão de Feedbacks</h1>
             </div>
             <div class="flex items-center space-x-4">
-                 <p id="session-id-text" class="text-sm text-gray-500">A conectar...</p>
+                 <p id="session-id-text" class="text-sm text-gray-500 hidden sm:block">Nenhuma sessão iniciada</p>
+                 
+                 <!-- BOTÃO DE NOVA SESSÃO (Header) -->
+                 <button id="header-new-session-btn" class="bg-blue-600 text-white text-sm font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
+                    Nova Sessão
+                 </button>
+
                  <button id="notifications-permission-btn" title="Gerir permissões de notificação">
                      <svg id="bell-icon" class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
                  </button>
@@ -76,45 +79,64 @@
     </header>
 
     <div class="container mx-auto p-4 md:p-8">
-        
-        <div id="connection-section" class="text-center mb-8 p-4 bg-white rounded-lg shadow-sm">
-             <p id="info-message" class="text-lg font-semibold text-gray-700">A procurar sessão ativa...</p>
+        <!-- Input Section -->
+        <div id="input-section" class="max-w-4xl mx-auto bg-white p-6 rounded-2xl shadow-sm border border-gray-200 mb-8 hidden">
+            <textarea id="data-input" rows="8" class="w-full border-gray-300 rounded-lg" placeholder="Copie as colunas (com cabeçalho) da sua planilha e cole aqui."></textarea>
+            <button id="process-btn" class="mt-4 w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition-opacity disabled:opacity-50" disabled>Aguarde a conexão...</button>
+            <p id="info-message" class="text-center text-sm mt-3 h-5"></p>
+        </div>
+
+        <!-- Connection Section -->
+         <div id="connection-section" class="text-center mb-8 flex flex-col sm:flex-row justify-center items-center gap-4 hidden">
+             <!-- Este botão antigo permanece, mas a função principal agora está no header -->
+             <button id="new-session-btn" class="bg-white text-blue-600 font-semibold py-2 px-5 rounded-lg border border-blue-600 hover:bg-blue-50 hidden" title="Limpa a sessão ativa globalmente e permite colar dados para uma nova">Iniciar Nova Sessão Global</button>
+             <div class="flex items-center gap-2">
+                 <input type="text" id="manual-session-id" placeholder="Ou conecte-se a uma sessão ID" class="border-gray-300 rounded-lg shadow-sm text-sm p-2">
+                 <button id="connect-session-btn" class="bg-blue-600 text-white font-semibold py-2 px-5 rounded-lg hover:bg-blue-700">Conectar</button>
+             </div>
          </div>
 
+
+        <!-- Dashboard Section -->
         <div id="dashboard" class="hidden">
             
+            <!-- INÍCIO DA SEÇÃO DE ACESSO RÁPIDO (MODIFICADA) -->
             <section id="acesso-rapido-section" class="mb-8 grid grid-cols-1 md:grid-cols-3 gap-6">
                 <!-- 1. Painel Gerentes -->
                 <a href="https://thamirisbezerra-coder.github.io/PainelGerencia/" target="_blank"
                    class="block bg-white p-6 rounded-2xl shadow-sm border hover:shadow-md transition hover:-translate-y-1">
                     <div class="flex items-center mb-3">
+                        <!-- Icon: Pasta (Folder) -->
                         <svg class="w-8 h-8 mr-3 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002 2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
                         <h3 class="text-xl font-bold text-gray-800">Painel Gerentes</h3>
                     </div>
                     <p class="text-sm text-gray-600">Sua senha de Gestor para este painel é:</p>
                     <p class="text-lg font-mono font-bold text-red-600 my-2 bg-gray-100 p-2 rounded text-center">admin123</p>
-                    <p class="text-xs text-gray-500 mt-1">Senhas dos gerentes estão disponíveis 
-                        <button type="button" id="open-senhas-gerentes-btn" class="text-blue-600 font-semibold hover:underline focus:outline-none">aqui</button>.
+                    <!-- Texto alterado AQUI -->
+                    <p class="text-xs text-gray-500 mt-1">Senhas dos gerentes estão disponíveis abaixo. 
+                        <button type="button" id="open-senhas-gerentes-btn" class="text-blue-600 font-semibold hover:underline focus:outline-none">Clique aqui para verificar</button>
                     </p>
                     <div class="text-right mt-2 text-sm font-semibold text-blue-600">Clique para abrir &rarr;</div>
                 </a>
 
                 <!-- 2. Painel Vendedores -->
-                <a href="https://thamirisbezerra-coder.github.io/Tela-do-Vendedor//" target="_blank"
+                <a href="https://thamirisbezerra-coder.github.io/Tela-do-Vendedor/" target="_blank"
                    class="block bg-white p-6 rounded-2xl shadow-sm border hover:shadow-md transition hover:-translate-y-1">
                     <div class="flex items-center mb-3">
+                        <!-- Icon: Usuário (User) -->
                          <svg class="w-8 h-8 mr-3 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
                         <h3 class="text-xl font-bold text-gray-800">Tela do Vendedor</h3>
                     </div>
                     <p class="text-sm text-gray-600">Este é o link que os vendedores acessarão para inserir seus feedbacks.</p>
-                    <p class="text-xs text-gray-500 mt-1">(Não precisam mais do ID da Sessão, apenas Nome e Código).</p>
+                    <p class="text-xs text-gray-500 mt-1">Eles usarão o código individual de 6 dígitos.</p>
                     <div class="text-right mt-3 text-sm font-semibold text-blue-600">Clique para abrir &rarr;</div>
                 </a>
                 
-                <!-- 3. Painel P&D -->
+                <!-- 3. Painel P&D (NOVO) -->
                 <a href="https://thamirisbezerra-coder.github.io/Painel-Pesquisa-e-Desenvolvimento/" target="_blank"
                    class="block bg-white p-6 rounded-2xl shadow-sm border hover:shadow-md transition hover:-translate-y-1">
                     <div class="flex items-center mb-3">
+                        <!-- Icon: Lupa de Pesquisa (ALTERADO) -->
                          <svg class="w-8 h-8 mr-3 text-blue-600 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                            <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
                          </svg>
@@ -122,24 +144,33 @@
                     </div>
                     <p class="text-sm text-gray-600">Sua senha de Gestor para este painel é:</p>
                     <p class="text-lg font-mono font-bold text-red-600 my-2 bg-gray-100 p-2 rounded text-center">admin123</p>
-                    <p class="text-xs text-gray-500 mt-1">Senhas de P&D estão disponíveis 
-                        <button type="button" id="open-senhas-pd-btn" class="text-blue-600 font-semibold hover:underline focus:outline-none">aqui</button>.
+                    <!-- Texto alterado AQUI -->
+                    <p class="text-xs text-gray-500 mt-1">Senhas de P&D estão disponíveis abaixo. 
+                        <button type="button" id="open-senhas-pd-btn" class="text-blue-600 font-semibold hover:underline focus:outline-none">Clique aqui para verificar</button>
                     </p>
                     <div class="text-right mt-2 text-sm font-semibold text-blue-600">Clique para abrir &rarr;</div>
                 </a>
             </section>
+            <!-- FIM DA SEÇÃO DE ACESSO RÁPIDO -->
             
+            <!-- INÍCIO PAINEL DE RESULTADOS (MOVIDO) -->
             <section id="painel-resultados-section" class="mb-8">
                 <a href="https://thamirisbezerra-coder.github.io/Painel-de-Resultados/" target="_blank" 
                    class="block bg-blue-600 text-white p-6 rounded-2xl shadow-lg border border-blue-700 hover:bg-blue-700 transition transform hover:-translate-y-1 md:max-w-4xl mx-auto">
                     <div class="flex items-center mb-3">
+                        <!-- Icon: Gráfico (Chart) -->
                         <svg class="w-8 h-8 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
                         <h3 class="text-xl font-bold">Resultados 2023x2024x2025</h3>
                     </div>
-                    <p class="text-sm text-blue-100">Contém o <strong>Ranking de Aromas (DAR)</strong>.</p>
+                    <p class="text-sm text-blue-100">Contém o <strong>Ranking de Aromas (DAR)</strong>:</p>
+                    <ul class="list-disc list-inside text-sm text-blue-100 mt-2 space-y-1">
+                        <li>Aroma com maior índice de aprovação.</li>
+                        <li>Vendedor com mais aromas aprovados.</li>
+                    </ul>
                     <div class="text-right mt-2 text-sm font-semibold text-blue-200">Clique para abrir &rarr;</div>
                 </a>
             </section>
+            <!-- FIM PAINEL DE RESULTADOS (MOVIDO) -->
 
             <!-- Notifications -->
             <section id="notifications-section" class="mb-8 max-w-4xl mx-auto">
@@ -179,57 +210,76 @@
                 </div>
             </section>
 
-            <!-- FEEDS LADO A LADO -->
+            <!-- *** INÍCIO: FEEDS LADO A LADO *** -->
             <section class="grid grid-cols-1 md:grid-cols-2 md:items-start gap-6 mb-10">
                 <!-- Coluna Feed Vendedores -->
                 <section id="observations-feed-section">
+                     <!-- Título -->
                      <h2 class="text-2xl font-bold text-gray-900 mb-4">Feed de Observações (Vendedores)</h2>
+                     <!-- Filtros (empilhados abaixo do título) -->
+                     <!-- *** CORREÇÃO: Adicionada altura mínima min-h-24 *** -->
                      <div class="mb-4 space-y-2 min-h-24">
                          <select id="observation-segment-filter" class="border-gray-300 rounded-lg shadow-sm text-sm w-full">
-                             <option value="">Todos os Segmentos</option>
+                             <option value="">Todos os Segmentos</option> <!-- Default option -->
+                             <!-- Options populated by JS -->
                          </select>
                          <input id="observation-search-input" type="text" placeholder="Pesquisar por vendedor..." class="border-gray-300 rounded-lg shadow-sm text-sm w-full">
                      </div>
+                     <!-- Lista -->
                      <div id="observations-feed-list" class="space-y-4 h-96 overflow-y-auto bg-white p-4 rounded-2xl shadow-sm border">
                          <p class="text-gray-500 placeholder-observation">Nenhuma observação encontrada com os filtros atuais.</p>
                      </div>
                 </section>
 
-                <!-- Coluna Post-its P&D -->
+                <!-- *** Coluna Post-its P&D (COM FILTRO) *** -->
                 <section id="pd-postits-section">
+                     <!-- Título -->
                      <h2 class="text-2xl font-bold text-gray-900 mb-4">Post-its do P&D (Notas Internas)</h2>
+                     <!-- Filtros (empilhados abaixo do título) -->
+                     <!-- *** CORREÇÃO: Adicionada altura mínima min-h-24 e removido div fantasma *** -->
                      <div class="mb-4 space-y-2 min-h-24">
                          <select id="pd-postit-segment-filter" class="border-gray-300 rounded-lg shadow-sm text-sm w-full">
                              <option value="">Todos os Segmentos</option>
+                             <!-- Options populated by JS -->
                          </select>
+                         <!-- Este div fantasma ocupa o espaço do input de pesquisa, alinhando as caixas de lista -->
+                         <!-- <div class="h-[42px]"></div>  REMOVIDO -->
                      </div>
+                     <!-- Lista -->
                      <div id="pd-postits-list" class="space-y-3 h-96 overflow-y-auto bg-gray-50 p-4 rounded-2xl shadow-sm border border-gray-200">
                          <p class="text-gray-500 placeholder-pd-postit">Nenhum post-it do P&D encontrado.</p>
                      </div>
                 </section>
             </section>
+            <!-- *** FIM: FEEDS LADO A LADO *** -->
+
 
             <!-- Segment Charts -->
             <section id="segment-charts-section" class="mb-10">
                 <h2 class="text-2xl font-bold text-gray-900 mb-4">Tipos de Resposta por Segmento</h2>
                 <div id="segment-charts-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Charts will be added here by JS -->
                 </div>
             </section>
 
-            <!-- Team Tracking Section -->
+            <!-- Team Tracking Section (was combined with Aroma before) -->
              <section id="team-tracking-section" class="mb-10 bg-white p-6 rounded-2xl shadow-sm border">
                  <div class="flex justify-between items-center mb-4">
                      <h2 class="text-2xl font-bold text-gray-900">Acompanhamento da Equipe (Sessão)</h2>
                      <input id="seller-search-input" type="text" placeholder="Procurar vendedor..." class="border-gray-300 rounded-lg shadow-sm text-sm">
                  </div>
                  <div id="sellers-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                     <!-- Seller cards will be added here by JS -->
                  </div>
              </section>
+
+              <!-- Removed Aroma Section and Full Samples Table Section -->
 
         </div>
     </div>
 
     <!-- Modals -->
+    <!-- Segment Association Modal -->
     <div id="segment-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 hidden z-20">
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
             <h3 class="text-2xl font-bold mb-4">Associar Vendedor a Segmento</h3>
@@ -244,6 +294,7 @@
         </div>
     </div>
 
+    <!-- Notification History Modal -->
     <div id="history-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 hidden z-20">
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl p-6">
             <h3 class="text-2xl font-bold mb-4">Histórico de Notificações</h3>
@@ -256,6 +307,7 @@
         </div>
     </div>
 
+    <!-- Chart Modal -->
      <div id="chart-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 hidden z-50">
          <div class="bg-white rounded-2xl shadow-xl w-full max-w-4xl h-4/5 p-6 relative">
              <button id="close-chart-modal-btn" class="absolute top-2 right-4 text-3xl font-bold text-gray-500 hover:text-gray-800">&times;</button>
@@ -263,6 +315,7 @@
          </div>
      </div>
 
+     <!-- Feedback Samples Modal -->
      <div id="feedback-samples-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 hidden z-30">
          <div class="bg-white rounded-2xl shadow-xl w-full max-w-3xl p-6">
              <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 border-b pb-3 gap-2">
@@ -271,6 +324,7 @@
                      <label for="modal-segment-filter" class="text-sm font-medium">Segmento:</label>
                      <select id="modal-segment-filter" class="border-gray-300 rounded-lg shadow-sm text-sm p-1">
                          <option value="">Todos os Segmentos</option>
+                         <!-- Options will be populated by JS -->
                      </select>
                  </div>
                  <button id="close-feedback-samples-btn" class="text-2xl font-bold text-gray-500 hover:text-gray-800 sm:ml-4">&times;</button>
@@ -284,13 +338,14 @@
          </div>
      </div>
 
+     <!-- Observation Reply Modal -->
      <div id="reply-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 hidden z-40">
          <div class="bg-white rounded-2xl shadow-xl w-full max-w-xl p-6">
              <h3 class="text-xl font-bold mb-4">Responder à Observação</h3>
              <div class="mb-4 p-3 bg-gray-100 rounded border text-sm">
                  <p class="font-semibold" id="reply-modal-product"></p>
                  <p class="text-xs text-gray-600 mb-1" id="reply-modal-seller"></p>
-                 <p class="italic">"${' '}"</p>
+                 <p class="italic">"${' '}"</p> <!-- Placeholder for observation -->
              </div>
              <div class="space-y-4">
                  <div>
@@ -309,7 +364,7 @@
          </div>
      </div>
 
-    <!-- Modais de Senhas -->
+    <!-- Senhas Gerentes Modal -->
     <div id="senhas-gerentes-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 hidden z-50">
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl p-6">
             <div class="flex justify-between items-center mb-4">
@@ -322,7 +377,7 @@
                         <tr>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Segmento</th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gerente</th>
-                            <th scope="col" classs="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Senha</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Senha</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
@@ -365,6 +420,7 @@
         </div>
     </div>
 
+    <!-- Senhas P&D Modal (NOVO) -->
     <div id="senhas-pd-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 hidden z-50">
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl p-6">
             <div class="flex justify-between items-center mb-4">
@@ -380,6 +436,7 @@
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
+                        <!-- Dados da imagem image_d77442.png -->
                         <tr>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Panificação</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">pd_adriana5</td>
@@ -417,12 +474,27 @@
         </div>
     </div>
 
+    <!-- *** NOVO: Custom Alert/Modal for errors *** -->
     <div id="custom-alert" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 hidden z-50">
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
-            <h3 id="custom-alert-title" class="text-xl font-bold mb-4 text-red-600">Erro na Operação</h3>
+            <h3 class="text-xl font-bold mb-4 text-red-600">Erro na Operação</h3>
             <p id="custom-alert-message" class="text-gray-700 mb-6">Ocorreu um erro. Tente novamente.</p>
             <div class="flex justify-end">
                 <button id="custom-alert-ok-btn" class="bg-blue-600 text-white font-bold py-2 px-5 rounded-lg">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- *** NOVO: Modal de Senha para Nova Sessão *** -->
+    <div id="password-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 hidden z-50">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
+            <h3 class="text-xl font-bold mb-4">Área Restrita</h3>
+            <p class="text-gray-600 mb-4">Digite a senha para iniciar uma nova sessão e sobrescrever a atual.</p>
+            <input type="password" id="session-password-input" class="w-full border-gray-300 rounded-lg shadow-sm p-2 mb-2" placeholder="Senha">
+            <p id="password-error" class="text-red-500 text-sm mb-4 hidden">Senha incorreta.</p>
+            <div class="flex justify-end space-x-2">
+                <button id="cancel-password-btn" class="bg-gray-200 text-gray-700 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300">Cancelar</button>
+                <button id="confirm-password-btn" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700">Confirmar</button>
             </div>
         </div>
     </div>
@@ -431,21 +503,19 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { 
-            getFirestore, collection, onSnapshot, doc, writeBatch, setDoc, getDoc, getDocs, 
-            updateDoc, query, orderBy, serverTimestamp, addDoc, limit, where, runTransaction, 
-            Timestamp, collectionGroup, getCountFromServer 
-        } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        // *** CORREÇÃO: Adicionado 'runTransaction' e 'Timestamp' ***
+        import { getFirestore, collection, onSnapshot, doc, writeBatch, setDoc, getDoc, getDocs, updateDoc, query, orderBy, serverTimestamp, addDoc, limit, where, runTransaction, Timestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
+        // IMPORTANT: Replace with your actual Firebase config
         const firebaseConfig = {
-             apiKey: "AIzaSyAF_TE28Tbp2nakBGTva1yEEbBCqWvRdJQ",
-             authDomain: "feedback-vendedores.firebaseapp.com",
-             projectId: "feedback-vendedores",
-             storageBucket: "feedback-vendedores.firebasestorage.app",
-             messagingSenderId: "650880422749",
-             appId: "1:650880422749:web:54a258964a6ca8db180eb4",
-             measurementId: "G-TG588KDK0C"
+             apiKey: "AIzaSyAF_TE28Tbp2nakBGTva1yEEbBCqWvRdJQ", // Keep yours
+             authDomain: "feedback-vendedores.firebaseapp.com", // Keep yours
+             projectId: "feedback-vendedores", // Keep yours
+             storageBucket: "feedback-vendedores.firebasestorage.app", // Keep yours
+             messagingSenderId: "650880422749", // Keep yours
+             appId: "1:650880422749:web:54a258964a6ca8db180eb4", // Keep yours
+             measurementId: "G-TG588KDK0C" // Keep yours
         };
 
         const app = initializeApp(firebaseConfig);
@@ -454,13 +524,22 @@
 
         const PENDING_STATUSES = ['EM ANÁLISE', 'AMOSTRA SEM FEEDBACK', 'SEM RETORNO DO CLIENTE', 'AMOSTRA NÃO TESTADA', 'PENDENTE'];
         const SEGMENTS = ['CÁRNEOS', 'EXPORTACAO', 'FOOD SERVICE', 'LACTEOS', 'NUTRACEUTICOS', 'NUTRICAO ANIMAL', 'PANIFICACAO', 'SMB', 'SORVETES', 'SUPPLY/FIS'];
-        const AROMA_FILTER_VALUE = 'AROMAS_FILTER';
+        const AROMA_FILTER_VALUE = 'AROMAS_FILTER'; // Special value for the new filter
+        
+        // *** SENHA PARA NOVA SESSÃO ***
+        const NEW_SESSION_PASSWORD = "admin123";
 
         // --- DOM Elements ---
+        const processBtn = document.getElementById('process-btn');
+        const dataInput = document.getElementById('data-input');
         const infoMessage = document.getElementById('info-message');
         const sessionIdText = document.getElementById('session-id-text');
         const dashboard = document.getElementById('dashboard');
+        const inputSection = document.getElementById('input-section');
         const connectionSection = document.getElementById('connection-section');
+        const newSessionBtn = document.getElementById('new-session-btn');
+        const manualSessionInput = document.getElementById('manual-session-id');
+        const connectSessionBtn = document.getElementById('connect-session-btn');
         const segmentModal = document.getElementById('segment-modal');
         const cancelModalBtn = document.getElementById('cancel-modal-btn');
         const confirmSegmentBtn = document.getElementById('confirm-segment-btn');
@@ -469,6 +548,7 @@
         const sellersListContainer = document.getElementById('sellers-list');
         const notificationsList = document.getElementById('notifications-list');
         const segmentChartsGrid = document.getElementById('segment-charts-grid');
+        // Removed: fullSamplesTbody, samplesTableTitle, showAllBtn
         const sellerSearchInput = document.getElementById('seller-search-input');
         const historyBtn = document.getElementById('history-btn');
         const historyModal = document.getElementById('history-modal');
@@ -496,96 +576,102 @@
         const cancelReplyBtn = document.getElementById('cancel-reply-btn');
         const sendReplyBtn = document.getElementById('send-reply-btn');
         
+        // NOVO: Elementos do Modal de Senhas
         const senhasGerentesModal = document.getElementById('senhas-gerentes-modal');
         const openSenhasGerentesBtn = document.getElementById('open-senhas-gerentes-btn');
         const closeSenhasGerentesBtns = document.querySelectorAll('.close-senhas-gerentes-btn');
+
+        // NOVO P&D: Elementos do Modal de Senhas P&D
         const senhasPdModal = document.getElementById('senhas-pd-modal');
         const openSenhasPdBtn = document.getElementById('open-senhas-pd-btn');
         const closeSenhasPdBtns = document.querySelectorAll('.close-senhas-pd-btn');
 
+        // *** NOVO: Custom Alert Elements ***
         const customAlert = document.getElementById('custom-alert');
-        const customAlertTitle = document.getElementById('custom-alert-title');
         const customAlertMessage = document.getElementById('custom-alert-message');
         const customAlertOkBtn = document.getElementById('custom-alert-ok-btn');
 
+        // *** NOVO: Elementos do Post-it P&D ***
         const pdPostitsList = document.getElementById('pd-postits-list');
+        // *** NOVO: Filtro de Post-it P&D ***
         const pdPostitSegmentFilter = document.getElementById('pd-postit-segment-filter');
+        
+        // *** NOVO: Elementos para Nova Sessão (Password) ***
+        const headerNewSessionBtn = document.getElementById('header-new-session-btn');
+        const passwordModal = document.getElementById('password-modal');
+        const sessionPasswordInput = document.getElementById('session-password-input');
+        const passwordError = document.getElementById('password-error');
+        const cancelPasswordBtn = document.getElementById('cancel-password-btn');
+        const confirmPasswordBtn = document.getElementById('confirm-password-btn');
+
+
+        // Removed Aroma Ranking DOM Elements
+
 
         // --- State Variables ---
-        let samplesListenersUnsubscribe = [];
+        let dataListenerUnsubscribe = null;
         let notificationListenerUnsubscribe = null;
         let sellerRepliesListenerUnsubscribe = null;
         let sellerRepliesToManagerListenerUnsubscribe = null;
         let destaquesAmostrasListenerUnsubscribe = null;
-        let historicalAromaDataUnsubscribe = null;
-        let pdPostitsListenerUnsubscribe = null;
+        let historicalAromaDataUnsubscribe = null; // Listener for historical data
+        let pdPostitsListenerUnsubscribe = null; // *** NOVO: Listener Post-it P&D ***
         let currentSessionId = null;
         let chartInstances = {};
         let modalChartInstance = null;
         let currentSellerForSegment = null;
-        let allCurrentSamples = [];
-        let sellerSegmentsCache = {};
-        let currentFeedbackFilter = '';
-        let allSellerReplies = [];
-        let allSellerRepliesToManager = [];
-        let highlightedSamplesCache = [];
-        let allPdPostits = [];
-        let currentSampleForReply = null;
-        let allNotifications = [];
+        let allCurrentSamples = []; // Stores LIVE data from the current session
+        let sellerSegmentsCache = {}; // Cache for seller segments { sellerName: segment } - Based on LIVE data
+        let currentFeedbackFilter = ''; // Track which feedback is shown in the samples modal
+        let allSellerReplies = []; // Cache for manager replies TO sellers (LIVE data)
+        let allSellerRepliesToManager = []; // Cache for seller replies TO manager (LIVE data)
+        let highlightedSamplesCache = []; // Cache for highlighted sample IDs (LIVE data)
+        let allPdPostits = []; // *** NOVO: Cache Post-it P&D ***
+        let currentSampleForReply = null; // Track which sample is being replied to (LIVE data)
+        let allNotifications = []; // LIVE notifications
         let areAllNotificationsVisible = false;
-        let historicalAromaData = [];
-        let sellerDataCache = {};
-        let samplesBySellerCache = {};
-        
-        // *** NOVO: Controlo de Carga Inicial ***
-        let initialLoadComplete = false;
-        let sellersLoadedCount = 0;
-        let totalSellersToLoad = 0;
-        let sellersWithActiveListeners = new Set();
+        // --- Aroma State Variables ---
+        let historicalAromaData = []; // Now populated by listener
 
 
         // --- Utility Functions ---
+        // Updated normalizeText to handle potential null/undefined input
         const normalizeText = (text = '') => text ? text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim() : '';
-        const sanitizeForFirebaseId = (text) => normalizeText(text).replace(/\//g, "-");
+        const sanitizeForFirebaseId = (text) => normalizeText(text).replace(/\//g, "-"); // Replace slashes
 
-        function showAlert(message, title = "Erro na Operação", color = "text-red-600") {
-            customAlertTitle.textContent = title;
-            customAlertMessage.innerHTML = message; // Usar innerHTML para o <br>
-            customAlertTitle.className = `text-xl font-bold mb-4 ${color}`;
+        // *** NOVO: Custom alert function ***
+        function showAlert(message) {
+            customAlertMessage.textContent = message;
             customAlert.classList.remove('hidden');
         }
         customAlertOkBtn.addEventListener('click', () => customAlert.classList.add('hidden'));
 
-        // *** CORREÇÃO: Função de erro de sintaxe corrigida ***
-        function handleFirestoreError(error, operationContext) {
-            console.error(`Erro em "${operationContext}":`, error);
-            let message = `Não foi possível completar a operação: ${operationContext}.<br><br>Erro: ${error.message}`;
-            let title = "Erro na Operação";
-            let color = "text-red-600";
-
-            if (error.code === 'resource-exhausted' || (error.message && error.message.includes('Quota exceeded'))) {
-                message = "O limite diário de uso do banco de dados foi atingido (Quota Exceeded). Novas alterações não serão salvas hoje.<br><br>Por favor, tente novamente amanhã ou contate o suporte.";
-                title = "Limite da Plataforma Atingido";
-                color = "text-amber-600";
-            }
-            // Chama a função showAlert com os argumentos corretos
-            showAlert(message, title, color);
-        }
-
+        /**
+         * Checks if a sample is considered an Aroma based on product code or description.
+         * @param {string} produto - The product code/name.
+         * @param {string} descricao - The product description.
+         * @returns {boolean} True if it's an aroma, false otherwise.
+         */
         function isAroma(produto, descricao) {
             const normalizedProduto = normalizeText(produto);
             const normalizedDescricao = normalizeText(descricao);
+
+            // Check product code/name
             if (normalizedProduto.startsWith('DAR ') || normalizedProduto.startsWith('AROMAS ')) {
                 return true;
             }
-            if (normalizedDescricao.includes('AROMA')) {
+            // Check description
+            if (normalizedDescricao.includes('AROMA')) { // Checks if 'AROMA' exists anywhere in the description
                 return true;
             }
             return false;
         }
 
+
+        // Standardize feedback text
         function getCanonicalFeedback(feedback) {
              if (!feedback) return '';
+             // Normalize text first for broader matching
              const normalized = normalizeText(feedback.replace(/^(A - |R - |E - |P - )/, '').trim());
              const mapping = {
                  'APROVADO COM PEDIDO': 'COM PEDIDO',
@@ -593,15 +679,19 @@
                  'INNOVATION / EVENTOS': 'EVENTO',
                  'AMOSTRA NAO TESTADA': 'AMOSTRA NÃO TESTADA',
                  'EM ANALISE': 'EM ANÁLISE'
+                 // Add more mappings if needed
              };
              return mapping[normalized] || normalized;
          }
          
+        // *** NOVO: Função para extrair nome do vendedor do contexto P&D ***
         function getSellerNameFromPdContext(context = '') {
             if (!context || !context.includes('(')) return null;
             try {
+                // Pega "FELIPE LOPES BARBOSA)"
                 let name = context.split('(').pop(); 
-                return normalizeText(name.replace(')', ''));
+                // Remove ")" e espaços
+                return normalizeText(name.replace(')', '')); // Normalizar para garantir a correspondência
             } catch (e) {
                 console.warn("Could not parse seller name from context:", context, e);
                 return null;
@@ -610,62 +700,185 @@
 
 
         // --- Main Dashboard Rendering Function ---
-        function processAndDisplayDashboard() {
-            // *** CORREÇÃO: Só mostra o dashboard se a carga inicial estiver completa ***
-            if (!initialLoadComplete) {
-                 console.log(`A aguardar carregamento. ${sellersLoadedCount}/${totalSellersToLoad} vendedores carregados.`);
-                 infoMessage.textContent = `A carregar dados... (${sellersLoadedCount}/${totalSellersToLoad})`;
-                 return;
-            }
-            
-            console.log("Carga inicial completa. A renderizar painel...");
+        function processAndDisplayDashboard(samples, sessionId, sellerDocs = []) {
             dashboard.classList.remove('hidden');
-            connectionSection.classList.remove('hidden'); // Manter visível para o status
-            sessionIdText.innerHTML = `Sessão Ativa: <strong>${currentSessionId}</strong>`;
-            infoMessage.textContent = "Dados carregados. A ouvir atualizações em tempo real.";
+            inputSection.classList.add('hidden');
+            connectionSection.classList.add('hidden');
+            sessionIdText.innerHTML = `ID da Sessão: <strong>${sessionId}</strong>`;
 
-            allCurrentSamples = Object.values(samplesBySellerCache).flat();
-            const combinedSamplesForStats = [...allCurrentSamples, ...historicalAromaData];
+            // Combine samples for charts and feedback details if historical data exists
+            // Uses the listener-populated historicalAromaData
+            const combinedSamplesForStats = [...samples, ...historicalAromaData];
 
-            renderCharts(combinedSamplesForStats);
-            renderFeedbackDetails(combinedSamplesForStats);
-            renderSegmentCharts(allCurrentSamples);
-            renderSellersList();
-            renderObservationsFeed(allCurrentSamples);
-            renderPdPostits();
-            populateSegmentFilters();
+            // Update historical data indicator based on listener data
+            // (Indicator removed from this file, logic remains for reference)
+            // if (historicalAromaData && historicalAromaData.length > 0) {
+            //     // historicalDataIndicator.classList.remove('hidden'); // Removed element
+            // } else {
+            //     // historicalDataIndicator.classList.add('hidden'); // Removed element
+            // }
+
+            // Render all dashboard components
+            renderCharts(combinedSamplesForStats); // Use combined for overall charts
+            renderFeedbackDetails(combinedSamplesForStats); // Use combined for overall feedback breakdown
+            renderSegmentCharts(samples); // Segment charts based on LIVE data (segments relate to live config)
+            renderSellersList(samples, sessionId, sellerDocs); // Team tracking is only for LIVE session
+            renderObservationsFeed(samples); // Feed is only for LIVE session
+            renderPdPostits(); // *** NOVO: Renderiza Post-its P&D ***
+            // Removed: renderFullSamplesTable(samples);
+
+            populateSegmentFilters(); // Update segment dropdowns based on LIVE data segments
+
+            // Removed: renderAromaDashboard call
+
+            // Removed table filtering logic
         }
 
         // --- Event Listeners ---
-        // (Event listeners de modais, botões e filtros permanecem os mesmos)
+        // Parse data and create new session
+        processBtn.addEventListener('click', () => {
+            const data = dataInput.value.trim();
+            if (data) parseAndCreateNewSession(data);
+        });
+
+        // Event Listeners para Nova Sessão com Senha
+        headerNewSessionBtn.addEventListener('click', () => {
+             passwordModal.classList.remove('hidden');
+             sessionPasswordInput.value = '';
+             passwordError.classList.add('hidden');
+             sessionPasswordInput.focus();
+        });
+
+        cancelPasswordBtn.addEventListener('click', () => {
+            passwordModal.classList.add('hidden');
+        });
+
+        confirmPasswordBtn.addEventListener('click', async () => {
+            const password = sessionPasswordInput.value;
+            if (password === NEW_SESSION_PASSWORD) {
+                // Senha correta - Executar lógica de nova sessão
+                passwordModal.classList.add('hidden');
+                
+                try {
+                    const activeSessionRef = doc(db, "configuracoes", "sessaoAtiva");
+                    await setDoc(activeSessionRef, { current: null }); // Clear global active session
+                    console.log("Sessão ativa global limpa.");
+                } catch (error) {
+                    console.error("Não foi possível limpar a sessão ativa global:", error);
+                    showAlert("Erro ao tentar iniciar nova sessão global.");
+                    return;
+                }
+                
+                resetToInitialState(); // Reset UI to show input section
+                inputSection.classList.remove('hidden');
+                connectionSection.classList.add('hidden');
+                infoMessage.textContent = 'Sessão global limpa. Cole os dados da nova sessão para iniciar.';
+
+            } else {
+                // Senha incorreta
+                passwordError.classList.remove('hidden');
+            }
+        });
+
+        // Old button listener (kept but button is hidden in UI now)
+        newSessionBtn.addEventListener('click', async () => {
+            try {
+                const activeSessionRef = doc(db, "configuracoes", "sessaoAtiva");
+                await setDoc(activeSessionRef, { current: null }); // Clear global active session
+                console.log("Sessão ativa global limpa.");
+            } catch (error) {
+                console.error("Não foi possível limpar a sessão ativa global:", error);
+                infoMessage.textContent = "Erro ao tentar iniciar nova sessão global.";
+                return;
+            }
+            resetToInitialState(); // Reset UI to show input section
+            inputSection.classList.remove('hidden');
+            connectionSection.classList.add('hidden');
+            infoMessage.textContent = 'Sessão global limpa. Cole os dados da nova sessão para iniciar.';
+        });
+
+        connectSessionBtn.addEventListener('click', async () => {
+            const manualId = manualSessionInput.value.trim();
+            if (manualId && manualId.startsWith('sessao_')) {
+                 infoMessage.textContent = `A tentar conectar à sessão: ${manualId}...`;
+                 inputSection.classList.add('hidden');
+                 connectionSection.classList.add('hidden');
+
+                 try {
+                     // Check if session exists (basic check)
+                     const sessionCheckRef = collection(db, "sessoes", manualId, "vendedores");
+                     const sessionCheckSnap = await getDocs(query(sessionCheckRef, limit(1)));
+
+                     if(sessionCheckSnap.empty) {
+                         infoMessage.textContent = `Sessão ${manualId} não encontrada ou vazia.`;
+                         resetToInitialState(true); // Show connection options again
+                         manualSessionInput.value = manualId; // Keep input value
+                         return; // Stop connection attempt
+                     }
+
+                     // Session seems valid, set it as active globally
+                     const activeSessionRef = doc(db, "configuracoes", "sessaoAtiva");
+                     await setDoc(activeSessionRef, { current: manualId });
+                     console.log(`Sessão ${manualId} definida como ativa globalmente.`);
+
+                     // Start listening (listeners will handle showing the dashboard)
+                     listenForDataUpdates(manualId);
+                     listenForNotifications(manualId);
+                     listenForSellerReplies(manualId);
+                     listenForSellerRepliesToManager(manualId);
+                     listenForDestaquesAmostras(manualId);
+                     listenForHistoricalAromaData(manualId); // Start listening for historical data
+                     listenForPdPostits(manualId); // *** NOVO: Inicia listener Post-it P&D ***
+
+                 } catch (error) {
+                      console.error(`Erro ao verificar ou definir sessão ativa ${manualId}:`, error);
+                      infoMessage.textContent = `Erro ao conectar à sessão ${manualId}. Verifique o ID.`;
+                      resetToInitialState(true);
+                      manualSessionInput.value = manualId;
+                 }
+
+            } else {
+                 infoMessage.textContent = 'ID de sessão inválido. Deve começar com "sessao_".';
+                 setTimeout(() => {
+                    if (!currentSessionId) infoMessage.textContent = 'Nenhuma sessão ativa. Conecte-se manualmente ou inicie uma nova.';
+                 }, 3000);
+            }
+        });
+
+
         cancelModalBtn.addEventListener('click', () => segmentModal.classList.add('hidden'));
+        // Removed: showAllBtn listener
         historyBtn.addEventListener('click', () => renderNotificationHistory());
         closeHistoryBtn.addEventListener('click', () => historyModal.classList.add('hidden'));
         notificationsPermissionBtn.addEventListener('click', () => {
-            Notification.requestPermission().then(setupNotificationButton);
+            Notification.requestPermission().then(setupNotificationButton); // Request permission and update button
         });
         closeChartModalBtn.addEventListener('click', () => chartModal.classList.add('hidden'));
         closeFeedbackSamplesBtn.addEventListener('click', () => feedbackSamplesModal.classList.add('hidden'));
         closeFeedbackSamplesBtnBottom.addEventListener('click', () => feedbackSamplesModal.classList.add('hidden'));
         modalSegmentFilter.addEventListener('change', () => {
+             // Re-render samples in modal when segment filter changes
              showFeedbackSamples(currentFeedbackFilter, modalSegmentFilter.value);
         });
         cancelReplyBtn.addEventListener('click', () => replyModal.classList.add('hidden'));
         sendReplyBtn.addEventListener('click', sendReplyToSeller);
         
+        // NOVO: Listeners do Modal de Senhas
         if (openSenhasGerentesBtn) {
             openSenhasGerentesBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
+                e.preventDefault(); // Impedir o link <a> de navegar
+                e.stopPropagation(); // Impedir que o card seja clicado
                 senhasGerentesModal.classList.remove('hidden');
             });
         }
+
         closeSenhasGerentesBtns.forEach(btn => {
             btn.addEventListener('click', () => {
                 senhasGerentesModal.classList.add('hidden');
             });
         });
 
+        // NOVO P&D: Listeners do Modal de Senhas P&D
         if (openSenhasPdBtn) {
             openSenhasPdBtn.addEventListener('click', (e) => {
                 e.preventDefault(); 
@@ -673,91 +886,372 @@
                 senhasPdModal.classList.remove('hidden');
             });
         }
+
         closeSenhasPdBtns.forEach(btn => {
             btn.addEventListener('click', () => {
                 senhasPdModal.classList.add('hidden');
             });
         });
 
+
+        // *** CORREÇÃO 4: Lógica de re-renderização corrigida ***
         confirmSegmentBtn.addEventListener('click', async () => {
             if (!currentSellerForSegment || !currentSessionId) return;
             const newSegment = segmentSelect.value;
             const sellerId = sanitizeForFirebaseId(currentSellerForSegment);
-            const docRef = doc(db, "vendedorConfig", sellerId);
+            const docRef = doc(db, "vendedorConfig", sellerId); // Config stored outside session
 
             try {
+                // Usar setDoc com merge para não sobrescrever outros campos
                 await setDoc(docRef, { segmento: newSegment }, { merge: true }); 
-                sellerSegmentsCache[normalizeText(currentSellerForSegment)] = newSegment;
-                
-                showAlert(`Segmento de ${currentSellerForSegment} atualizado.`, "Sucesso", "text-green-600");
+                sellerSegmentsCache[normalizeText(currentSellerForSegment)] = newSegment; // *** CORREÇÃO: Usar nome normalizado como chave do cache ***
+
+                infoMessage.textContent = `Segmento de ${currentSellerForSegment} atualizado.`;
                 segmentModal.classList.add('hidden');
                 
-                processAndDisplayDashboard(); // Re-renderiza com novo segmento
+                // Recriar a lista de 'sellerDocs' com base nos dados atuais
+                // para passar ao 'processAndDisplayDashboard'
+                const sellerDocs = [...new Set(allCurrentSamples.map(s => s.sellerName))].map(name => {
+                    const sellerId = sanitizeForFirebaseId(name);
+                    const docData = allCurrentSamples.find(s => s.sellerName === name); // Pegar dados de exemplo
+                    const sellerDoc = sellersListContainer.querySelector(`.seller-card[data-seller-name="${name}"]`); // Tentar pegar accessCode
+                    return {
+                        id: sellerId,
+                        originalName: name,
+                        amostras: allCurrentSamples.filter(s => s.sellerName === name),
+                        accessCode: sellerDoc ? sellerDoc.querySelector('.copy-code-btn')?.dataset.code : null
+                    };
+                });
+                
+                // Re-renderizar o dashboard completo para atualizar tudo
+                processAndDisplayDashboard(allCurrentSamples, currentSessionId, sellerDocs);
 
+
+                 setTimeout(() => infoMessage.textContent = '', 3000);
             } catch (error) {
-                handleFirestoreError(error, `atualizar segmento de ${currentSellerForSegment}`);
+                console.error("Erro ao atualizar segmento:", error);
+                // Usar showAlert em vez de infoMessage para erros
+                showAlert("Erro ao guardar segmento.");
             }
         });
 
+        // Filter seller cards in Team Tracking section
         sellerSearchInput.addEventListener('input', () => {
             const searchTerm = normalizeText(sellerSearchInput.value);
-            const sellerCards = sellersListContainer.querySelectorAll('.seller-card');
+            const sellerCards = sellersListContainer.querySelectorAll('.seller-card'); // Still uses .seller-card, but no click handler for table
             sellerCards.forEach(card => {
                 const sellerName = normalizeText(card.dataset.sellerName);
                 card.style.display = sellerName.includes(searchTerm) ? '' : 'none';
             });
         });
 
+        // Filter observations feed when segment or search changes
         observationSegmentFilter.addEventListener('change', () => renderObservationsFeed(allCurrentSamples));
         observationSearchInput.addEventListener('input', () => renderObservationsFeed(allCurrentSamples));
         
+        // *** NOVO: Listener para filtro de Post-it P&D ***
         if (pdPostitSegmentFilter) {
             pdPostitSegmentFilter.addEventListener('change', () => renderPdPostits());
         }
 
+
+        // Removed Aroma Ranking Listeners
+
         // --- Core Functions ---
 
-        function resetToInitialState() {
-            samplesListenersUnsubscribe.forEach(unsub => unsub());
-            samplesListenersUnsubscribe = [];
-            
+        // Parse pasted data and initiate new session creation
+        function parseAndCreateNewSession(data) {
+            infoMessage.textContent = "A processar...";
+            processBtn.disabled = true;
+
+            Papa.parse(data, {
+                header: true,
+                skipEmptyLines: true,
+                transformHeader: h => h.trim(), // Normalize headers
+                complete: (results) => {
+                    if (results.errors.length > 0) {
+                        infoMessage.textContent = `Erro de formatação: ${results.errors[0].message}`;
+                        processBtn.disabled = false;
+                        return;
+                    }
+
+                    // Map parsed rows to sample objects
+                    const allSamplesData = results.data.map((row, index) => {
+                        const sellerName = row['Vendedor(a)'];
+                        if (!sellerName || !row['Pedido']) return null; // Basic validation
+                        const normalizedStatus = normalizeText(row['Status']);
+                        return {
+                            id: `sample_${Date.now()}_${index}`, // Unique ID for each sample
+                            sellerName: String(sellerName),
+                            isPending: PENDING_STATUSES.includes(normalizedStatus), // Check if status is pending
+                            // Map other columns, defaulting to empty string if missing
+                            pedido: String(row['Pedido'] || ''),
+                            razaoSocial: String(row['Razão Social'] || ''),
+                            produto: String(row['Produto'] || ''),
+                            descricao: String(row['Descrição'] || ''),
+                            qtde: String(row['Qtde.'] || ''),
+                            notaFiscal: String(row['Nota Fiscal'] || ''),
+                            emissaoNF: String(row['Emissão NF'] || ''),
+                            originalStatus: String(row['Status'] || ''),
+                            // Fields to be updated by vendor/manager
+                            feedback: '',
+                            observation: '',
+                            finalizedByVendor: false, // Flag set by vendor app
+                            systemStatus: 'pending', // Manager status: pending, baixado
+                            // *** Adicionar timestamp de criação/última atualização ***
+                            lastUpdate: Timestamp.now() // Usar Timestamp do Firestore
+                        };
+                    }).filter(Boolean); // Remove null entries
+
+                    if (allSamplesData.length === 0) {
+                        infoMessage.textContent = "Nenhum dado válido encontrado para processar.";
+                        processBtn.disabled = false;
+                        return;
+                    }
+
+                    const sessionId = `sessao_${Date.now()}`; // Create unique session ID
+                    allCurrentSamples = allSamplesData; // Update local state immediately
+
+                    inputSection.classList.add('hidden');
+                    connectionSection.classList.add('hidden');
+                    infoMessage.textContent = "Painel gerado. A guardar na nuvem...";
+
+                    saveDataAndUpdateActiveSession(allSamplesData, sessionId); // Save data to Firestore
+                }
+            });
+        }
+
+        // Save parsed data to Firestore and set as active session
+        async function saveDataAndUpdateActiveSession(samples, sessionId) {
+            // Group samples by seller
+            const sellersData = samples.reduce((acc, sample) => {
+                if (!acc[sample.sellerName]) {
+                    acc[sample.sellerName] = { amostras: [], originalName: sample.sellerName, accessCode: null };
+                }
+                acc[sample.sellerName].amostras.push(sample);
+                return acc;
+            }, {});
+
+            // Save seller data in batches to avoid large writes
+            const sellersArray = Object.entries(sellersData);
+            const batchSize = 5; // Adjust batch size if needed
+            for (let i = 0; i < sellersArray.length; i += batchSize) {
+                const chunk = sellersArray.slice(i, i + batchSize);
+                infoMessage.textContent = `A guardar vendedores ${i + 1} a ${i + chunk.length} de ${sellersArray.length}...`;
+                const batch = writeBatch(db);
+                chunk.forEach(([sellerName, data]) => {
+                    const sellerId = sanitizeForFirebaseId(sellerName); // Use sanitized ID for Firestore doc
+                    const docRef = doc(db, "sessoes", sessionId, "vendedores", sellerId);
+                    // Generate unique 6-digit access code for each seller
+                    data.accessCode = Math.floor(100000 + Math.random() * 900000).toString();
+                    batch.set(docRef, data);
+                });
+                await batch.commit();
+                await new Promise(resolve => setTimeout(resolve, 500)); // Small delay between batches
+            }
+
+            infoMessage.textContent = "Guardado com sucesso! A definir como sessão ativa global...";
+            // Set this new session as the globally active one
+            const activeSessionRef = doc(db, "configuracoes", "sessaoAtiva");
+            await setDoc(activeSessionRef, { current: sessionId });
+
+             infoMessage.textContent = `Sessão ${sessionId} criada e definida como ativa. A carregar dados...`;
+             // Start listening to the newly created session
+             listenForDataUpdates(sessionId);
+             listenForNotifications(sessionId);
+             listenForSellerReplies(sessionId);
+             listenForSellerRepliesToManager(sessionId);
+             listenForDestaquesAmostras(sessionId);
+             listenForHistoricalAromaData(sessionId); // Start listening for historical data
+             listenForPdPostits(sessionId); // *** NOVO: Inicia listener Post-it P&D ***
+        }
+
+        // Listen for real-time updates to seller data within a session
+        function listenForDataUpdates(sessionId) {
+            currentSessionId = sessionId;
+            const q = collection(db, "sessoes", sessionId, "vendedores");
+            if (dataListenerUnsubscribe) dataListenerUnsubscribe(); // Unsubscribe from previous listener
+
+            let isInitialDataLoad = true;
+
+            dataListenerUnsubscribe = onSnapshot(q, async (snapshot) => {
+                 // Handle case where session ID is invalid or empty on initial load
+                 if (snapshot.empty && isInitialDataLoad) {
+                     console.warn(`Sessão ${sessionId} não encontrada ou vazia.`);
+                     infoMessage.textContent = `Sessão ${sessionId} não encontrada ou vazia. Verifique o ID ou inicie uma nova sessão global.`;
+                     resetToInitialState(true); // Show connection options
+                     manualSessionInput.value = sessionId;
+                     if(dataListenerUnsubscribe) dataListenerUnsubscribe(); // Stop listening
+                     currentSessionId = null;
+                     return;
+                 }
+
+                const previousSamples = isInitialDataLoad ? [] : [...allCurrentSamples];
+                // Flatten all samples from all seller documents
+                const allSamples = snapshot.docs.flatMap(doc => doc.data().amostras || []);
+                allCurrentSamples = allSamples; // Update LIVE data
+
+                // Show dashboard once data is loaded (or if session becomes non-empty)
+                if (!snapshot.empty || !isInitialDataLoad) {
+                    inputSection.classList.add('hidden');
+                    connectionSection.classList.add('hidden');
+                    dashboard.classList.remove('hidden');
+
+                    // --- Notification Logic on Updates (after initial load) ---
+                    if (!isInitialDataLoad) {
+                        const batch = writeBatch(db);
+                        let notificationAdded = false;
+
+                        // 1. Check for individual samples that just received feedback
+                        const newFeedbacks = allSamples.filter(currentSample => {
+                            const prevSample = previousSamples.find(p => p.id === currentSample.id);
+                            // Check if previous feedback was empty and current is not
+                            // *** CORREÇÃO: Verificar 'isPending' também ***
+                            // A notificação deve disparar quando 'isPending' muda de true para false
+                            return prevSample && (prevSample.isPending === true) && (currentSample.isPending === false);
+                        });
+
+                        if (newFeedbacks.length > 0) {
+                            newFeedbacks.forEach(sample => {
+                                const message = `<strong>${sample.sellerName}</strong> deu feedback para <strong>${sample.produto}</strong>: ${sample.feedback} (Ped: ${sample.pedido})`;
+                                const notifId = sanitizeForFirebaseId(`notif-${sample.id}-${Date.now()}`);
+                                const notifRef = doc(db, "sessoes", currentSessionId, "notificacoes", notifId);
+                                batch.set(notifRef, {
+                                    message,
+                                    color: 'blue', // Color for regular feedback
+                                    timestamp: serverTimestamp(),
+                                    triggerPopup: false // Don't trigger browser notification for this
+                                });
+                                notificationAdded = true;
+                            });
+                        }
+
+                        // 2. Check for sellers who just finalized (sinalizaram)
+                        // *** CORREÇÃO: A notificação de "finalizado" é enviada pelo telavendedor.html ***
+                        // A lógica aqui deve verificar por 'editedAfterCompletion'
+                        const editedSamples = allSamples.filter(currentSample => {
+                            const prevSample = previousSamples.find(p => p.id === currentSample.id);
+                            // Verificar se 'editedAfterCompletion' mudou de 'undefined' ou 'false' para 'true'
+                            return prevSample && 
+                                   (prevSample.editedAfterCompletion !== true) && 
+                                   (currentSample.editedAfterCompletion === true);
+                        });
+
+                        if (editedSamples.length > 0) {
+                             editedSamples.forEach(sample => {
+                                const message = `<strong>${sample.sellerName}</strong> <i>editou</i> o feedback para <strong>${sample.produto}</strong> (Ped: ${sample.pedido}): ${sample.feedback}`;
+                                const notifId = sanitizeForFirebaseId(`edit-notif-${sample.id}-${Date.now()}`);
+                                const notifRef = doc(db, "sessoes", currentSessionId, "notificacoes", notifId);
+                                batch.set(notifRef, {
+                                    message,
+                                    color: 'orange', // Laranja para edições
+                                    timestamp: serverTimestamp(),
+                                    triggerPopup: true // Acionar popup para edições
+                                });
+                                notificationAdded = true;
+                             });
+                        }
+
+                        // Commit notification batch if any were added
+                        if (notificationAdded) {
+                            try {
+                                await batch.commit();
+                            } catch (commitError) {
+                                console.error("Erro ao guardar notificações:", commitError);
+                            }
+                        }
+                    } // End notification logic
+
+                    // Load seller segments if needed (based on LIVE data)
+                    const sellerDocs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    if (sellerDocs.length > 0) {
+                        await loadAllSellerSegments([...new Set(allSamples.map(s => s.sellerName))]);
+                    }
+
+                    // Ensure other listeners are active *before* processing dashboard
+                    if (!sellerRepliesListenerUnsubscribe) listenForSellerReplies(sessionId);
+                    if (!sellerRepliesToManagerListenerUnsubscribe) listenForSellerRepliesToManager(sessionId);
+                    if (!destaquesAmostrasListenerUnsubscribe) listenForDestaquesAmostras(sessionId);
+                    if (!historicalAromaDataUnsubscribe) listenForHistoricalAromaData(sessionId); // Ensure historical listener is active
+                    if (!pdPostitsListenerUnsubscribe) listenForPdPostits(sessionId); // *** NOVO: Garantir que o listener P&D está ativo ***
+
+                    // Update the UI with the latest LIVE data (processAndDisplayDashboard handles combining for aroma)
+                    processAndDisplayDashboard(allSamples, sessionId, sellerDocs);
+                    infoMessage.textContent = ''; // Clear loading messages
+
+                } // End dashboard display logic
+
+                isInitialDataLoad = false; // Mark initial load complete
+            }, (error) => {
+                 console.error("Erro ao escutar dados da sessão:", error);
+                 infoMessage.textContent = `Erro ao carregar dados da sessão ${sessionId}. Verifique o ID ou a ligação.`;
+                 resetToInitialState(true);
+                 manualSessionInput.value = sessionId;
+                 if(dataListenerUnsubscribe) dataListenerUnsubscribe();
+                 currentSessionId = null;
+            });
+        }
+
+        // Reset UI state, clear listeners and data
+        function resetToInitialState(keepConnectionOptions = false) {
+            // Unsubscribe from all Firestore listeners
+            if (dataListenerUnsubscribe) dataListenerUnsubscribe();
             if (notificationListenerUnsubscribe) notificationListenerUnsubscribe();
             if (sellerRepliesListenerUnsubscribe) sellerRepliesListenerUnsubscribe();
             if (sellerRepliesToManagerListenerUnsubscribe) sellerRepliesToManagerListenerUnsubscribe();
             if (destaquesAmostrasListenerUnsubscribe) destaquesAmostrasListenerUnsubscribe();
-            if (historicalAromaDataUnsubscribe) historicalAromaDataUnsubscribe();
-            if (pdPostitsListenerUnsubscribe) pdPostitsListenerUnsubscribe();
+            if (historicalAromaDataUnsubscribe) historicalAromaDataUnsubscribe(); // Unsubscribe historical listener
+            if (pdPostitsListenerUnsubscribe) pdPostitsListenerUnsubscribe(); // *** NOVO: Parar listener Post-it P&D ***
 
+            // Clear local state
             currentSessionId = null;
             allCurrentSamples = [];
             allNotifications = [];
             allSellerReplies = [];
             allSellerRepliesToManager = [];
             highlightedSamplesCache = [];
-            allPdPostits = [];
+            allPdPostits = []; // *** NOVO: Limpar cache Post-it P&D ***
             areAllNotificationsVisible = false;
             sellerSegmentsCache = {};
             currentSampleForReply = null;
             currentFeedbackFilter = '';
+            // --- Reset aroma state ---
             historicalAromaData = [];
-            sellerDataCache = {};
-            samplesBySellerCache = {};
-            
-            // *** NOVO: Reseta controlo de carga ***
-            initialLoadComplete = false;
-            sellersLoadedCount = 0;
-            totalSellersToLoad = 0;
-            sellersWithActiveListeners.clear();
 
+
+            // Reset UI elements
             dashboard.classList.add('hidden');
-            sessionIdText.textContent = 'A conectar...';
-            infoMessage.textContent = 'A procurar sessão ativa...';
-            connectionSection.classList.remove('hidden');
+            sessionIdText.textContent = 'Nenhuma sessão iniciada';
 
-            updateNotificationDisplay();
-            renderPdPostits();
+            // Removed Aroma UI reset logic
+
+
+            if (keepConnectionOptions) {
+                // Show connection section if resetting due to error or cleared global session
+                inputSection.classList.add('hidden');
+                connectionSection.classList.remove('hidden');
+                if (!infoMessage.textContent.includes("não encontrada") && !infoMessage.textContent.includes("Erro")) {
+                    infoMessage.textContent = 'Nenhuma sessão ativa globalmente. Conecte-se manualmente ou inicie uma nova.';
+                }
+                 processBtn.disabled = true; // Disable parse button when showing connection
+            } else {
+                // Show input section for creating a new session
+                inputSection.classList.remove('hidden');
+                connectionSection.classList.add('hidden');
+                infoMessage.textContent = 'Conectado. Nenhuma sessão ativa globalmente. Cole os dados para iniciar.';
+                manualSessionInput.value = ''; // Clear manual input
+                processBtn.disabled = false; // Enable parse button
+                processBtn.textContent = 'Gerar Painel e Acessos';
+            }
+             if(processBtn.disabled) {
+                 processBtn.textContent = 'Aguarde a conexão...';
+             }
+
+            updateNotificationDisplay(); // Clear notifications list
+            renderPdPostits(); // *** NOVO: Limpar lista de Post-its P&D ***
         }
 
+        // Listen for changes to the globally active session ID
         function listenForActiveSession() {
             const activeSessionRef = doc(db, "configuracoes", "sessaoAtiva");
             let unsubscribe = null;
@@ -766,210 +1260,74 @@
                 const activeSessionId = docSnap.exists() ? docSnap.data().current : null;
 
                 if (activeSessionId) {
-                    if (activeSessionId !== currentSessionId) {
-                        console.log(`Nova sessão ativa encontrada: ${activeSessionId}. A conectar...`);
-                        resetToInitialState();
-                        currentSessionId = activeSessionId;
-                        infoMessage.textContent = `Sessão ativa: ${activeSessionId}. A carregar dados...`;
-                        
-                        // Carrega dados estáticos primeiro
-                        await loadAllSellerData();
-                        await loadAllSellerSegments();
-                        
-                        // Inicia listeners de amostras (agora controla a carga inicial)
-                        listenForSamples();
-                        
-                        // Inicia outros listeners
-                        listenForNotifications();
-                        listenForSellerReplies();
-                        listenForSellerRepliesToManager();
-                        listenForDestaquesAmostras();
-                        listenForHistoricalAromaData();
-                        listenForPdPostits();
+                    // If a global session exists and it's different OR dashboard isn't visible yet
+                    if (activeSessionId !== currentSessionId || dashboard.classList.contains('hidden')) {
+                        console.log(`Global active session is ${activeSessionId}. Connecting...`);
+                        infoMessage.textContent = `Sessão ativa global encontrada: ${activeSessionId}. A carregar...`;
+                        inputSection.classList.add('hidden');
+                        connectionSection.classList.add('hidden');
+                        // Start listening to the global session
+                        listenForDataUpdates(activeSessionId);
+                        listenForNotifications(activeSessionId);
+                        listenForSellerReplies(activeSessionId);
+                        listenForSellerRepliesToManager(activeSessionId);
+                        listenForDestaquesAmostras(activeSessionId);
+                        listenForHistoricalAromaData(activeSessionId); // Start listening for historical data
+                        listenForPdPostits(activeSessionId); // *** NOVO: Inicia listener Post-it P&D ***
+                    } else {
+                        // Already connected to the correct global session
+                        console.log(`Already connected to global session ${activeSessionId}`);
                     }
                 } else {
-                    console.warn("Nenhuma sessão ativa encontrada.");
-                    resetToInitialState();
-                    infoMessage.textContent = 'Nenhuma sessão ativa encontrada.';
+                    // No active global session
+                    if (currentSessionId) {
+                        // Was connected, but global session was cleared externally
+                        console.log("Sessão ativa global foi limpa. A redefinir.");
+                        resetToInitialState(true); // Reset and show connection options
+                    } else if (inputSection.classList.contains('hidden')) {
+                        // Not connected and no global session, show connection options
+                        console.log("Nenhuma sessão global ou local ativa. A mostrar opções de ligação.");
+                        resetToInitialState(true);
+                    } else {
+                        // Input section is visible, waiting for user to paste data
+                         console.log("Input section visible, awaiting user action.");
+                         processBtn.disabled = false; // Ensure button is enabled
+                         processBtn.textContent = 'Gerar Painel e Acessos';
+                         infoMessage.textContent = 'Conectado. Nenhuma sessão ativa globalmente. Cole os dados para iniciar.';
+                    }
                 }
             }, (error) => {
-                infoMessage.textContent = "Erro ao verificar sessão ativa.";
+                infoMessage.textContent = "Erro ao verificar sessão ativa global.";
                 console.error("Active session listener error:", error);
-                resetToInitialState();
-            });
-        }
-        
-        async function loadAllSellerData() {
-            if (!currentSessionId) return;
-            
-            const sellersRef = collection(db, "sessoes", currentSessionId, "vendedores");
-            try {
-                const snapshot = await getDocs(sellersRef);
-                sellerDataCache = {};
-                snapshot.forEach(doc => {
-                    sellerDataCache[doc.id] = doc.data();
-                });
-                console.log(`Cache de dados de ${Object.keys(sellerDataCache).length} vendedores carregado.`);
-            } catch (error) {
-                handleFirestoreError(error, "carregar dados dos vendedores");
-            }
-        }
-
-        function listenForSamples() {
-            samplesListenersUnsubscribe.forEach(unsub => unsub());
-            samplesListenersUnsubscribe = [];
-            samplesBySellerCache = {};
-            allCurrentSamples = [];
-            
-            // *** NOVO: Reseta controlo de carga ***
-            initialLoadComplete = false;
-            sellersLoadedCount = 0;
-            totalSellersToLoad = Object.keys(sellerDataCache).length;
-            sellersWithActiveListeners.clear();
-
-            if (totalSellersToLoad === 0) {
-                console.warn("Nenhum vendedor encontrado no cache. Não é possível ouvir amostras.");
-                initialLoadComplete = true; // Marca como completo para permitir renderização
-                processAndDisplayDashboard();
-                return;
-            }
-            
-            console.log(`A iniciar listeners para ${totalSellersToLoad} vendedores...`);
-
-            Object.keys(sellerDataCache).forEach(sellerId => {
-                const samplesQuery = query(
-                    collection(db, "sessoes", currentSessionId, "vendedores", sellerId, "amostras")
-                );
-
-                const unsubscribe = onSnapshot(samplesQuery, (snapshot) => {
-                    const previousSamples = [...allCurrentSamples];
-                    
-                    samplesBySellerCache[sellerId] = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    
-                    // *** NOVO: Lógica de Controlo de Carga Inicial ***
-                    if (!initialLoadComplete) {
-                        // Se este vendedor ainda não foi contado na carga inicial
-                        if (!sellersWithActiveListeners.has(sellerId)) {
-                            sellersWithActiveListeners.add(sellerId);
-                            sellersLoadedCount++;
-                            console.log(`Vendedor ${sellerId} carregado (${sellersLoadedCount}/${totalSellersToLoad})`);
-                        }
-                        
-                        // Reconstrói amostras totais para o status
-                        allCurrentSamples = Object.values(samplesBySellerCache).flat();
-                        
-                        // Se todos os vendedores carregaram pela primeira vez
-                        if (sellersLoadedCount >= totalSellersToLoad) {
-                            initialLoadComplete = true;
-                            processAndDisplayDashboard(); // Renderiza o painel COMPLETO
-                        } else {
-                            // Atualiza a mensagem de progresso
-                            infoMessage.textContent = `A carregar dados... (${sellersLoadedCount}/${totalSellersToLoad})`;
-                        }
-                        
-                    } else {
-                        // Carga inicial já terminou, isto é uma atualização em tempo real
-                        allCurrentSamples = Object.values(samplesBySellerCache).flat();
-                        processSampleUpdates(allCurrentSamples, previousSamples);
-                        processAndDisplayDashboard(); // Re-renderiza o painel com a atualização
-                    }
-
-                }, (error) => {
-                    handleFirestoreError(error, `ouvir amostras do vendedor ${sellerId}`);
-                    // Se um vendedor falhar, contamos mesmo assim para não bloquear a carga
-                    if (!initialLoadComplete && !sellersWithActiveListeners.has(sellerId)) {
-                         sellersWithActiveListeners.add(sellerId);
-                         sellersLoadedCount++;
-                         if (sellersLoadedCount >= totalSellersToLoad) {
-                            initialLoadComplete = true;
-                            processAndDisplayDashboard();
-                         }
-                    }
-                });
-
-                samplesListenersUnsubscribe.push(unsubscribe);
+                 resetToInitialState(true); // Show connection options on error
             });
         }
 
-
-        // Função 'processSampleUpdates' (permanece a mesma)
-        async function processSampleUpdates(currentSamples, previousSamples) {
-             const batch = writeBatch(db);
-             let notificationAdded = false;
-
-             const newFeedbacks = currentSamples.filter(currentSample => {
-                 const prevSample = previousSamples.find(p => p.id === currentSample.id);
-                 return prevSample && (prevSample.isPending === true) && (currentSample.isPending === false);
-             });
-
-             if (newFeedbacks.length > 0) {
-                 newFeedbacks.forEach(sample => {
-                     const message = `<strong>${sample.sellerName}</strong> deu feedback para <strong>${sample.produto}</strong>: ${sample.feedback} (Ped: ${sample.pedido})`;
-                     const notifId = sanitizeForFirebaseId(`notif-${sample.id}-${Date.now()}`);
-                     const notifRef = doc(db, "sessoes", currentSessionId, "notificacoes", notifId);
-                     batch.set(notifRef, {
-                         message,
-                         color: 'blue',
-                         timestamp: serverTimestamp(),
-                         triggerPopup: false
-                     });
-                     notificationAdded = true;
-                 });
-             }
-
-             const editedSamples = currentSamples.filter(currentSample => {
-                 const prevSample = previousSamples.find(p => p.id === currentSample.id);
-                 return prevSample && 
-                        (prevSample.editedAfterCompletion !== true) && 
-                        (currentSample.editedAfterCompletion === true);
-             });
-
-             if (editedSamples.length > 0) {
-                  editedSamples.forEach(sample => {
-                     const message = `<strong>${sample.sellerName}</strong> <i>editou</i> o feedback para <strong>${sample.produto}</strong> (Ped: ${sample.pedido}): ${sample.feedback}`;
-                     const notifId = sanitizeForFirebaseId(`edit-notif-${sample.id}-${Date.now()}`);
-                     const notifRef = doc(db, "sessoes", currentSessionId, "notificacoes", notifId);
-                     batch.set(notifRef, {
-                         message,
-                         color: 'orange',
-                         timestamp: serverTimestamp(),
-                         triggerPopup: true
-                     });
-                     notificationAdded = true;
-                  });
-             }
-
-             if (notificationAdded) {
-                 try {
-                     await batch.commit();
-                 } catch (commitError) {
-                     handleFirestoreError(commitError, "guardar notificações de feedback");
-                 }
-             }
-        }
-
-
-        // (Todas as outras funções 'listenFor...' permanecem as mesmas da v2)
-        function listenForNotifications() {
-            if (!currentSessionId) return;
+        // Listen for new notifications within the session
+        function listenForNotifications(sessionId) {
             if (notificationListenerUnsubscribe) notificationListenerUnsubscribe();
-            const q = query(collection(db, "sessoes", currentSessionId, "notificacoes"), orderBy("timestamp", "desc"));
+            const q = query(collection(db, "sessoes", sessionId, "notificacoes"), orderBy("timestamp", "desc")); // Order by time
 
             let initialLoad = true;
             notificationListenerUnsubscribe = onSnapshot(q, (snapshot) => {
+                 if (snapshot.empty && initialLoad) {
+                     console.log(`Nenhuma notificação encontrada para a sessão ${sessionId}.`);
+                 }
+
                 allNotifications = snapshot.docs.map(doc => ({
                     id: doc.id,
                     ...doc.data(),
-                    timestamp: doc.data().timestamp
+                    timestamp: doc.data().timestamp // Keep as Firestore Timestamp
                 }));
-                updateNotificationDisplay();
+                updateNotificationDisplay(); // Update the UI list
 
+                // Trigger browser notifications for specific types on subsequent updates
                 if (!initialLoad) {
                     snapshot.docChanges().forEach((change) => {
-                        if (change.type === "added" && !change.doc.metadata.fromCache) {
+                        if (change.type === "added" && !change.doc.metadata.fromCache) { // *** Adicionado !change.doc.metadata.fromCache ***
                             const notificationData = change.doc.data();
-                            if (notificationData.triggerPopup === true) {
-                                const cleanMessage = notificationData.message.replace(/<[^>]*>?/gm, '');
+                            if (notificationData.triggerPopup === true) { // Check flag
+                                const cleanMessage = notificationData.message.replace(/<[^>]*>?/gm, ''); // Remove HTML for browser notification
                                 showBrowserNotification(notificationData.color === 'green' ? 'Tarefa Finalizada' : 'Nova Resposta', cleanMessage);
                             }
                         }
@@ -977,52 +1335,65 @@
                 }
                 initialLoad = false;
             }, (error) => {
-                 handleFirestoreError(error, "ouvir notificações do gestor");
+                 console.error(`Erro ao escutar notificações para a sessão ${sessionId}:`, error);
             });
         }
 
-        async function listenForSellerReplies() {
-            if (!currentSessionId) return;
+        // Listen for manager replies (sent TO vendors)
+        async function listenForSellerReplies(sessionId) {
+            if (!sessionId) return;
             if (sellerRepliesListenerUnsubscribe) sellerRepliesListenerUnsubscribe();
 
-            const repliesRef = collection(db, "sessoes", currentSessionId, "notificacoesVendedor");
-            const q = query(repliesRef);
+            const repliesRef = collection(db, "sessoes", sessionId, "notificacoesVendedor");
+            const q = query(repliesRef); // No specific ordering needed here for cache
 
             sellerRepliesListenerUnsubscribe = onSnapshot(q, (snapshot) => {
                  allSellerReplies = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                 console.log(`[v2] Loaded/Updated ${allSellerReplies.length} manager replies.`);
-                 if(initialLoadComplete) { // Só renderiza se a carga inicial estiver completa
+                 console.log(`Loaded/Updated ${allSellerReplies.length} manager replies.`);
+                 // Re-render observations feed and modal (if open) as replies affect display
+                 if(!dashboard.classList.contains('hidden')) {
                      renderObservationsFeed(allCurrentSamples);
                      if (!feedbackSamplesModal.classList.contains('hidden') && currentFeedbackFilter) {
                          showFeedbackSamples(currentFeedbackFilter, modalSegmentFilter.value);
                      }
                  }
             }, (error) => {
-                 handleFirestoreError(error, "ouvir respostas para vendedores");
-                 allSellerReplies = [];
+                 console.error(`Erro ao escutar respostas para vendedores na sessão ${sessionId}:`, error);
+                 allSellerReplies = []; // Clear cache on error
+                 if(!dashboard.classList.contains('hidden')) {
+                     renderObservationsFeed(allCurrentSamples); // Re-render feed without replies
+                 }
             });
         }
 
-        async function listenForSellerRepliesToManager() {
-            if (!currentSessionId) return;
+        // *** CORREÇÃO 3: Usar Transação para processar respostas do vendedor ***
+        async function listenForSellerRepliesToManager(sessionId) {
+            if (!sessionId) return;
             if (sellerRepliesToManagerListenerUnsubscribe) sellerRepliesToManagerListenerUnsubscribe();
 
-            const repliesRef = collection(db, "sessoes", currentSessionId, "respostasVendedor");
+            const repliesRef = collection(db, "sessoes", sessionId, "respostasVendedor");
             const q = query(repliesRef, where("readByManager", "==", false));
 
             sellerRepliesToManagerListenerUnsubscribe = onSnapshot(q, async (snapshot) => {
+
+                // Processar cada *nova* resposta não lida individualmente com uma transação
                 for (const change of snapshot.docChanges()) {
                     if (change.type === "added") {
                         const replyData = change.doc.data();
-                        const replyDocRef = change.doc.ref;
+                        const replyDocRef = change.doc.ref; // Referência ao documento de resposta
 
                         try {
                             await runTransaction(db, async (transaction) => {
+                                // 1. Ler o documento de resposta DENTRO da transação
                                 const replyDocSnap = await transaction.get(replyDocRef);
                                 if (!replyDocSnap.exists() || replyDocSnap.data().readByManager === true) {
+                                    // Se não existe ou já foi lido (por outro gestor), não fazer nada
+                                    console.log(`Resposta ${replyDocRef.id} já processada.`);
                                     return; 
                                 }
 
+                                // 2. Se ainda não foi lido, criar a notificação
+                                // *** ATUALIZAÇÃO: Diferenciar P&D de Vendedor ***
                                 const isPDReply = replyData.originalManagerName === "P&D";
                                 const senderName = isPDReply ? `${replyData.sellerName} (P&D)` : replyData.sellerName;
                                 const message = `<strong>${senderName}</strong> respondeu à sua observação sobre <strong>${replyData.produto}</strong>: "${replyData.replyMessage}"`;
@@ -1032,138 +1403,203 @@
 
                                 transaction.set(notifRef, {
                                     message,
-                                    color: isPDReply ? 'purple' : 'orange',
+                                    color: isPDReply ? 'purple' : 'orange', // Cor Roxa para P&D, Laranja para Vendedor
                                     timestamp: serverTimestamp(),
-                                    triggerPopup: true
+                                    triggerPopup: true // Acionar popup
                                 });
+
+                                // 3. Marcar a resposta como lida
                                 transaction.update(replyDocRef, { readByManager: true });
                             });
+                            console.log(`Resposta ${replyDocRef.id} processada com sucesso.`);
                         } catch (error) {
-                            handleFirestoreError(error, `processar a resposta ${replyDocRef.id}`);
+                            console.error(`Falha na transação ao processar a resposta ${replyDocRef.id}:`, error);
+                            // Se a transação falhar, o listener tentará novamente na próxima vez
+                            // ou outro gestor pode processá-la.
                         }
                     }
                 }
 
-                if(initialLoadComplete) { // Só atualiza UI se a carga inicial estiver completa
-                     const fullQuery = query(collection(db, "sessoes", currentSessionId, "respostasVendedor"));
+                // Após processar as novas, atualizar o cache local com TODAS as respostas (lidas e não lidas)
+                // para garantir que a UI (feed de observações) esteja correta.
+                if(!dashboard.classList.contains('hidden')) {
+                     const fullQuery = query(collection(db, "sessoes", sessionId, "respostasVendedor"));
                      const fullSnapshot = await getDocs(fullQuery);
                      allSellerRepliesToManager = fullSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+                     // Re-renderizar elementos da UI afetados
                      renderObservationsFeed(allCurrentSamples);
                      if (!feedbackSamplesModal.classList.contains('hidden') && currentFeedbackFilter) {
                          showFeedbackSamples(currentFeedbackFilter, modalSegmentFilter.value);
                      }
                 }
             }, (error) => {
-                 handleFirestoreError(error, "ouvir respostas de vendedores");
-                 allSellerRepliesToManager = [];
+                 console.error(`Erro ao escutar respostas de vendedores na sessão ${sessionId}:`, error);
+                 allSellerRepliesToManager = []; // Limpar cache no erro
+                 if(!dashboard.classList.contains('hidden')) {
+                     renderObservationsFeed(allCurrentSamples); // Re-renderizar feed
+                 }
             });
         }
 
-        function listenForDestaquesAmostras() {
-            if (!currentSessionId) return;
+
+        // *** CORREÇÃO: Preencher o cache no listener ***
+        function listenForDestaquesAmostras(sessionId) {
+            if (!sessionId) return;
             if (destaquesAmostrasListenerUnsubscribe) destaquesAmostrasListenerUnsubscribe();
             
-            const destaquesRef = doc(db, "sessoes", currentSessionId, "configuracoes", "destaquesAmostras");
+            const destaquesRef = doc(db, "sessoes", sessionId, "configuracoes", "destaquesAmostras");
 
             destaquesAmostrasListenerUnsubscribe = onSnapshot(destaquesRef, (docSnap) => {
                 highlightedSamplesCache = docSnap.exists() ? (docSnap.data().lista || []) : [];
-                if (initialLoadComplete && !feedbackSamplesModal.classList.contains('hidden') && currentFeedbackFilter) {
+                // O listener apenas atualiza o cache. A escrita é feita em 'toggleDestaqueAmostra'
+                if (!feedbackSamplesModal.classList.contains('hidden') && currentFeedbackFilter) {
                     showFeedbackSamples(currentFeedbackFilter, modalSegmentFilter.value);
                 }
             }, (error) => {
-                handleFirestoreError(error, "ouvir destaques de amostras");
-                highlightedSamplesCache = [];
+                console.error("Erro ao escutar destaques de amostras:", error);
+                highlightedSamplesCache = []; // Limpar cache no erro
             });
         }
 
-        function listenForHistoricalAromaData() {
-            if (!currentSessionId) return;
-            if (historicalAromaDataUnsubscribe) historicalAromaDataUnsubscribe();
+         // *** NOVO: Ouvir dados históricos de aroma ***
+        function listenForHistoricalAromaData(sessionId) {
+            if (!sessionId) return;
+            if (historicalAromaDataUnsubscribe) historicalAromaDataUnsubscribe(); // Desinscrever anterior
 
-            const historicalDocRef = doc(db, "sessoes", currentSessionId, "configuracoes", "dadosHistoricosAroma");
+            const historicalDocRef = doc(db, "sessoes", sessionId, "configuracoes", "dadosHistoricosAroma");
 
             historicalAromaDataUnsubscribe = onSnapshot(historicalDocRef, (docSnap) => {
                 const newData = docSnap.exists() ? (docSnap.data().data || []) : [];
                 
+                // Verificar se os dados realmente mudaram para evitar re-renderizações desnecessárias
                 if (JSON.stringify(historicalAromaData) !== JSON.stringify(newData)) {
-                     console.log(`Dados históricos de aroma atualizados. Registros: ${newData.length}`);
-                     historicalAromaData = newData;
+                     console.log(`Dados históricos de aroma atualizados para a sessão ${sessionId}. Registros: ${newData.length}`);
+                     historicalAromaData = newData; // Atualizar estado global
                      
-                     if (initialLoadComplete && currentSessionId) {
-                         processAndDisplayDashboard(); 
+                     // Re-renderizar o dashboard SOMENTE se estiver visível
+                     // Isso garante que gráficos e rankings sejam atualizados para todos conectados
+                     if (!dashboard.classList.contains('hidden') && currentSessionId === sessionId) {
+                         // Precisamos dos sellerDocs atuais para re-renderizar
+                         const sellerDocs = [...new Set(allCurrentSamples.map(s => s.sellerName))].map(name => {
+                            const sellerId = sanitizeForFirebaseId(name);
+                            const sellerDoc = sellersListContainer.querySelector(`.seller-card[data-seller-name="${name}"]`);
+                            return {
+                                id: sellerId,
+                                originalName: name,
+                                amostras: allCurrentSamples.filter(s => s.sellerName === name),
+                                accessCode: sellerDoc ? sellerDoc.querySelector('.copy-code-btn')?.dataset.code : null
+                            };
+                        });
+                         processAndDisplayDashboard(allCurrentSamples, currentSessionId, sellerDocs); 
                      }
                 }
+
             }, (error) => {
-                handleFirestoreError(error, "ouvir dados históricos de aroma");
-                historicalAromaData = [];
+                console.error("Erro ao escutar dados históricos de aroma:", error);
+                historicalAromaData = []; // Limpar dados no erro
+                // Opcionalmente, re-renderizar o dashboard se necessário no erro
+                if (!dashboard.classList.contains('hidden') && currentSessionId === sessionId) {
+                    const sellerDocs = [...new Set(allCurrentSamples.map(s => s.sellerName))].map(name => {
+                        const sellerId = sanitizeForFirebaseId(name);
+                        const sellerDoc = sellersListContainer.querySelector(`.seller-card[data-seller-name="${name}"]`);
+                        return {
+                            id: sellerId,
+                            originalName: name,
+                            amostras: allCurrentSamples.filter(s => s.sellerName === name),
+                            accessCode: sellerDoc ? sellerDoc.querySelector('.copy-code-btn')?.dataset.code : null
+                        };
+                    });
+                    processAndDisplayDashboard(allCurrentSamples, currentSessionId, sellerDocs);
+                }
             });
         }
         
-        function listenForPdPostits() {
-            if (!currentSessionId) return;
+        // *** NOVO: Listener para Post-its P&D ***
+        function listenForPdPostits(sessionId) {
+            if (!sessionId) return;
             if (pdPostitsListenerUnsubscribe) pdPostitsListenerUnsubscribe();
 
+            // Query para TODOS os post-its, ordenados por data
             const q = query(
-                collection(db, "sessoes", currentSessionId, "pdPostits"),
+                collection(db, "sessoes", sessionId, "pdPostits"),
                 orderBy("timestamp", "desc")
             );
 
             pdPostitsListenerUnsubscribe = onSnapshot(q, (snapshot) => {
                 allPdPostits = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                if (initialLoadComplete) {
-                    renderPdPostits();
+                console.log(`[Gestor] Post-its P&D carregados: ${allPdPostits.length}`);
+                if (!dashboard.classList.contains('hidden')) {
+                    renderPdPostits(); // Chamar a nova função de renderização
                 }
             }, (error) => {
-                handleFirestoreError(error, "carregar post-its P&D");
+                console.error("Erro ao carregar post-its P&D:", error);
                 allPdPostits = [];
+                if (!dashboard.classList.contains('hidden')) {
+                    renderPdPostits(); // Limpar a lista em caso de erro
+                }
             });
         }
 
 
+        // *** CORREÇÃO 2: Usar Transação para destacar/desdestacar amostra ***
         async function toggleDestaqueAmostra(e) {
-            e.stopPropagation();
+            e.stopPropagation(); // Impedir o manipulador de clique do modal
             const sampleId = e.currentTarget.dataset.sampleId;
             if (!currentSessionId || !sampleId) return;
 
             const destaquesRef = doc(db, "sessoes", currentSessionId, "configuracoes", "destaquesAmostras");
             const button = e.currentTarget;
-            button.disabled = true;
+            button.disabled = true; // Desativar botão durante a operação
 
             try {
                 await runTransaction(db, async (transaction) => {
+                    // 1. Ler o documento de destaques DENTRO da transação
                     const destaquesDoc = await transaction.get(destaquesRef);
+                    
+                    // 2. Obter a lista atual, ou uma lista vazia se o documento não existir
                     const currentList = destaquesDoc.exists() ? (destaquesDoc.data().lista || []) : [];
                     let updatedList = [...currentList];
 
+                    // 3. Modificar a lista
                     if (updatedList.includes(sampleId)) {
-                        updatedList = updatedList.filter(id => id !== sampleId);
+                        updatedList = updatedList.filter(id => id !== sampleId); // Remover se existe
                     } else {
-                        updatedList.push(sampleId);
+                        updatedList.push(sampleId); // Adicionar se não existe
                     }
-                    transaction.set(destaquesRef, { lista: updatedList });
+
+                    // 4. Salvar a lista atualizada de volta
+                    transaction.set(destaquesRef, { lista: updatedList }); // Usar 'set' pois o doc pode não existir
                 });
+                
+                // Sucesso! O listener 'listenForDestaquesAmostras' atualizará o cache local
+                // e acionará a re-renderização do modal.
+                console.log(`Destaques de amostras atualizados (via transação).`);
+
             } catch (error) {
-                handleFirestoreError(error, "atualizar destaques de amostra");
+                console.error("Erro na transação ao atualizar destaques de amostra:", error);
+                showAlert("Erro ao guardar destaque de amostra. Tente novamente.");
             } finally {
-                button.disabled = false;
+                button.disabled = false; // Reativar o botão
             }
         }
 
 
         // --- UI Rendering Functions ---
 
-        // (Todas as funções 'render...' permanecem as mesmas da v2)
-        // ...
-        // Renderiza gráficos principais
+        // Render main dashboard charts (using combined data)
         function renderCharts(samples) {
             let pending = 0, resolved = 0, approved = 0, rejected = 0, events = 0;
-            const feedbackCounts = {};
+            const feedbackCounts = {}; // Counts for specific feedback reasons
 
+            // Define canonical feedback types for categorization
             const APPROVED_WITHOUT_PREFIX = ['COM PEDIDO', 'APROVADO SEM PEDIDO'];
             const REJECTED_WITHOUT_PREFIX = ['APRESENTAÇÃO PRÓ ATIVA', 'CALIBRE', 'EXTRAVIADA', 'FORA DA ESPECIFICAÇÃO DO CLIENTE', 'FORA DO PERFIL DO CLIENTE', 'FRACA / ESTOURANDO / COM CHUVEIRO', 'PRODUTO DESCONTINUADO', 'QUANTIDADE INSUFICIENTE', 'REPRESENTAÇÃO / DISTRIBUIDOR', 'SEM RETORNO DO CLIENTE', 'EXPORTACAO'];
             const EVENTS_WITHOUT_PREFIX = ['INNOVATION / EVENTOS', 'EVENTO'];
 
+            // Categorize samples
             samples.forEach(s => {
+                // Use originalStatus for session status chart if 'isPending' isn't available
                 let isSamplePending = s.isPending;
                 if (typeof isSamplePending === 'undefined') {
                     isSamplePending = PENDING_STATUSES.includes(normalizeText(s.originalStatus));
@@ -1175,9 +1611,10 @@
                     resolved++;
                     if (s.feedback && s.feedback.trim() !== '') {
                         const feedbackKey = s.feedback.trim();
-                        const normalizedFeedback = getCanonicalFeedback(feedbackKey);
-                        feedbackCounts[normalizedFeedback] = (feedbackCounts[normalizedFeedback] || 0) + 1;
+                        const normalizedFeedback = getCanonicalFeedback(feedbackKey); // Use getter
+                        feedbackCounts[normalizedFeedback] = (feedbackCounts[normalizedFeedback] || 0) + 1; // Count specific reasons
 
+                        // Categorize into Approved, Rejected, Events
                         if (feedbackKey.startsWith('A -') || APPROVED_WITHOUT_PREFIX.includes(normalizedFeedback)) {
                             approved++;
                         } else if (feedbackKey.startsWith('R -') || REJECTED_WITHOUT_PREFIX.includes(normalizedFeedback)) {
@@ -1189,16 +1626,18 @@
                 }
             });
 
+            // Render Session Status Doughnut Chart
             renderChart('session-status-chart', 'doughnut', {
                 labels: ['Pendentes', 'Resolvidos'],
-                datasets: [{ data: [pending, resolved], backgroundColor: ['#facc15', '#3b82f6'] }]
+                datasets: [{ data: [pending, resolved], backgroundColor: ['#facc15', '#3b82f6'] }] // Yellow, Blue
             });
 
+            // Render Feedback Distribution Doughnut Chart
             const rejectionChartTitle = document.getElementById('rejection-chart-title');
             rejectionChartTitle.textContent = 'Distribuição de Feedbacks';
-            if (approved === 0 && rejected === 0 && events === 0 && resolved > 0) {
+            if (approved === 0 && rejected === 0 && events === 0 && resolved > 0) { // Show placeholder if resolved but no specific feedback yet
                  renderChart('rejection-rate-chart', 'doughnut', { labels: ['Aguardando Detalhes'], datasets: [{ data: [resolved], backgroundColor: ['#e5e7eb'] }] });
-            } else if (approved === 0 && rejected === 0 && events === 0) {
+            } else if (approved === 0 && rejected === 0 && events === 0) { // Show placeholder if nothing resolved
                  renderChart('rejection-rate-chart', 'doughnut', { labels: ['Aguardando Respostas'], datasets: [{ data: [1], backgroundColor: ['#e5e7eb'] }] });
             }
              else {
@@ -1206,45 +1645,54 @@
                     labels: ['Aprovadas', 'Reprovadas', 'Eventos'],
                     datasets: [{
                         data: [approved, rejected, events],
-                        backgroundColor: ['#34d399', '#f87171', '#a78bfa']
+                        backgroundColor: ['#34d399', '#f87171', '#a78bfa'] // Green, Red, Purple
                     }]
                 });
             }
         }
 
+        // Generic function to render/update a Chart.js chart
         function renderChart(canvasId, type, data, options = {}) {
             const canvas = document.getElementById(canvasId);
             if (!canvas) return;
             const ctx = canvas.getContext('2d');
             if (!ctx) return;
 
+            // Destroy previous instance if it exists
             if (chartInstances[canvasId]) chartInstances[canvasId].destroy();
-            Chart.register(ChartDataLabels);
 
+            Chart.register(ChartDataLabels); // Register plugin
+
+            // Default options
             const finalOptions = {
                 responsive: true,
                 maintainAspectRatio: false,
                 ...options,
                 plugins: {
-                    legend: { display: type === 'doughnut' },
-                    datalabels: { display: false },
-                    ...options.plugins
+                    legend: { display: type === 'doughnut' }, // Show legend only for doughnut
+                    datalabels: { display: false }, // Hide data labels by default on main charts
+                    ...options.plugins // Allow overriding plugins
                 }
             };
 
             chartInstances[canvasId] = new Chart(ctx, { type, data, options: finalOptions });
+
+            // Make canvas clickable to open modal view
             canvas.onclick = () => openChartModal(canvasId);
         }
 
+        // Open a larger version of a chart in a modal
         function openChartModal(canvasId) {
             const originalChart = chartInstances[canvasId];
             if (!originalChart) return;
 
             if (modalChartInstance) {
-                modalChartInstance.destroy();
+                modalChartInstance.destroy(); // Destroy previous modal chart
             }
 
             const modalCtx = modalChartCanvas.getContext('2d');
+
+            // Clone options, enable data labels for modal view (except simple status chart)
             const modalOptions = JSON.parse(JSON.stringify(originalChart.config.options));
             if (originalChart.config.type === 'bar' || (originalChart.config.type === 'doughnut' && canvasId !== 'session-status-chart')) {
                  modalOptions.plugins.datalabels = {
@@ -1252,16 +1700,17 @@
                      color: 'white',
                      font: { weight: 'bold' },
                      formatter: (value, context) => {
+                         // Show count and percentage for doughnut charts in modal
                          if (originalChart.config.type === 'doughnut') {
                              const total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
                              const percentage = total > 0 ? (value / total * 100).toFixed(1) + '%' : '0%';
                              return `${value}\n(${percentage})`;
                          }
-                         return value;
+                         return value; // Show only count for bar charts
                      }
                  };
             }
-            modalOptions.maintainAspectRatio = false;
+            modalOptions.maintainAspectRatio = false; // Allow modal chart to fill height
 
             modalChartInstance = new Chart(modalCtx, {
                 type: originalChart.config.type,
@@ -1269,42 +1718,61 @@
                 options: modalOptions
             });
 
-            chartModal.classList.remove('hidden');
+            chartModal.classList.remove('hidden'); // Show the modal
         }
 
-        // Renderiza lista de vendedores (agora usa caches)
-        function renderSellersList() {
+        // Render the list of seller cards in Team Tracking (only LIVE data)
+        function renderSellersList(samples, sessionId, sellerDocs) {
             sellersListContainer.innerHTML = '';
+            // Team tracking only shows LIVE session data
             
-            Object.keys(sellerDataCache).sort((a,b) => sellerDataCache[a].originalName.localeCompare(sellerDataCache[b].originalName)).forEach(sellerId => {
-                const sellerData = sellerDataCache[sellerId];
-                const sellerName = sellerData.originalName;
-                
-                const sellerSamples = samplesBySellerCache[sellerId] || [];
-                
-                const totalPending = sellerSamples.filter(s => s.isPending).length;
-                const isFinalizedByVendor = totalPending === 0;
-                
-                let systemStatus = 'pending';
-                if (sellerSamples.length > 0 && sellerSamples.every(s => s.systemStatus === 'baixado')) {
-                    systemStatus = 'baixado';
-                }
+            const sellers = {};
+            // Group samples and determine initial system status (using LIVE samples)
+             samples.forEach(s => {
+                 if (!sellers[s.sellerName]) sellers[s.sellerName] = { samples: [], totalPending: 0, finalized: 0, total: 0, systemStatus: 'pending' };
+                 sellers[s.sellerName].samples.push(s);
+                 let isBaixado = true;
+                 // Check if ALL samples for this seller are marked 'baixado'
+                 sellers[s.sellerName].samples.forEach(sample => {
+                     if (sample.systemStatus !== 'baixado') isBaixado = false;
+                 });
+                 if (isBaixado) sellers[s.sellerName].systemStatus = 'baixado';
+             });
 
-                let statusColor = 'yellow';
-                if (isFinalizedByVendor && systemStatus === 'pending') {
-                    statusColor = 'green';
-                } else if (systemStatus === 'baixado') {
-                    statusColor = 'purple';
+             // Add access codes from the separate sellerDocs array (relates to LIVE session)
+             sellerDocs.forEach(doc => {
+                 if(sellers[doc.originalName]) {
+                     sellers[doc.originalName].accessCode = doc.accessCode;
+                 }
+             });
+
+
+            // Create and append card for each seller, sorted alphabetically
+            Object.keys(sellers).sort().forEach(sellerName => {
+                const seller = sellers[sellerName];
+                // *** CORREÇÃO: 'totalPending' deve ser baseado em 'isPending' ***
+                const totalPending = seller.samples.filter(s => s.isPending).length;
+                const isFinalizedByVendor = totalPending === 0; // Vendor finished if no samples are pending
+
+                // Determine border color based on status
+                let statusColor = 'yellow'; // Default: Pending
+                if (isFinalizedByVendor && seller.systemStatus === 'pending') {
+                    statusColor = 'green'; // Vendor finished, Manager hasn't marked as 'baixado'
+                } else if (seller.systemStatus === 'baixado') {
+                    statusColor = 'purple'; // Manager marked as 'baixado'
                 }
 
                 const card = document.createElement('div');
-                card.className = `p-4 rounded-lg shadow bg-white border-l-4 border-${statusColor}-500 seller-card`;
-                card.dataset.sellerName = sellerName;
+                 // Removed seller-card interaction for table filtering
+                card.className = `p-4 rounded-lg shadow bg-white border-l-4 border-${statusColor}-500 seller-card`; // Adicionei 'seller-card' aqui para o filtro
+                card.dataset.sellerName = sellerName; // Store seller name for filtering
 
-                const segment = sellerSegmentsCache[normalizeText(sellerName)] || 'Sem Segmento';
+                const segment = sellerSegmentsCache[normalizeText(sellerName)] || 'Sem Segmento'; // *** CORREÇÃO: Usar nome normalizado para buscar no cache ***
 
+                // Determine status display HTML
                 let statusHTML = `<span class="text-xs text-gray-500">${isFinalizedByVendor ? 'Finalizado' : `${totalPending} pendente(s)`}</span>`;
-                if (isFinalizedByVendor && systemStatus === 'pending') {
+                if (isFinalizedByVendor && seller.systemStatus === 'pending') {
+                    // Show checkbox if vendor finished but manager hasn't marked 'baixado'
                     statusHTML = `
                          <div class="flex items-center space-x-2">
                              <label class="flex items-center space-x-2 cursor-pointer text-sm">
@@ -1312,10 +1780,11 @@
                                  <span>Dar Baixa</span>
                              </label>
                          </div>`;
-                } else if (systemStatus === 'baixado') {
+                } else if (seller.systemStatus === 'baixado') {
                     statusHTML = `<span class="text-sm font-semibold text-purple-600">✓ Baixado em Sistema</span>`;
                 }
 
+                // Card inner HTML
                 card.innerHTML = `
                     <div class="flex justify-between items-start mb-2">
                         <div class="font-bold text-lg flex items-center">
@@ -1329,139 +1798,175 @@
                     <div class="mt-4 flex items-center justify-between">
                          <div>${statusHTML}</div>
                          <div class="flex items-center space-x-2">
-                             <span class="text-sm font-semibold text-gray-700">${sellerData.accessCode}</span>
-                             <button class="copy-code-btn bg-gray-200 text-gray-700 text-xs font-semibold py-1 px-2 rounded" data-code="${sellerData.accessCode}">Copiar</button>
+                             <span class="text-sm font-semibold text-gray-700">${seller.accessCode ? seller.accessCode : 'A gerar...'}</span>
+                             <button class="copy-code-btn bg-gray-200 text-gray-700 text-xs font-semibold py-1 px-2 rounded" data-code="${seller.accessCode}" ${!seller.accessCode ? 'disabled' : ''}>Copiar</button>
                          </div>
                     </div>`;
+
+                 // Removed card click listener for table filtering
                 sellersListContainer.appendChild(card);
             });
 
-            // Add event listeners (a lógica interna permanece a mesma)
+            // Add event listeners for copy buttons
             document.querySelectorAll('.copy-code-btn').forEach(btn => {
                 btn.onclick = (e) => {
-                    e.stopPropagation();
+                    e.stopPropagation(); // Prevent card click
                     const textToCopy = e.currentTarget.dataset.code;
                     if (!textToCopy) return;
+
+                    // Use Clipboard API (fallback to execCommand if needed, though less common now)
                     const textarea = document.createElement('textarea');
                     textarea.value = textToCopy;
                     document.body.appendChild(textarea);
                     textarea.select();
                     try {
-                        document.execCommand('copy');
+                        document.execCommand('copy'); // execCommand for broader compatibility in iFrames
                          const button = e.currentTarget;
+                         const originalText = button.textContent;
                          button.textContent = 'Copiado!';
                          setTimeout(() => { button.textContent = 'Copiar'; }, 2000);
-                    } catch (err) { console.error('Falha ao copiar código:', err); }
+                    } catch (err) {
+                        console.error('Falha ao copiar código:', err);
+                        // Optionally provide feedback to the user
+                    }
                     document.body.removeChild(textarea);
+
                 };
             });
 
+            // *** CORREÇÃO 1: Usar Transação para "Dar Baixa" ***
             document.querySelectorAll('.system-check-btn').forEach(checkbox => {
                 checkbox.addEventListener('change', async (e) => {
                     const checkboxEl = e.target;
                     if (checkboxEl.checked) {
-                        checkboxEl.disabled = true;
+                        checkboxEl.disabled = true; // Prevent multiple clicks
                         
                         const sellerName = checkboxEl.dataset.sellerName;
+                        const sellerId = sanitizeForFirebaseId(sellerName);
+                        const docRef = doc(db, "sessoes", currentSessionId, "vendedores", sellerId);
+                        
                         const label = checkboxEl.closest('label');
                         const card = checkboxEl.closest('.seller-card');
+                        const originalLabelText = label ? label.querySelector('span').textContent : 'Dar Baixa';
                         
-                        let labelSpan = null;
-                        let originalLabelText = 'Dar Baixa';
+                        // --- Atualização Otimista da UI ---
                         if (label) {
-                            labelSpan = label.querySelector('span');
-                            if (labelSpan) {
-                                originalLabelText = labelSpan.textContent;
-                                labelSpan.textContent = 'A guardar...';
-                                labelSpan.classList.add('label-saving');
-                            }
+                            label.querySelector('span').textContent = 'A guardar...';
+                            label.classList.add('text-purple-600', 'font-semibold');
                         }
                         if (card) {
                             card.classList.remove('border-green-500');
                             card.classList.add('border-purple-500');
                         }
+                        // --- Fim da Atualização Otimista ---
 
                         try {
-                            const sellerId = sanitizeForFirebaseId(sellerName);
-                            const samplesToUpdateQuery = query(
-                                collection(db, "sessoes", currentSessionId, "vendedores", sellerId, "amostras")
-                            );
-                            const samplesSnapshot = await getDocs(samplesToUpdateQuery);
-                            
-                            const batch = writeBatch(db);
-                            samplesSnapshot.forEach(doc => {
-                                batch.update(doc.ref, { systemStatus: 'baixado' });
+                            // Iniciar Transação
+                            await runTransaction(db, async (transaction) => {
+                                // 1. Ler o documento DENTRO da transação
+                                const sellerDocSnap = await transaction.get(docRef);
+                                if (!sellerDocSnap.exists()) {
+                                    throw new Error("Documento do vendedor não encontrado!");
+                                }
+
+                                const sellerData = sellerDocSnap.data();
+                                // 2. Modificar os dados (amostras)
+                                const updatedSamples = sellerData.amostras.map(s => ({ ...s, systemStatus: 'baixado' }));
+                                
+                                // 3. Atualizar o documento DENTRO da transação
+                                transaction.update(docRef, { amostras: updatedSamples });
                             });
-                            await batch.commit();
                             
-                            console.log(`Status do sistema atualizado para 'baixado' para ${sellerName}.`);
+                            // Sucesso! O listener onSnapshot irá re-renderizar o card
+                            // para "✓ Baixado em Sistema".
+                            console.log(`Status do sistema atualizado para 'baixado' para ${sellerName} (via transação).`);
 
                         } catch (error) {
-                            handleFirestoreError(error, `dar baixa para ${sellerName}`);
+                            console.error("Erro na transação ao atualizar o status do sistema:", error);
+                            showAlert(`Falha ao dar baixa para ${sellerName}. Os dados podem ter sido modificados por um vendedor. Tente novamente.`);
                             
-                            checkboxEl.checked = false;
+                            // --- Reverter UI em caso de erro ---
+                            checkboxEl.checked = false; // Desmarcar no erro
                             checkboxEl.disabled = false;
-                            if (labelSpan) {
-                                labelSpan.textContent = originalLabelText;
-                                labelSpan.classList.remove('label-saving');
+                            if (label) {
+                                label.querySelector('span').textContent = originalLabelText;
+                                label.classList.remove('text-purple-600', 'font-semibold');
                             }
                             if (card) {
                                 card.classList.remove('border-purple-500');
                                 card.classList.add('border-green-500');
                             }
+                            // --- Fim da Reversão ---
                         }
                     }
                 });
             });
 
+
+            // Add event listeners for config (segment) buttons
              document.querySelectorAll('.config-seller-btn').forEach(btn => {
                  btn.addEventListener('click', (e) => {
-                     e.stopPropagation();
+                     e.stopPropagation(); // Prevent card click
                      openSegmentModal(e.currentTarget.dataset.sellerName);
                  });
              });
         }
 
-        // 'renderObservationsFeed' permanece a mesma
+        // Removed: renderFullSamplesTable function
+
+        // Render Observations Feed (only LIVE data)
         function renderObservationsFeed(samples) {
             const feedContainer = document.getElementById('observations-feed-list');
-            const segmentFilter = observationSegmentFilter.value;
+            const segmentFilter = observationSegmentFilter.value; // Filter value from the dropdown
             const searchTerm = normalizeText(observationSearchInput.value);
 
+            // Feed always shows only LIVE data
+
+            // Start with samples that have an observation
             let filteredSamples = samples.filter(s => s.observation && s.observation.trim() !== '');
 
+            // Apply segment or aroma filter
             if (segmentFilter) {
                 if (segmentFilter === AROMA_FILTER_VALUE) {
+                    // Filter specifically for aromas based on product/description
                     filteredSamples = filteredSamples.filter(sample => isAroma(sample.produto, sample.descricao));
                 } else {
+                    // Filter by actual seller segment
                     filteredSamples = filteredSamples.filter(sample => sellerSegmentsCache[normalizeText(sample.sellerName)] === segmentFilter);
                 }
             }
+
+            // Apply search term filter if entered (filters seller name)
             if (searchTerm) {
                 filteredSamples = filteredSamples.filter(sample =>
                     normalizeText(sample.sellerName).includes(searchTerm)
                 );
             }
 
+            // Sort by the 'lastUpdate' timestamp of the sample itself, DESCENDING (newest first)
             filteredSamples.sort((a, b) => {
                 const timeA = a.lastUpdate?.toDate ? a.lastUpdate.toDate().getTime() : 0;
                 const timeB = b.lastUpdate?.toDate ? b.lastUpdate.toDate().getTime() : 0;
                 return timeB - timeA;
             });
 
+            // Display placeholder if no observations match filters
             if (filteredSamples.length === 0) {
                 feedContainer.innerHTML = '<p class="text-gray-500 placeholder-observation">Nenhuma observação encontrada com os filtros atuais.</p>';
                 return;
             }
 
-            feedContainer.innerHTML = '';
+            feedContainer.innerHTML = ''; // Clear previous content
+
+            // Create card for each observation in the filtered list
             filteredSamples.forEach(sample => {
                 const card = document.createElement('div');
                 card.className = 'p-4 rounded-lg border bg-gray-50';
 
+                // Find the latest manager reply for this specific observation
                 const managerReply = allSellerReplies
                     .filter(r => r.sellerName === sample.sellerName && r.pedido === sample.pedido && r.produto === sample.produto && r.originalObservation === sample.observation)
-                    .sort((a, b) => (b.timestamp?.toDate() ?? 0) - (a.timestamp?.toDate() ?? 0))[0];
+                    .sort((a, b) => (b.timestamp?.toDate() ?? 0) - (a.timestamp?.toDate() ?? 0))[0]; // Get the most recent
 
                  let repliesHtml = '';
                  if (managerReply) {
@@ -1473,6 +1978,8 @@
                          </div>
                      `;
 
+                     // Find the latest seller reply *to this manager's reply*
+                     // *** ATUALIZAÇÃO: Incluir respostas do P&D ***
                      const sellerOrPdReply = allSellerRepliesToManager
                          .filter(r => r.originalManagerMessage === managerReply.replyMessage && r.pedido === sample.pedido && r.produto === sample.produto)
                          .sort((a, b) => (b.timestamp?.toDate() ?? 0) - (a.timestamp?.toDate() ?? 0))[0];
@@ -1481,9 +1988,10 @@
                          const time = sellerOrPdReply.timestamp?.toDate() ? sellerOrPdReply.timestamp.toDate().toLocaleString('pt-BR') : '';
                          const isPDReply = sellerOrPdReply.originalManagerName === "P&D";
                          const senderName = isPDReply ? `${sellerOrPdReply.sellerName} (P&D)` : sellerOrPdReply.sellerName;
+                         const replyClass = isPDReply ? 'pd-reply' : 'seller-reply'; // pd-reply precisa ser estilizado, usar seller-reply por enquanto
                          
                          repliesHtml += `
-                             <div class="seller-reply">
+                             <div class="seller-reply"> <!-- Usando seller-reply style por enquanto -->
                                  <p><strong>${senderName} respondeu:</strong> ${sellerOrPdReply.replyMessage}</p>
                                  <p class="text-xs text-gray-400 text-right">${time}</p>
                              </div>
@@ -1491,6 +1999,7 @@
                      }
                  }
 
+                // Observation card HTML
                 const observationTime = sample.lastUpdate?.toDate() ? sample.lastUpdate.toDate().toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }) : '';
                 card.innerHTML = `
                     <div class="mb-2">
@@ -1501,7 +2010,7 @@
                     <div class="flex justify-between items-end text-xs text-gray-500 ${repliesHtml ? 'mt-2' : 'mt-3'}">
                          <div>
                              <p>- ${sample.sellerName} (Pedido: ${sample.pedido})</p>
-                             <p class="text-gray-400">${observationTime}</p>
+                             <p class="text-gray-400">${observationTime}</p> <!-- Display observation timestamp -->
                          </div>
                         <button class="reply-observation-btn bg-blue-100 text-blue-700 hover:bg-blue-200 px-2 py-1 rounded text-xs font-semibold" data-sample-id="${sample.id}">
                             ${managerReply ? 'Responder Novamente' : 'Responder'}
@@ -1511,53 +2020,63 @@
                 feedContainer.appendChild(card);
             });
 
+              // Add event listeners for reply buttons in the feed
               feedContainer.querySelectorAll('.reply-observation-btn').forEach(btn => {
                   btn.addEventListener('click', openReplyModal);
               });
         }
-        
-        // 'openReplyModal' permanece a mesma
+
+
+        // Open the modal for replying to an observation
         function openReplyModal(event) {
              const sampleId = event.target.dataset.sampleId;
              const sample = allCurrentSamples.find(s => s.id === sampleId);
              if (!sample || !sample.observation) {
+                 console.error("Sample not found or no observation to reply to:", sampleId);
+                 // Usar o modal de alerta customizado
                  showAlert("Não é possível responder a uma amostra sem observação.");
                  return;
              }
-             currentSampleForReply = sample;
+             currentSampleForReply = sample; // Store sample context
 
+             // Populate modal fields
              replyModalProduct.textContent = `${sample.produto} (${sample.pedido})`;
              replyModalSeller.textContent = `Observação de: ${sample.sellerName}`;
              replyModalObservation.textContent = `"${sample.observation}"`;
-             replyMessageInput.value = '';
-             managerNameInput.value = localStorage.getItem('managerName') || '';
+             replyMessageInput.value = ''; // Clear previous reply
+             managerNameInput.value = localStorage.getItem('managerName') || ''; // Pre-fill manager name
 
-             replyModal.classList.remove('hidden');
+             replyModal.classList.remove('hidden'); // Show modal
         }
         
-        // 'renderPdPostits' permanece a mesma
+        // *** NOVO: Renderiza a lista de Post-its do P&D (com filtro e novos dados) ***
         function renderPdPostits() {
             const feedContainer = document.getElementById('pd-postits-list');
             if (!feedContainer) return;
             
-            const segmentFilter = pdPostitSegmentFilter ? pdPostitSegmentFilter.value : '';
+            const segmentFilter = pdPostitSegmentFilter ? pdPostitSegmentFilter.value : ''; // Ler o filtro
 
+            // Filtrar a lista
             let filteredNotes = allPdPostits;
             if (segmentFilter) {
                 if (segmentFilter === AROMA_FILTER_VALUE) {
+                    // Filtrar por Aroma (baseado no código do produto no 'context')
                     filteredNotes = allPdPostits.filter(note => {
                         const contextProduct = note.context ? note.context.split('(')[0].trim() : '';
-                        return isAroma(contextProduct, '');
+                        return isAroma(contextProduct, ''); // Checar se o código do produto é de aroma
                     });
                 } else {
+                    // Filtrar por Segmento
                     filteredNotes = allPdPostits.filter(note => {
                         const sellerName = getSellerNameFromPdContext(note.context);
                         if (!sellerName) return false;
+                        // Usar sellerSegmentsCache[NORMALIZED_SELLER_NAME]
                         return sellerSegmentsCache[sellerName] === segmentFilter;
                     });
                 }
             }
             
+            // Limpar
             if (filteredNotes.length === 0) {
                 feedContainer.innerHTML = '<p class="text-gray-500 placeholder-pd-postit">Nenhum post-it encontrado com os filtros atuais.</p>';
                 return;
@@ -1566,10 +2085,11 @@
             feedContainer.innerHTML = ''; 
             filteredNotes.forEach(note => {
                 const card = document.createElement('div');
-                card.className = 'pd-postit-card';
+                card.className = 'pd-postit-card'; // Usar a nova classe CSS
 
                 const time = note.timestamp?.toDate() ? note.timestamp.toDate().toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '';
                 
+                // **NOVA ESTRUTURA DO CARD**
                 card.innerHTML = `
                     <p class="text-sm text-gray-800">${note.message}</p>
                     <div class="mt-2 pt-2 border-t border-amber-200">
@@ -1588,7 +2108,8 @@
             });
         }
 
-        // 'sendReplyToSeller' permanece a mesma
+
+       // Send manager's reply to the seller
        async function sendReplyToSeller() {
            if (!currentSampleForReply || !currentSessionId) return;
 
@@ -1596,6 +2117,7 @@
            const replyMessage = replyMessageInput.value.trim();
 
            if (!managerName || !replyMessage) {
+               // Usar o modal de alerta customizado
                showAlert("Por favor, preencha o seu nome e a mensagem de resposta.");
                return;
            }
@@ -1604,69 +2126,81 @@
            sendReplyBtn.textContent = 'A Enviar...';
 
            try {
-               localStorage.setItem('managerName', managerName);
+               localStorage.setItem('managerName', managerName); // Save manager name for next time
 
+               // Data for the notification to the seller
                const notificationData = {
                    managerName: managerName,
                    replyMessage: replyMessage,
-                   originalObservation: currentSampleForReply.observation,
+                   originalObservation: currentSampleForReply.observation, // Link reply to original observation
                    sellerName: currentSampleForReply.sellerName,
                    pedido: currentSampleForReply.pedido,
                    produto: currentSampleForReply.produto,
-                   descricao: currentSampleForReply.descricao || '',
-                   razaoSocial: currentSampleForReply.razaoSocial || '',
                    timestamp: serverTimestamp(),
-                   read: false,
-                   readByPd: false
+                   read: false, // Flag for vendor app to track read status
+                   readByPd: false // *** NOVO: Flag para P&D ler ***
                };
 
+               // Add reply to the seller's notification collection
                const sellerNotifsRef = collection(db, "sessoes", currentSessionId, "notificacoesVendedor");
                await addDoc(sellerNotifsRef, notificationData);
 
-               replyModal.classList.add('hidden');
-               showAlert(`Resposta enviada para ${currentSampleForReply.sellerName}.`, "Sucesso", "text-green-600");
+               replyModal.classList.add('hidden'); // Hide modal on success
+               // Usar infoMessage para sucesso, não alerta
+               infoMessage.textContent = `Resposta enviada para ${currentSampleForReply.sellerName}.`;
+                setTimeout(() => { infoMessage.textContent = ''; }, 3000);
+               // Feed will update automatically via the listener
 
            } catch (error) {
-               handleFirestoreError(error, "enviar resposta ao vendedor");
+               console.error("Erro ao enviar resposta:", error);
+               // Usar o modal de alerta customizado
+               showAlert("Ocorreu um erro ao enviar a resposta. Tente novamente.");
            } finally {
                sendReplyBtn.disabled = false;
                sendReplyBtn.textContent = 'Enviar Resposta';
-               currentSampleForReply = null;
+               currentSampleForReply = null; // Clear sample context
            }
        }
 
-        // 'updateNotificationDisplay' permanece a mesma
+
+        // Removed: filterSamplesTable function
+
+        // Update the notifications list display (only LIVE data)
         function updateNotificationDisplay() {
             notificationsList.innerHTML = '';
+            // Notifications only show LIVE data
 
             if (allNotifications.length === 0) {
                 notificationsList.innerHTML = '<p class="text-gray-500 placeholder-notification">Nenhuma notificação nova.</p>';
                 return;
             }
 
+            // Sort notifications by timestamp (descending) before displaying/slicing
             allNotifications.sort((a, b) => {
                  const timeA = a.timestamp?.toDate ? a.timestamp.toDate().getTime() : 0;
                  const timeB = b.timestamp?.toDate ? b.timestamp.toDate().getTime() : 0;
                 return timeB - timeA;
             });
 
+            // Show either first 3 or all notifications
             const notificationsToDisplay = areAllNotificationsVisible ? allNotifications : allNotifications.slice(0, 3);
 
             notificationsToDisplay.forEach(notification => {
                 const card = document.createElement('div');
-                const color = notification.color || 'blue';
-                card.className = `notification-card bg-white p-3 rounded-lg shadow-sm border-l-4 border-${color}-500 flex justify-between items-center`;
+                // Apply color based on notification type
+                card.className = `notification-card bg-white p-3 rounded-lg shadow-sm border-l-4 border-${notification.color}-500 flex justify-between items-center`;
                 card.innerHTML = `<p class="text-sm">${notification.message}</p>`;
                 notificationsList.appendChild(card);
             });
 
+            // Add "Show More" / "Show Less" button if applicable
             if (allNotifications.length > 3 && !areAllNotificationsVisible) {
                 const showMoreCard = document.createElement('div');
                 showMoreCard.className = 'notification-card bg-gray-100 p-3 rounded-lg text-center cursor-pointer hover:bg-gray-200';
                 showMoreCard.innerHTML = `<p class="text-sm font-semibold text-gray-700">+${allNotifications.length - 3} mais</p>`;
                 showMoreCard.onclick = () => {
                     areAllNotificationsVisible = true;
-                    updateNotificationDisplay();
+                    updateNotificationDisplay(); // Re-render with all notifications
                 };
                 notificationsList.appendChild(showMoreCard);
             } else if (areAllNotificationsVisible && allNotifications.length > 3) {
@@ -1675,15 +2209,16 @@
                  showLessCard.innerHTML = `<p class="text-sm font-semibold text-gray-700">Mostrar menos</p>`;
                  showLessCard.onclick = () => {
                      areAllNotificationsVisible = false;
-                     updateNotificationDisplay();
+                     updateNotificationDisplay(); // Re-render with only 3 notifications
                  };
                  notificationsList.appendChild(showLessCard);
             }
         }
 
-        // 'renderNotificationHistory' permanece a mesma
+        // Render the notification history modal (only LIVE data)
         function renderNotificationHistory() {
             historyList.innerHTML = '';
+            // Sort notifications by timestamp (descending) for history
             const sortedNotifications = [...allNotifications].sort((a, b) => {
                  const timeA = a.timestamp?.toDate ? a.timestamp.toDate().getTime() : 0;
                  const timeB = b.timestamp?.toDate ? b.timestamp.toDate().getTime() : 0;
@@ -1691,11 +2226,13 @@
             });
 
             if (sortedNotifications.length === 0) {
-                historyList.innerHTML = `<p class="text-gray-500">Nenhum histórico para mostrar.</p>`;
+                 const message = "Nenhum histórico para mostrar."; // Removed historical check
+                historyList.innerHTML = `<p class="text-gray-500">${message}</p>`;
             } else {
                 sortedNotifications.forEach(notification => {
                     const item = document.createElement('div');
                     item.className = 'p-3 border-b';
+                    // Format timestamp for display
                     const timestampDate = notification.timestamp?.toDate ? notification.timestamp.toDate() : null;
                     item.innerHTML = `
                          <p class="text-sm text-gray-800">${notification.message}</p>
@@ -1704,47 +2241,55 @@
                     historyList.appendChild(item);
                 });
             }
-            historyModal.classList.remove('hidden');
+            historyModal.classList.remove('hidden'); // Show modal
         }
 
-        // 'openSegmentModal' permanece a mesma
+        // Open modal for setting/changing a seller's segment
         async function openSegmentModal(sellerName) {
             currentSellerForSegment = sellerName;
             segmentModal.classList.remove('hidden');
             segmentModalSellerName.textContent = `Definir segmento para: ${sellerName}`;
-            const currentSegment = sellerSegmentsCache[normalizeText(sellerName)] || "";
+            const currentSegment = sellerSegmentsCache[normalizeText(sellerName)] || ""; // *** CORREÇÃO: Usar nome normalizado para buscar no cache ***
+            // Populate select options
             segmentSelect.innerHTML = `<option value="">Selecione...</option>` + SEGMENTS.map(s => `<option value="${s}" ${currentSegment === s ? 'selected' : ''}>${s}</option>`).join('');
         }
 
-        // 'loadAllSellerSegments' permanece a mesma
-        async function loadAllSellerSegments() {
-            const uniqueSellers = [...new Set(Object.values(sellerDataCache).map(data => normalizeText(data.originalName)))];
+        // Load segment configurations for sellers from Firestore (based on LIVE data sellers)
+        async function loadAllSellerSegments(sellerNames) {
+            const uniqueSellers = [...new Set(sellerNames.map(name => normalizeText(name)))]; // *** CORREÇÃO: Normalizar nomes ao carregar ***
+            
+            // A chave do cache DEVE ser o nome normalizado
             const sellersToFetch = uniqueSellers.filter(normalizedName => !sellerSegmentsCache.hasOwnProperty(normalizedName));
             
             if (sellersToFetch.length === 0) {
-                 populateSegmentFilters();
-                 return;
+                 populateSegmentFilters(); // Populate filters even if no fetch needed
+                 return; // Already have all segments
             }
 
             const fetchedConfigs = {};
             try {
+                // Fetch all configs (simpler than individual fetches)
                 const q = collection(db, "vendedorConfig");
                 const snapshot = await getDocs(q);
                 snapshot.forEach(doc => {
+                    // O ID do documento é o nome normalizado
                     fetchedConfigs[doc.id] = doc.data().segmento;
                 });
             } catch (error) {
-                handleFirestoreError(error, "carregar configurações de segmento");
+                console.error("Erro ao carregar configurações de segmento:", error);
+                // Continue without fetched data, sellers will show "Sem Segmento"
             }
 
+            // Update cache for all sellers (fetched or not)
             uniqueSellers.forEach(normalizedName => {
-                sellerSegmentsCache[normalizedName] = fetchedConfigs[normalizedName] || null;
+                // O ID do doc é o nome normalizado
+                sellerSegmentsCache[normalizedName] = fetchedConfigs[normalizedName] || null; // Use fetched or null
             });
 
-            populateSegmentFilters();
+            populateSegmentFilters(); // Populate/update filter dropdowns
         }
 
-        // 'renderFeedbackDetails' permanece a mesma
+        // Render the lists of specific feedback reasons (uses combined data)
         function renderFeedbackDetails(samples) {
             const lists = {
                 approved: document.getElementById('approved-feedback-list'),
@@ -1816,12 +2361,14 @@
             renderList(lists.pending, counts.pending);
         }
 
-        // 'showFeedbackSamples' permanece a mesma
+        // Show samples for a specific feedback reason in a modal (uses combined data)
         function showFeedbackSamples(feedbackText, segmentFilter = '') {
             currentFeedbackFilter = feedbackText;
+            // Use COMBINED data source for the modal view (listener-populated historicalAromaData)
             const dataSource = [...allCurrentSamples, ...historicalAromaData];
             if (!dataSource || dataSource.length === 0) return;
 
+            // Filter samples by the selected canonical feedback text
             let filteredSamples = dataSource.filter(sample => {
                  if (feedbackText === 'PENDENTE (SISTEMA)') {
                      let isSamplePending = sample.isPending;
@@ -1833,14 +2380,19 @@
                 return getCanonicalFeedback(sample.feedback) === feedbackText;
             });
 
+            // Apply segment or aroma filter
             if (segmentFilter) {
                 if (segmentFilter === AROMA_FILTER_VALUE) {
+                    // Filter specifically for aromas based on product/description
                     filteredSamples = filteredSamples.filter(sample => isAroma(sample.produto, sample.descricao));
                 } else {
+                    // Filter by actual seller segment (using LIVE cache)
                     filteredSamples = filteredSamples.filter(sample => sellerSegmentsCache[normalizeText(sample.sellerName)] === segmentFilter);
                 }
             }
 
+
+            // Sort samples within the modal: highlighted first (live only), then by seller/pedido
             filteredSamples.sort((a, b) => {
                 const isAHighlighted = !a.isHistorical && highlightedSamplesCache.includes(a.id);
                 const isBHighlighted = !b.isHistorical && highlightedSamplesCache.includes(b.id);
@@ -1868,6 +2420,7 @@
                     const highlightClass = isHighlighted ? 'bg-amber-50 rounded-lg p-2' : '';
                     itemDiv.className = `feedback-sample-item text-sm ${highlightClass}`;
 
+                     // Find relevant replies (only applies to live data)
                      const managerReply = !sample.isHistorical ? allSellerReplies
                          .filter(r => r.sellerName === sample.sellerName && r.pedido === sample.pedido && r.produto === sample.produto && r.originalObservation === sample.observation)
                          .sort((a, b) => (b.timestamp?.toDate() ?? 0) - (a.timestamp?.toDate() ?? 0))[0] : null;
@@ -1889,8 +2442,10 @@
                              repliesHtml += `<div class="seller-reply"><p><strong>${senderName} respondeu:</strong> ${sellerOrPdReply.replyMessage}</p><p class="text-xs text-gray-400 text-right">${time}</p></div>`;
                          }
                      }
+                     // Reply button (only if there's an observation and it's LIVE data)
                      const replyButtonHtml = (sample.observation && !sample.isHistorical) ? `<button class="reply-observation-btn bg-blue-100 text-blue-700 hover:bg-blue-200 px-2 py-1 rounded text-xs font-semibold ml-2" data-sample-id="${sample.id}">${managerReply ? 'Responder Novamente' : 'Responder'}</button>` : '';
 
+                     // Highlight (star) button HTML (only if sample has an ID and it's LIVE data)
                      const starIcon = isHighlighted ?
                          `<svg class="w-5 h-5 text-amber-500" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588 1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>` :
                          `<svg class="w-5 h-5 text-gray-400 hover:text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.524 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.524 4.674c.3.921-.755 1.688-1.54 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.784.57-1.838-.197-1.539-1.118l1.524-4.674a1 1 0 00-.363-1.118L2.98 10.1c-.783-.57-.38-1.81.588 1.81h4.914a1 1 0 00.951-.69l1.524-4.674z"></path></svg>`;
@@ -1917,6 +2472,7 @@
                      `;
                     feedbackSamplesList.appendChild(itemDiv);
                 });
+                 // Add listeners only for LIVE data buttons
                  feedbackSamplesList.querySelectorAll('.reply-observation-btn').forEach(btn => {
                      btn.addEventListener('click', openReplyModal);
                  });
@@ -1925,28 +2481,31 @@
                  });
             }
              if (feedbackSamplesModal.classList.contains('hidden')) {
-                 populateModalSegmentFilter();
-                 modalSegmentFilter.value = segmentFilter;
+                 populateModalSegmentFilter(); // Populate before setting value
+                 modalSegmentFilter.value = segmentFilter; // Set the value AFTER populating
                  feedbackSamplesModal.classList.remove('hidden');
              }
         }
 
-        // 'populateModalSegmentFilter' permanece a mesma
+        // Populate the segment filter dropdown within the feedback samples modal (uses LIVE data segments)
         function populateModalSegmentFilter() {
             const currentSegments = [...new Set(Object.values(sellerSegmentsCache).filter(Boolean))].sort();
-            const currentValue = modalSegmentFilter.value;
+            const currentValue = modalSegmentFilter.value; // Store current value before clearing
 
             modalSegmentFilter.innerHTML = '<option value="">Todos os Segmentos</option>';
+            // Add the special Aroma filter option FIRST
             const aromaOption = document.createElement('option');
             aromaOption.value = AROMA_FILTER_VALUE;
             aromaOption.textContent = 'Aromas (DAR / AROMAS)';
             modalSegmentFilter.appendChild(aromaOption);
 
+            // Add a separator
             const separator = document.createElement('option');
             separator.disabled = true;
             separator.textContent = '--- Segmentos ---';
             modalSegmentFilter.appendChild(separator);
 
+            // Add actual segments
             currentSegments.forEach(segment => {
                 const option = document.createElement('option');
                 option.value = segment;
@@ -1954,20 +2513,25 @@
                 modalSegmentFilter.appendChild(option);
             });
 
+            // Try to restore the previous selection
             if (modalSegmentFilter.querySelector(`option[value="${currentValue}"]`)) {
                 modalSegmentFilter.value = currentValue;
             } else {
-                modalSegmentFilter.value = "";
+                modalSegmentFilter.value = ""; // Default to "Todos" if previous value is no longer valid
             }
         }
 
-        // 'renderSegmentCharts' permanece a mesma
+
+        // Render bar charts for feedback types per segment (uses LIVE data)
         function renderSegmentCharts(samples) {
             segmentChartsGrid.innerHTML = '';
             const samplesBySegment = {};
 
+            // Segment charts only show LIVE data
+
+            // Group non-pending, categorized feedback by segment (using LIVE samples)
             samples.forEach(sample => {
-                const segment = sellerSegmentsCache[normalizeText(sample.sellerName)];
+                const segment = sellerSegmentsCache[normalizeText(sample.sellerName)]; // *** CORREÇÃO: Usar nome normalizado para buscar no cache ***
                 if (segment && !sample.isPending && sample.feedback && sample.feedback.trim() !== '') {
                      const canonicalFeedback = getCanonicalFeedback(sample.feedback);
                      const CANONICAL_PENDING = ['AMOSTRA NÃO TESTADA', 'EM ANÁLISE', 'AMOSTRA SEM FEEDBACK', 'PENDENTE (SISTEMA)'];
@@ -2015,7 +2579,7 @@
             });
         }
 
-        // 'generateColorPalette' permanece a mesma
+        // Generate a palette of distinct colors
         function generateColorPalette(numColors) {
             const colors = [
                 '#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#ef4444',
@@ -2028,12 +2592,13 @@
             return palette;
         }
 
-        // 'setupNotificationButton' permanece a mesma
+        // Update notification bell icon based on permission status
         function setupNotificationButton() {
             if (!("Notification" in window)) {
                 notificationsPermissionBtn.style.display = 'none';
                 return;
             }
+
             switch(Notification.permission) {
                 case 'granted':
                     bellIcon.classList.remove('text-gray-400', 'text-red-500');
@@ -2043,16 +2608,16 @@
                 case 'denied':
                     bellIcon.classList.remove('text-gray-400', 'text-green-500');
                     bellIcon.classList.add('text-red-500');
-                    notificationsPermissionBtn.title = 'Notificações bloqueadas.';
+                    notificationsPermissionBtn.title = 'Notificações bloqueadas. Clique para ver como desbloquear.';
                     break;
                 default:
                     bellIcon.classList.remove('text-green-500', 'text-red-500');
                     bellIcon.classList.add('text-gray-400');
-                    notificationsPermissionBtn.title = 'Clique para ativar as notificações.';
+                    notificationsPermissionBtn.title = 'Clique para ativar as notificações no navegador.';
             }
         }
 
-        // 'showBrowserNotification' permanece a mesma
+        // Show browser notification if permission granted and tab not active
         function showBrowserNotification(title, body) {
             if (Notification.permission === 'granted') {
                  if(document.visibilityState === 'visible') {
@@ -2066,32 +2631,40 @@
             }
         }
 
-        // 'populateSegmentFilters' permanece a mesma
+        // *** CORREÇÃO: Função atualizada para popular AMBOS os filtros ***
         function populateSegmentFilters() {
              const currentSegments = [...new Set(Object.values(sellerSegmentsCache).filter(Boolean))].sort();
+
+             // Popular Filtro de Observação (página principal)
              const obsSelect = document.getElementById('observation-segment-filter');
+             // **NOVO: Popular Filtro de Post-it P&D**
              const pdSelect = document.getElementById('pd-postit-segment-filter');
 
+             // Função auxiliar para popular um select
              const populateSelect = (selectEl) => {
                  if (!selectEl) return;
                  const currentValue = selectEl.value; 
                  selectEl.innerHTML = '<option value="">Todos os Segmentos</option>';
+
                  const aromaOption = document.createElement('option');
                  aromaOption.value = AROMA_FILTER_VALUE;
                  aromaOption.textContent = 'Aromas (DAR / AROMAS)';
                  selectEl.appendChild(aromaOption);
+
                  if (currentSegments.length > 0) {
                      const separator = document.createElement('option');
                      separator.disabled = true;
                      separator.textContent = '--- Segmentos ---';
                      selectEl.appendChild(separator);
                  }
+
                  currentSegments.forEach(segment => {
                      const option = document.createElement('option');
                      option.value = segment;
                      option.textContent = segment;
                      selectEl.appendChild(option);
                  });
+
                  if (selectEl.querySelector(`option[value="${currentValue}"]`)) {
                      selectEl.value = currentValue;
                  } else {
@@ -2102,44 +2675,32 @@
                      }
                  }
              };
-             populateSelect(obsSelect);
-             populateSelect(pdSelect);
+
+             populateSelect(obsSelect); // Popular filtro de observação
+             populateSelect(pdSelect); // Popular filtro de post-it
+
+           // A função de popular o modal já é chamada separadamente
              populateModalSegmentFilter();
         }
+
+        // Removed Aroma Ranking Functions
+
 
         // --- Initial Setup ---
         (async () => {
              try {
-                 await signInAnonymously(auth);
-                 listenForActiveSession();
-                 setupNotificationButton();
+                 await signInAnonymously(auth); // Sign in user anonymously
+                 listenForActiveSession(); // Check for a globally active session first
+                 setupNotificationButton(); // Set initial notification button state
              } catch (error) {
                  infoMessage.textContent = "Não foi possível conectar ao serviço.";
                  console.error("Firebase Auth Error:", error);
-                 resetToInitialState();
+                 resetToInitialState(true); // Show connection options on auth error
              }
         })();
     </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
