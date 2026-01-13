@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel de Gestão de Feedbacks (v2.6)</title>
+    <title>Painel de Gestão de Feedbacks (v2.7)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
@@ -31,6 +31,10 @@
                 <h1 class="text-xl font-bold text-gray-800">Painel de Gestão de Feedbacks</h1>
             </div>
             <div class="flex items-center space-x-4">
+                 <!-- BOTÃO NOVA SESSÃO NO HEADER -->
+                 <button id="header-new-session-btn" class="hidden bg-red-50 text-red-600 border border-red-200 text-xs font-bold py-2 px-3 rounded hover:bg-red-100 transition" title="Encerrar sessão atual e importar novos dados">
+                    Nova Sessão
+                 </button>
                  <p id="session-id-text" class="text-sm text-gray-500">Nenhuma sessão iniciada</p>
                  <button id="notifications-permission-btn" title="Gerir permissões de notificação">
                      <svg id="bell-icon" class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
@@ -43,7 +47,7 @@
         <!-- Input Section -->
         <div id="input-section" class="max-w-4xl mx-auto bg-white p-6 rounded-2xl shadow-sm border border-gray-200 mb-8 hidden">
             <h2 class="text-lg font-bold mb-2">Importar Dados (13 Colunas)</h2>
-            <p class="text-sm text-gray-600 mb-4">Cole seus dados do Excel abaixo. O sistema identificará automaticamente as colunas.</p>
+            <p class="text-sm text-gray-600 mb-4">Cole seus dados do Excel abaixo. O sistema forçará todas as tarefas como "Pendentes" (Amarelo) para você dar baixa manualmente.</p>
             <textarea id="data-input" rows="8" class="w-full border-gray-300 rounded-lg p-2" placeholder="Cole aqui os dados (com cabeçalho)"></textarea>
             <button id="process-btn" class="mt-4 w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition-opacity disabled:opacity-50" disabled>Aguarde a conexão...</button>
             <p id="info-message" class="text-center text-sm mt-3 h-5 text-blue-600 font-medium"></p>
@@ -315,6 +319,7 @@
         const inputSection = document.getElementById('input-section');
         const connectionSection = document.getElementById('connection-section');
         const newSessionBtn = document.getElementById('new-session-btn');
+        const headerNewSessionBtn = document.getElementById('header-new-session-btn');
         const manualSessionInput = document.getElementById('manual-session-id');
         const connectSessionBtn = document.getElementById('connect-session-btn');
         const segmentModal = document.getElementById('segment-modal');
@@ -433,6 +438,7 @@
             dashboard.classList.remove('hidden');
             inputSection.classList.add('hidden');
             connectionSection.classList.add('hidden');
+            headerNewSessionBtn.classList.remove('hidden'); // Show header button
             sessionIdText.innerHTML = `ID da Sessão: <strong>${sessionId}</strong>`;
 
             const combinedSamplesForStats = [...samples, ...historicalAromaData];
@@ -451,7 +457,8 @@
             if (data) parseAndCreateNewSession(data);
         });
 
-        newSessionBtn.addEventListener('click', async () => {
+        // Handler for both New Session buttons
+        const handleNewSession = async () => {
             try {
                 const activeSessionRef = doc(db, "configuracoes", "sessaoAtiva");
                 await setDoc(activeSessionRef, { current: null });
@@ -464,7 +471,10 @@
             inputSection.classList.remove('hidden');
             connectionSection.classList.add('hidden');
             infoMessage.textContent = 'Sessão global limpa. Cole os dados da nova sessão para iniciar.';
-        });
+        };
+
+        newSessionBtn.addEventListener('click', handleNewSession);
+        headerNewSessionBtn.addEventListener('click', handleNewSession);
 
         connectSessionBtn.addEventListener('click', async () => {
             const manualId = manualSessionInput.value.trim();
@@ -698,6 +708,7 @@
                     inputSection.classList.add('hidden');
                     connectionSection.classList.add('hidden');
                     dashboard.classList.remove('hidden');
+                    headerNewSessionBtn.classList.remove('hidden');
 
                     if (!isInitialDataLoad) {
                         const batch = writeBatch(db);
@@ -794,6 +805,7 @@
             historicalAromaData = [];
 
             dashboard.classList.add('hidden');
+            headerNewSessionBtn.classList.add('hidden'); // Hide header button
             sessionIdText.textContent = 'Nenhuma sessão iniciada';
 
             if (keepConnectionOptions) {
