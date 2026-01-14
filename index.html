@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel de Gestão de Feedbacks (v2.8)</title>
+    <title>Painel de Gestão de Feedbacks (v2.9)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
@@ -26,12 +26,10 @@
     <header class="bg-white shadow-sm sticky top-0 z-10">
         <div class="container mx-auto px-4 md:px-8 py-3 flex justify-between items-center">
             <div class="flex items-center space-x-4">
-                <!-- LOGO DOREMUS -->
                 <img src="https://i.postimg.cc/76mXWMJh/as-02.png" alt="Doremus Logo" class="h-12 w-auto object-contain">
                 <h1 class="text-xl font-bold text-gray-800">Painel de Gestão de Feedbacks</h1>
             </div>
             <div class="flex items-center space-x-4">
-                 <!-- BOTÃO NOVA SESSÃO NO HEADER -->
                  <button id="header-new-session-btn" class="hidden bg-red-50 text-red-600 border border-red-200 text-xs font-bold py-2 px-3 rounded hover:bg-red-100 transition" title="Encerrar sessão atual e importar novos dados">
                     Nova Sessão
                  </button>
@@ -47,7 +45,7 @@
         <!-- Input Section -->
         <div id="input-section" class="max-w-4xl mx-auto bg-white p-6 rounded-2xl shadow-sm border border-gray-200 mb-8 hidden">
             <h2 class="text-lg font-bold mb-2">Importar Dados (13 Colunas)</h2>
-            <p class="text-sm text-gray-600 mb-4">Cole seus dados do Excel abaixo. O sistema forçará todas as tarefas como "Pendentes" (Amarelo) para você dar baixa manualmente.</p>
+            <p class="text-sm text-gray-600 mb-4">Cole seus dados do Excel abaixo. O sistema forçará todas as tarefas como "Pendentes" para você dar baixa manualmente.</p>
             <textarea id="data-input" rows="8" class="w-full border-gray-300 rounded-lg p-2" placeholder="Cole aqui os dados (com cabeçalho)"></textarea>
             <button id="process-btn" class="mt-4 w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition-opacity disabled:opacity-50" disabled>Aguarde a conexão...</button>
             <p id="info-message" class="text-center text-sm mt-3 h-5 text-blue-600 font-medium"></p>
@@ -177,6 +175,29 @@
     </div>
 
     <!-- Modals -->
+    <!-- NEW: Security Modal for New Session -->
+    <div id="security-modal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 hidden z-[70]">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 transform transition-all">
+            <div class="text-center mb-6">
+                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                    <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                </div>
+                <h3 class="text-lg font-medium text-gray-900">Iniciar Nova Sessão?</h3>
+                <p class="text-sm text-gray-500 mt-2">Isso desconectará todos os vendedores atuais. Tem certeza?</p>
+            </div>
+            <div class="mb-4">
+                <input type="password" id="security-password" placeholder="Senha do Gestor" class="w-full border-gray-300 rounded-lg shadow-sm p-2 text-center focus:ring-red-500 focus:border-red-500">
+                <p id="security-error" class="text-red-500 text-xs mt-1 text-center hidden">Senha incorreta.</p>
+            </div>
+            <div class="flex justify-end gap-3">
+                <button id="cancel-security-btn" class="w-full bg-gray-100 text-gray-700 font-semibold py-2 rounded-lg hover:bg-gray-200">Cancelar</button>
+                <button id="confirm-security-btn" class="w-full bg-red-600 text-white font-bold py-2 rounded-lg hover:bg-red-700">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
     <div id="segment-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 hidden z-20">
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
             <h3 class="text-2xl font-bold mb-4">Associar Vendedor a Segmento</h3>
@@ -290,7 +311,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, onSnapshot, doc, writeBatch, setDoc, getDoc, getDocs, updateDoc, query, orderBy, serverTimestamp, addDoc, limit, where, runTransaction, Timestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, doc, writeBatch, setDoc, getDoc, getDocs, updateDoc, query, orderBy, serverTimestamp, addDoc, limit, where, runTransaction, Timestamp, collectionGroup } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
         const firebaseConfig = {
@@ -370,6 +391,13 @@
         const pdPostitsList = document.getElementById('pd-postits-list');
         const pdPostitSegmentFilter = document.getElementById('pd-postit-segment-filter');
 
+        // Security Modal Elements
+        const securityModal = document.getElementById('security-modal');
+        const securityPasswordInput = document.getElementById('security-password');
+        const securityError = document.getElementById('security-error');
+        const cancelSecurityBtn = document.getElementById('cancel-security-btn');
+        const confirmSecurityBtn = document.getElementById('confirm-security-btn');
+
         let dataListenerUnsubscribe = null;
         let notificationListenerUnsubscribe = null;
         let sellerRepliesListenerUnsubscribe = null;
@@ -377,6 +405,7 @@
         let destaquesAmostrasListenerUnsubscribe = null;
         let historicalAromaDataUnsubscribe = null;
         let pdPostitsListenerUnsubscribe = null;
+        let subCollectionListeners = []; // Array to hold unsubscribe functions for subcollections
         let currentSessionId = null;
         let chartInstances = {};
         let modalChartInstance = null;
@@ -438,7 +467,7 @@
             dashboard.classList.remove('hidden');
             inputSection.classList.add('hidden');
             connectionSection.classList.add('hidden');
-            headerNewSessionBtn.classList.remove('hidden'); // Show header button
+            headerNewSessionBtn.classList.remove('hidden'); 
             sessionIdText.innerHTML = `ID da Sessão: <strong>${sessionId}</strong>`;
 
             const combinedSamplesForStats = [...samples, ...historicalAromaData];
@@ -457,24 +486,49 @@
             if (data) parseAndCreateNewSession(data);
         });
 
-        // Handler for both New Session buttons
-        const handleNewSession = async () => {
-            try {
-                const activeSessionRef = doc(db, "configuracoes", "sessaoAtiva");
-                await setDoc(activeSessionRef, { current: null });
-            } catch (error) {
-                console.error("Erro ao limpar sessão:", error);
-                infoMessage.textContent = "Erro ao limpar sessão.";
-                return;
-            }
-            resetToInitialState();
-            inputSection.classList.remove('hidden');
-            connectionSection.classList.add('hidden');
-            infoMessage.textContent = 'Sessão global limpa. Cole os dados da nova sessão para iniciar.';
-        };
+        // --- Security Modal Logic ---
+        function openSecurityModal() {
+            securityModal.classList.remove('hidden');
+            securityPasswordInput.value = '';
+            securityError.classList.add('hidden');
+            securityPasswordInput.focus();
+        }
 
-        newSessionBtn.addEventListener('click', handleNewSession);
-        headerNewSessionBtn.addEventListener('click', handleNewSession);
+        function closeSecurityModal() {
+            securityModal.classList.add('hidden');
+        }
+
+        async function confirmNewSession() {
+            const password = securityPasswordInput.value.trim();
+            if (password === 'admin123') { // Simple hardcoded check
+                closeSecurityModal();
+                try {
+                    const activeSessionRef = doc(db, "configuracoes", "sessaoAtiva");
+                    await setDoc(activeSessionRef, { current: null });
+                } catch (error) {
+                    console.error("Erro ao limpar sessão:", error);
+                    infoMessage.textContent = "Erro ao limpar sessão.";
+                    return;
+                }
+                resetToInitialState();
+                inputSection.classList.remove('hidden');
+                connectionSection.classList.add('hidden');
+                infoMessage.textContent = 'Sessão global limpa. Cole os dados da nova sessão para iniciar.';
+            } else {
+                securityError.classList.remove('hidden');
+            }
+        }
+
+        newSessionBtn.addEventListener('click', openSecurityModal);
+        headerNewSessionBtn.addEventListener('click', openSecurityModal);
+        cancelSecurityBtn.addEventListener('click', closeSecurityModal);
+        confirmSecurityBtn.addEventListener('click', confirmNewSession);
+        
+        // Allow Enter key in password field
+        securityPasswordInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') confirmNewSession();
+        });
+
 
         connectSessionBtn.addEventListener('click', async () => {
             const manualId = manualSessionInput.value.trim();
@@ -542,6 +596,7 @@
                 infoMessage.textContent = `Segmento de ${currentSellerForSegment} atualizado.`;
                 segmentModal.classList.add('hidden');
                 
+                // Refresh logic using current samples data
                 const sellerDocs = [...new Set(allCurrentSamples.map(s => s.sellerName))].map(name => {
                     const sellerId = sanitizeForFirebaseId(name);
                     const sellerDoc = sellersListContainer.querySelector(`.seller-card[data-seller-name="${name}"]`);
@@ -621,8 +676,9 @@
                             feedback: existingFeedback, 
                             observation: '',
                             finalizedByVendor: !!existingFeedback, 
-                            systemStatus: 'pending', // FORÇADO PENDENTE PARA O GESTOR
-                            lastUpdate: Timestamp.now()
+                            systemStatus: 'pending', 
+                            lastUpdate: Timestamp.now(),
+                            sessionId: `sessao_${Date.now()}` // Will be set to actual ID later
                         };
                     }).filter(Boolean);
 
@@ -633,6 +689,9 @@
                     }
 
                     const sessionId = `sessao_${Date.now()}`;
+                    // Update session ID in all samples
+                    allSamplesData.forEach(s => s.sessionId = sessionId);
+                    
                     allCurrentSamples = allSamplesData;
 
                     inputSection.classList.add('hidden');
@@ -647,26 +706,48 @@
         async function saveDataAndUpdateActiveSession(samples, sessionId) {
             const sellersData = samples.reduce((acc, sample) => {
                 if (!acc[sample.sellerName]) {
-                    acc[sample.sellerName] = { amostras: [], originalName: sample.sellerName, accessCode: null };
+                    acc[sample.sellerName] = { samples: [], originalName: sample.sellerName, accessCode: null };
                 }
-                acc[sample.sellerName].amostras.push(sample);
+                acc[sample.sellerName].samples.push(sample);
                 return acc;
             }, {});
 
             const sellersArray = Object.entries(sellersData);
-            const batchSize = 5;
-            for (let i = 0; i < sellersArray.length; i += batchSize) {
-                const chunk = sellersArray.slice(i, i + batchSize);
-                infoMessage.textContent = `A guardar vendedores ${i + 1} a ${i + chunk.length}...`;
-                const batch = writeBatch(db);
-                chunk.forEach(([sellerName, data]) => {
-                    const sellerId = sanitizeForFirebaseId(sellerName);
-                    const docRef = doc(db, "sessoes", sessionId, "vendedores", sellerId);
-                    data.accessCode = Math.floor(100000 + Math.random() * 900000).toString();
-                    batch.set(docRef, data);
+            const batchSize = 100; // Limit for batch writes
+            let batch = writeBatch(db);
+            let operationCount = 0;
+
+            infoMessage.textContent = "A inicializar base de dados...";
+
+            for (const [sellerName, data] of sellersArray) {
+                const sellerId = sanitizeForFirebaseId(sellerName);
+                const sellerDocRef = doc(db, "sessoes", sessionId, "vendedores", sellerId);
+                const accessCode = Math.floor(100000 + Math.random() * 900000).toString();
+                
+                // 1. Create the Seller Document (parent)
+                batch.set(sellerDocRef, {
+                    originalName: sellerName,
+                    accessCode: accessCode,
+                    createdAt: serverTimestamp()
                 });
+                operationCount++;
+
+                // 2. Create the Samples in Subcollection (Critical for Vendor App Compatibility)
+                for (const sample of data.samples) {
+                    const sampleDocRef = doc(db, "sessoes", sessionId, "vendedores", sellerId, "amostras", sample.id);
+                    batch.set(sampleDocRef, sample);
+                    operationCount++;
+
+                    if (operationCount >= 400) { // Commit before hitting limit
+                        await batch.commit();
+                        batch = writeBatch(db);
+                        operationCount = 0;
+                    }
+                }
+            }
+
+            if (operationCount > 0) {
                 await batch.commit();
-                await new Promise(resolve => setTimeout(resolve, 300));
             }
 
             infoMessage.textContent = "Guardado! Ativando sessão...";
@@ -683,14 +764,21 @@
              listenForPdPostits(sessionId);
         }
 
+        // Updated Listener to handle Subcollections
         function listenForDataUpdates(sessionId) {
             currentSessionId = sessionId;
-            const q = collection(db, "sessoes", sessionId, "vendedores");
+            
+            // 1. Listen for Seller Documents (to get names and access codes)
+            const sellersQ = collection(db, "sessoes", sessionId, "vendedores");
             if (dataListenerUnsubscribe) dataListenerUnsubscribe();
+            
+            // Clear existing subcollection listeners
+            subCollectionListeners.forEach(unsub => unsub());
+            subCollectionListeners = [];
 
             let isInitialDataLoad = true;
 
-            dataListenerUnsubscribe = onSnapshot(q, async (snapshot) => {
+            dataListenerUnsubscribe = onSnapshot(sellersQ, async (snapshot) => {
                  if (snapshot.empty && isInitialDataLoad) {
                      infoMessage.textContent = `Sessão ${sessionId} vazia.`;
                      resetToInitialState(true);
@@ -700,84 +788,65 @@
                      return;
                  }
 
-                const previousSamples = isInitialDataLoad ? [] : [...allCurrentSamples];
-                const allSamples = snapshot.docs.flatMap(doc => doc.data().amostras || []);
-                allCurrentSamples = allSamples;
+                // Map seller docs for Team Tracking
+                const sellerDocs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                
+                // 2. Setup listeners for EACH seller's 'amostras' subcollection
+                // This ensures we get updates from the Vendor App which writes to subcollections
+                if (isInitialDataLoad || subCollectionListeners.length === 0) {
+                    // Reset allCurrentSamples on full reload to avoid duplication if logic changes
+                    // But here we'll merge. For simplicity, we'll clear and rebuild on initial load logic.
+                    // Actually, we need to maintain a map of samples.
+                }
 
-                if (!snapshot.empty || !isInitialDataLoad) {
+                // We need to iterate over changes to add listeners for new sellers
+                snapshot.docChanges().forEach(change => {
+                    if (change.type === 'added') {
+                        const sellerId = change.doc.id;
+                        const subColQuery = collection(db, "sessoes", sessionId, "vendedores", sellerId, "amostras");
+                        
+                        const unsubSub = onSnapshot(subColQuery, (subSnap) => {
+                            // Merge these samples into the global state
+                            const newSamples = subSnap.docs.map(d => d.data());
+                            
+                            // Remove old samples for this seller from state
+                            allCurrentSamples = allCurrentSamples.filter(s => s.sellerName !== change.doc.data().originalName);
+                            // Add new/updated samples
+                            allCurrentSamples = [...allCurrentSamples, ...newSamples];
+                            
+                            // Trigger UI Update
+                            processAndDisplayDashboard(allCurrentSamples, sessionId, sellerDocs);
+                            
+                            // Check for notifications (simplified for this structure)
+                            // Note: Notification logic could be added here if needed for real-time alerts
+                        });
+                        subCollectionListeners.push(unsubSub);
+                    }
+                });
+
+                if (!snapshot.empty) {
                     inputSection.classList.add('hidden');
                     connectionSection.classList.add('hidden');
                     dashboard.classList.remove('hidden');
                     headerNewSessionBtn.classList.remove('hidden');
-
-                    if (!isInitialDataLoad) {
-                        const batch = writeBatch(db);
-                        let notificationAdded = false;
-
-                        const newFeedbacks = allSamples.filter(currentSample => {
-                            const prevSample = previousSamples.find(p => p.id === currentSample.id);
-                            return prevSample && (prevSample.isPending === true) && (currentSample.isPending === false);
-                        });
-
-                        if (newFeedbacks.length > 0) {
-                            newFeedbacks.forEach(sample => {
-                                const message = `<strong>${sample.sellerName}</strong> deu feedback para <strong>${sample.produto}</strong>: ${sample.feedback} (Ped: ${sample.pedido})`;
-                                const notifId = sanitizeForFirebaseId(`notif-${sample.id}-${Date.now()}`);
-                                const notifRef = doc(db, "sessoes", currentSessionId, "notificacoes", notifId);
-                                batch.set(notifRef, {
-                                    message,
-                                    color: 'blue',
-                                    timestamp: serverTimestamp(),
-                                    triggerPopup: false
-                                });
-                                notificationAdded = true;
-                            });
-                        }
-
-                        const editedSamples = allSamples.filter(currentSample => {
-                            const prevSample = previousSamples.find(p => p.id === currentSample.id);
-                            return prevSample && (prevSample.editedAfterCompletion !== true) && (currentSample.editedAfterCompletion === true);
-                        });
-
-                        if (editedSamples.length > 0) {
-                             editedSamples.forEach(sample => {
-                                const message = `<strong>${sample.sellerName}</strong> <i>editou</i> o feedback para <strong>${sample.produto}</strong> (Ped: ${sample.pedido}): ${sample.feedback}`;
-                                const notifId = sanitizeForFirebaseId(`edit-notif-${sample.id}-${Date.now()}`);
-                                const notifRef = doc(db, "sessoes", currentSessionId, "notificacoes", notifId);
-                                batch.set(notifRef, {
-                                    message,
-                                    color: 'orange',
-                                    timestamp: serverTimestamp(),
-                                    triggerPopup: true
-                                });
-                                notificationAdded = true;
-                             });
-                        }
-
-                        if (notificationAdded) {
-                            try { await batch.commit(); } catch (e) { console.error(e); }
-                        }
-                    }
-
-                    const sellerDocs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    if (sellerDocs.length > 0) {
-                        await loadAllSellerSegments([...new Set(allSamples.map(s => s.sellerName))]);
-                    }
-
-                    if (!sellerRepliesListenerUnsubscribe) listenForSellerReplies(sessionId);
-                    if (!sellerRepliesToManagerListenerUnsubscribe) listenForSellerRepliesToManager(sessionId);
-                    if (!destaquesAmostrasListenerUnsubscribe) listenForDestaquesAmostras(sessionId);
-                    if (!historicalAromaDataUnsubscribe) listenForHistoricalAromaData(sessionId);
-                    if (!pdPostitsListenerUnsubscribe) listenForPdPostits(sessionId);
-
-                    processAndDisplayDashboard(allSamples, sessionId, sellerDocs);
                     infoMessage.textContent = '';
-
+                    
+                    if (isInitialDataLoad) {
+                         await loadAllSellerSegments(sellerDocs.map(s => s.originalName));
+                    }
                 }
+                
+                // Initialize other listeners if not already done
+                if (!sellerRepliesListenerUnsubscribe) listenForSellerReplies(sessionId);
+                if (!sellerRepliesToManagerListenerUnsubscribe) listenForSellerRepliesToManager(sessionId);
+                if (!destaquesAmostrasListenerUnsubscribe) listenForDestaquesAmostras(sessionId);
+                if (!historicalAromaDataUnsubscribe) listenForHistoricalAromaData(sessionId);
+                if (!pdPostitsListenerUnsubscribe) listenForPdPostits(sessionId);
+
                 isInitialDataLoad = false;
             }, (error) => {
                  console.error("Erro data update:", error);
-                 infoMessage.textContent = `Erro.`;
+                 infoMessage.textContent = `Erro ao carregar dados.`;
                  resetToInitialState(true);
             });
         }
@@ -790,6 +859,10 @@
             if (destaquesAmostrasListenerUnsubscribe) destaquesAmostrasListenerUnsubscribe();
             if (historicalAromaDataUnsubscribe) historicalAromaDataUnsubscribe();
             if (pdPostitsListenerUnsubscribe) pdPostitsListenerUnsubscribe();
+            
+            // Unsubscribe all subcollection listeners
+            subCollectionListeners.forEach(unsub => unsub());
+            subCollectionListeners = [];
 
             currentSessionId = null;
             allCurrentSamples = [];
@@ -961,6 +1034,7 @@
                 if (JSON.stringify(historicalAromaData) !== JSON.stringify(newData)) {
                      historicalAromaData = newData; 
                      if (!dashboard.classList.contains('hidden') && currentSessionId === sessionId) {
+                         // Refresh to include new history
                          const sellerDocs = [...new Set(allCurrentSamples.map(s => s.sellerName))].map(name => {
                             const sellerId = sanitizeForFirebaseId(name);
                             const sellerDoc = sellersListContainer.querySelector(`.seller-card[data-seller-name="${name}"]`);
@@ -1096,7 +1170,6 @@
                 btn.onclick = (e) => {
                     e.stopPropagation();
                     const text = e.currentTarget.dataset.code;
-                    // Fallback para restrições de iframe
                     const textArea = document.createElement("textarea");
                     textArea.value = text;
                     textArea.style.position = "fixed";
@@ -1119,8 +1192,23 @@
             document.querySelectorAll('.system-check-btn').forEach(checkbox => {
                 checkbox.addEventListener('change', async (e) => {
                     const sellerId = sanitizeForFirebaseId(e.target.dataset.sellerName);
-                    const docRef = doc(db, "sessoes", currentSessionId, "vendedores", sellerId);
-                    try { await runTransaction(db, async (t) => { const snap = await t.get(docRef); if(!snap.exists()) throw "Erro"; const updated = snap.data().amostras.map(s => ({...s, systemStatus: 'baixado'})); t.update(docRef, {amostras: updated}); }); } catch(err) { e.target.checked = false; showAlert("Erro ao dar baixa."); }
+                    // Update only seller document or potentially subcollections if needed
+                    // For "Dar Baixa", updating the subcollection is better for consistency
+                    
+                    // Since manager view aggregates, we update the seller's samples in the subcollection via batch
+                    const sellerSamples = allCurrentSamples.filter(s => s.sellerName === e.target.dataset.sellerName);
+                    const batch = writeBatch(db);
+                    sellerSamples.forEach(s => {
+                        const ref = doc(db, "sessoes", currentSessionId, "vendedores", sellerId, "amostras", s.id);
+                        batch.update(ref, { systemStatus: 'baixado' });
+                    });
+
+                    try { 
+                        await batch.commit(); 
+                    } catch(err) { 
+                        e.target.checked = false; 
+                        showAlert("Erro ao dar baixa."); 
+                    }
                 });
             });
              document.querySelectorAll('.config-seller-btn').forEach(btn => { btn.addEventListener('click', (e) => { e.stopPropagation(); openSegmentModal(e.currentTarget.dataset.sellerName); }); });
