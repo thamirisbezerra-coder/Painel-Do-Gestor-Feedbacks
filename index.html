@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel de Gestão de Feedbacks (v2.9)</title>
+    <title>Painel de Gestão de Feedbacks (v3.0)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
@@ -45,7 +45,7 @@
         <!-- Input Section -->
         <div id="input-section" class="max-w-4xl mx-auto bg-white p-6 rounded-2xl shadow-sm border border-gray-200 mb-8 hidden">
             <h2 class="text-lg font-bold mb-2">Importar Dados (13 Colunas)</h2>
-            <p class="text-sm text-gray-600 mb-4">Cole seus dados do Excel abaixo. O sistema forçará todas as tarefas como "Pendentes" para você dar baixa manualmente.</p>
+            <p class="text-sm text-gray-600 mb-4">Cole seus dados do Excel abaixo. <strong>ATENÇÃO:</strong> Todos os itens entrarão como PENDENTES (Amarelo) para que os vendedores validem, mesmo que já exista histórico.</p>
             <textarea id="data-input" rows="8" class="w-full border-gray-300 rounded-lg p-2" placeholder="Cole aqui os dados (com cabeçalho)"></textarea>
             <button id="process-btn" class="mt-4 w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition-opacity disabled:opacity-50" disabled>Aguarde a conexão...</button>
             <p id="info-message" class="text-center text-sm mt-3 h-5 text-blue-600 font-medium"></p>
@@ -175,7 +175,6 @@
     </div>
 
     <!-- Modals -->
-    <!-- NEW: Security Modal for New Session -->
     <div id="security-modal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 hidden z-[70]">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 transform transition-all">
             <div class="text-center mb-6">
@@ -405,7 +404,7 @@
         let destaquesAmostrasListenerUnsubscribe = null;
         let historicalAromaDataUnsubscribe = null;
         let pdPostitsListenerUnsubscribe = null;
-        let subCollectionListeners = []; // Array to hold unsubscribe functions for subcollections
+        let subCollectionListeners = []; 
         let currentSessionId = null;
         let chartInstances = {};
         let modalChartInstance = null;
@@ -500,7 +499,7 @@
 
         async function confirmNewSession() {
             const password = securityPasswordInput.value.trim();
-            if (password === 'admin123') { // Simple hardcoded check
+            if (password === 'admin123') { 
                 closeSecurityModal();
                 try {
                     const activeSessionRef = doc(db, "configuracoes", "sessaoAtiva");
@@ -524,7 +523,6 @@
         cancelSecurityBtn.addEventListener('click', closeSecurityModal);
         confirmSecurityBtn.addEventListener('click', confirmNewSession);
         
-        // Allow Enter key in password field
         securityPasswordInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') confirmNewSession();
         });
@@ -596,7 +594,6 @@
                 infoMessage.textContent = `Segmento de ${currentSellerForSegment} atualizado.`;
                 segmentModal.classList.add('hidden');
                 
-                // Refresh logic using current samples data
                 const sellerDocs = [...new Set(allCurrentSamples.map(s => s.sellerName))].map(name => {
                     const sellerId = sanitizeForFirebaseId(name);
                     const sellerDoc = sellersListContainer.querySelector(`.seller-card[data-seller-name="${name}"]`);
@@ -661,7 +658,8 @@
                         return {
                             id: `sample_${Date.now()}_${index}`,
                             sellerName: String(sellerName),
-                            isPending: isPending && !existingFeedback, 
+                            // FORÇAR PENDENTE: Sempre true para novas importações
+                            isPending: true, // was: isPending && !existingFeedback
                             pedido: String(row['Pedido'] || ''),
                             codCliente: String(row['Cód. Cliente'] || ''),
                             razaoSocial: String(row['Razão Social'] || ''),
@@ -675,10 +673,11 @@
                             originalStatus: statusRaw,
                             feedback: existingFeedback, 
                             observation: '',
-                            finalizedByVendor: !!existingFeedback, 
+                            // FORÇAR NÃO FINALIZADO
+                            finalizedByVendor: false, // was: !!existingFeedback
                             systemStatus: 'pending', 
                             lastUpdate: Timestamp.now(),
-                            sessionId: `sessao_${Date.now()}` // Will be set to actual ID later
+                            sessionId: `sessao_${Date.now()}` 
                         };
                     }).filter(Boolean);
 
@@ -689,7 +688,6 @@
                     }
 
                     const sessionId = `sessao_${Date.now()}`;
-                    // Update session ID in all samples
                     allSamplesData.forEach(s => s.sessionId = sessionId);
                     
                     allCurrentSamples = allSamplesData;
@@ -1034,7 +1032,6 @@
                 if (JSON.stringify(historicalAromaData) !== JSON.stringify(newData)) {
                      historicalAromaData = newData; 
                      if (!dashboard.classList.contains('hidden') && currentSessionId === sessionId) {
-                         // Refresh to include new history
                          const sellerDocs = [...new Set(allCurrentSamples.map(s => s.sellerName))].map(name => {
                             const sellerId = sanitizeForFirebaseId(name);
                             const sellerDoc = sellersListContainer.querySelector(`.seller-card[data-seller-name="${name}"]`);
@@ -1192,9 +1189,6 @@
             document.querySelectorAll('.system-check-btn').forEach(checkbox => {
                 checkbox.addEventListener('change', async (e) => {
                     const sellerId = sanitizeForFirebaseId(e.target.dataset.sellerName);
-                    // Update only seller document or potentially subcollections if needed
-                    // For "Dar Baixa", updating the subcollection is better for consistency
-                    
                     // Since manager view aggregates, we update the seller's samples in the subcollection via batch
                     const sellerSamples = allCurrentSamples.filter(s => s.sellerName === e.target.dataset.sellerName);
                     const batch = writeBatch(db);
@@ -1443,3 +1437,4 @@
     </script>
 </body>
 </html>
+
