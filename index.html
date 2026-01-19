@@ -236,7 +236,7 @@
                     <div class="absolute top-0 right-0 w-32 h-32 bg-white opacity-5 rounded-full -mr-10 -mt-10 transition-transform group-hover:scale-110"></div>
                     <div class="relative z-10">
                         <div class="flex items-center gap-3 mb-3">
-                            <svg class="w-8 h-8 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                            <svg class="w-8 h-8 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
                             <h3 class="text-xl font-bold">Resultados & Rankings</h3>
                         </div>
                         <p class="text-slate-300 text-sm mb-4">Acesse o comparativo 2023-2025 e o Ranking de Aromas (DAR).</p>
@@ -731,15 +731,16 @@
                 skipEmptyLines: true,
                 transformHeader: h => h.trim(),
                 complete: (results) => {
+                    // *** FIX STARTS HERE ***
+                    // Relaxed error handling: Don't stop on "Too many fields"
                     if (results.errors.length > 0) {
-                        infoMessage.textContent = `Erro: ${results.errors[0].message}`;
-                        processBtn.disabled = false;
-                        return;
+                        console.warn("Avisos do CSV:", results.errors);
+                        // Optional: Check if error is fatal. Usually "Too many fields" is not if header: true
                     }
-
-                    // Objeto para armazenar segmentos extraídos (Vendedor -> Segmento)
+                    
+                    // Proceed to map data even if there are warnings
                     const extractedSegments = {};
-
+                    
                     const allSamplesData = results.data.map((row, index) => {
                         const sellerName = row['Vendedor(a)'];
                         if (!sellerName || !row['Pedido']) return null; 
@@ -778,10 +779,13 @@
                     }).filter(Boolean);
 
                     if (allSamplesData.length === 0) {
-                        infoMessage.textContent = "Nenhum dado válido. Verifique os nomes das colunas.";
-                        processBtn.disabled = false;
-                        return;
+                         // Only fail if we couldn't extract ANY valid row
+                         const msg = results.errors.length > 0 ? results.errors[0].message : "Formato inválido";
+                         infoMessage.textContent = `Erro: ${msg}`;
+                         processBtn.disabled = false;
+                         return;
                     }
+                    // *** FIX ENDS HERE ***
 
                     const sessionId = `sessao_${Date.now()}`;
                     allCurrentSamples = allSamplesData;
@@ -1642,6 +1646,7 @@
     </script>
 </body>
 </html>
+
 
 
 
