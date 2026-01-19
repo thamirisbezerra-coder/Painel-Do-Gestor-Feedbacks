@@ -83,12 +83,23 @@
             </div>
             
             <div class="flex items-center gap-4">
-                 <div class="flex flex-col items-end">
-                    <p id="session-id-text" class="text-xs font-medium text-slate-400 uppercase tracking-wide">A aguardar sessão</p>
-                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 animate-pulse hidden" id="live-indicator">
-                        ● AO VIVO
-                    </span>
+                 <div class="flex items-center gap-3">
+                    <!-- Botão Nova Sessão no Header -->
+                    <button id="header-new-session-btn" class="bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold py-2 px-4 rounded-lg shadow transition-colors flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                        Nova Sessão
+                    </button>
+
+                    <div class="flex flex-col items-end">
+                        <p id="session-id-text" class="text-xs font-medium text-slate-400 uppercase tracking-wide">A aguardar sessão</p>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 animate-pulse hidden" id="live-indicator">
+                            ● AO VIVO
+                        </span>
+                    </div>
                  </div>
+                 
+                 <div class="h-6 w-px bg-slate-200 mx-2"></div>
+
                  <button id="notifications-permission-btn" class="p-2 rounded-full hover:bg-slate-100 transition-colors relative group">
                      <svg id="bell-icon" class="w-6 h-6 text-slate-400 group-hover:text-blue-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
                  </button>
@@ -125,6 +136,7 @@
                  <h2 class="text-xl font-bold text-slate-800 mb-4">Gestão da Sessão</h2>
                  <p class="text-slate-500 mb-6 text-sm">Existe uma sessão ativa ou você pode iniciar uma nova zerando os dados anteriores.</p>
                  
+                 <!-- Botão duplicado mantido aqui para casos de acesso direto sem dashboard -->
                  <button id="new-session-btn" class="w-full bg-slate-800 text-white font-semibold py-3 px-6 rounded-xl hover:bg-slate-900 transition-all mb-4 flex items-center justify-center gap-2">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     Iniciar Nova Sessão (Requer Senha)
@@ -546,6 +558,7 @@
         const inputSection = document.getElementById('input-section');
         const connectionSection = document.getElementById('connection-section');
         const newSessionBtn = document.getElementById('new-session-btn');
+        const headerNewSessionBtn = document.getElementById('header-new-session-btn'); // Novo botão no header
         const manualSessionInput = document.getElementById('manual-session-id');
         const connectSessionBtn = document.getElementById('connect-session-btn');
         const segmentModal = document.getElementById('segment-modal');
@@ -660,13 +673,18 @@
         }
 
         // --- Logic: New Session & Password ---
-        newSessionBtn.addEventListener('click', () => {
-            // Show password modal
+        // Adiciona listener ao novo botão do header e ao antigo
+        const openPasswordModal = () => {
             passwordModal.classList.remove('hidden');
             sessionPasswordInput.value = '';
             passwordError.classList.add('hidden');
             sessionPasswordInput.focus();
-        });
+        };
+
+        newSessionBtn.addEventListener('click', openPasswordModal);
+        if (headerNewSessionBtn) {
+            headerNewSessionBtn.addEventListener('click', openPasswordModal);
+        }
 
         cancelPasswordBtn.addEventListener('click', () => {
             passwordModal.classList.add('hidden');
@@ -719,10 +737,21 @@
                         return;
                     }
 
+                    // Objeto para armazenar segmentos extraídos (Vendedor -> Segmento)
+                    const extractedSegments = {};
+
                     const allSamplesData = results.data.map((row, index) => {
                         const sellerName = row['Vendedor(a)'];
                         if (!sellerName || !row['Pedido']) return null; 
                         
+                        // Extrair segmento da coluna 'Divisão Comercial'
+                        const divisaoComercial = String(row['Divisão Comercial'] || '').trim();
+                        // Se houver um segmento válido, guardar para este vendedor
+                        // (Se houver múltiplos, o último lido prevalecerá, mas assumimos consistência)
+                        if (divisaoComercial) {
+                            extractedSegments[normalizeText(sellerName)] = divisaoComercial;
+                        }
+
                         return {
                             id: `sample_${Date.now()}_${index}`,
                             sellerName: String(sellerName),
@@ -734,7 +763,7 @@
                             produto: String(row['Produto'] || ''),
                             descricao: String(row['Descrição'] || ''),
                             qtde: String(row['Qtde.'] || ''),
-                            divisaoComercial: String(row['Divisão Comercial'] || ''),
+                            divisaoComercial: divisaoComercial, // Guardar no objeto também
                             notaFiscal: String(row['Nota Fiscal'] || ''),
                             emissaoNF: String(row['Emissão NF'] || ''),
                             divisaoPD: String(row['Divisão P&D'] || ''),
@@ -760,12 +789,13 @@
                     inputSection.classList.add('hidden');
                     infoMessage.textContent = "Painel gerado! A sincronizar com a nuvem...";
                     
-                    saveDataAndUpdateActiveSession(allSamplesData, sessionId);
+                    // Passar os segmentos extraídos para a função de salvamento
+                    saveDataAndUpdateActiveSession(allSamplesData, sessionId, extractedSegments);
                 }
             });
         }
 
-        async function saveDataAndUpdateActiveSession(samples, sessionId) {
+        async function saveDataAndUpdateActiveSession(samples, sessionId, extractedSegments) {
             const sellersData = samples.reduce((acc, sample) => {
                 if (!acc[sample.sellerName]) {
                     acc[sample.sellerName] = { amostras: [], originalName: sample.sellerName, accessCode: null };
@@ -774,6 +804,7 @@
                 return acc;
             }, {});
 
+            // 1. Salvar dados da sessão (Vendedores e Amostras)
             const sellersArray = Object.entries(sellersData);
             const batchSize = 5; 
             for (let i = 0; i < sellersArray.length; i += batchSize) {
@@ -789,6 +820,25 @@
                 await batch.commit();
             }
 
+            // 2. Salvar/Atualizar Segmentos Extraídos (vendedorConfig)
+            // Isso garante que o dashboard mostre o segmento correto imediatamente
+            const segmentEntries = Object.entries(extractedSegments);
+            if (segmentEntries.length > 0) {
+                infoMessage.textContent = `A atualizar vínculos de segmentos...`;
+                const configBatch = writeBatch(db);
+                segmentEntries.forEach(([normalizedSellerName, segment]) => {
+                    // O ID do documento é o nome normalizado (convenção usada em loadAllSellerSegments)
+                    const sellerId = sanitizeForFirebaseId(normalizedSellerName); 
+                    const configRef = doc(db, "vendedorConfig", sellerId);
+                    configBatch.set(configRef, { segmento: segment }, { merge: true });
+                    
+                    // Atualizar cache local também
+                    sellerSegmentsCache[normalizedSellerName] = segment;
+                });
+                await configBatch.commit();
+            }
+
+            // 3. Definir Sessão Ativa
             const activeSessionRef = doc(db, "configuracoes", "sessaoAtiva");
             await setDoc(activeSessionRef, { current: sessionId });
 
@@ -1592,5 +1642,6 @@
     </script>
 </body>
 </html>
+
 
 
