@@ -86,7 +86,13 @@
                     </span>
                  </div>
                  <button id="notifications-permission-btn" class="p-2 rounded-full hover:bg-slate-100 transition-colors relative group">
-                     <svg id="bell-icon" class="w-6 h-6 text-slate-400 group-hover:text-blue-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                     <div class="relative">
+                        <svg id="bell-icon" class="w-6 h-6 text-slate-400 group-hover:text-blue-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                        <span id="bell-badge" class="absolute -top-1 -right-1 flex h-3 w-3 hidden">
+                          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                          <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                        </span>
+                     </div>
                  </button>
             </div>
         </div>
@@ -581,6 +587,7 @@
         const historyList = document.getElementById('history-list');
         const notificationsPermissionBtn = document.getElementById('notifications-permission-btn');
         const bellIcon = document.getElementById('bell-icon');
+        const bellBadge = document.getElementById('bell-badge');
         const observationSegmentFilter = document.getElementById('observation-segment-filter');
         const observationSearchInput = document.getElementById('observation-search-input');
         const filterRepliedObs = document.getElementById('filter-replied-obs');
@@ -647,6 +654,9 @@
         let allNotifications = [];
         let areAllNotificationsVisible = false;
         let historicalAromaData = [];
+        
+        let sysNotifs = []; 
+        let replyNotifs = [];
 
         const normalizeText = (text = '') => text ? text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim() : '';
         const sanitizeForFirebaseId = (text) => normalizeText(text).replace(/[\/\.]/g, "-");
@@ -1034,50 +1044,75 @@
                 if (sample.lastUpdate) {
                    const date = sample.lastUpdate.toDate ? sample.lastUpdate.toDate() : new Date(sample.lastUpdate);
                    const formatted = date.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
-                   responseTimeHtml = `<span class="text-xs text-slate-400 block mt-1">Respondido em: ${formatted}</span>`;
+                   responseTimeHtml = `<span class="text-xs text-slate-400 block mt-1 text-right">Respondido em: ${formatted}</span>`;
                 }
 
                 const card = document.createElement('div');
-                card.className = 'attention-card p-4 rounded-lg bg-white shadow-sm border border-amber-200 relative';
+                card.className = 'attention-card bg-white rounded-lg shadow-sm border border-amber-200 overflow-hidden group transition-all duration-200';
                 
-                const starBtn = document.createElement('button');
-                starBtn.className = 'absolute top-1 right-1 p-1 text-amber-500 hover:text-amber-600 transition-colors z-10';
-                starBtn.innerHTML = '<svg class="w-6 h-6 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588 1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>';
-                starBtn.onclick = (e) => toggleDestaqueAmostra(e, sample.id);
+                const bodyId = `attention-body-${sample.id}`;
 
                 card.innerHTML = `
-                    <div class="pr-8">
-                        <div class="flex justify-between items-start">
-                             <h4 class="font-bold text-slate-800 text-sm mb-1 line-clamp-2" title="${sample.produto}">${sample.produto}</h4>
+                    <div class="attention-header p-3 cursor-pointer hover:bg-slate-50 transition-colors flex justify-between items-center gap-3 relative" onclick="toggleAttentionCard('${bodyId}', this)">
+                        <div class="flex-1 min-w-0 pr-8">
+                             <p class="text-xs text-blue-600 font-bold uppercase tracking-wide truncate mb-0.5">${sample.razaoSocial || 'Cliente não informado'}</p>
+                             <p class="font-bold text-slate-800 text-sm truncate" title="${sample.produto}">${sample.produto}</p>
                         </div>
-                        <p class="text-xs text-slate-500 mb-2 line-clamp-2" title="${sample.descricao}">${sample.descricao || ''}</p>
                         
-                        <div class="grid grid-cols-2 gap-x-2 gap-y-1 text-xs text-slate-600 mb-2">
-                            <p>Vendedor: <span class="font-medium text-slate-800">${sample.sellerName}</span></p>
-                            <p>Pedido: <span class="font-medium text-slate-800">${sample.pedido}</span></p>
-                            <p>NF: <span class="font-medium text-slate-800">${sample.notaFiscal} (${sample.emissaoNF})</span></p>
+                        <div class="absolute top-2 right-2 flex items-center gap-2">
+                             <button class="star-btn p-1 text-amber-500 hover:text-amber-600 transition-colors z-20" onclick="toggleDestaqueAmostra(event, '${sample.id}')">
+                                <svg class="w-5 h-5 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588 1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                            </button>
+                        </div>
+                        <svg class="chevron-icon w-4 h-4 text-slate-300 transition-transform duration-200 absolute bottom-2 right-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                    </div>
+                    
+                    <div id="${bodyId}" class="hidden border-t border-slate-100 bg-slate-50/50 p-4 text-sm animate-[fadeIn_0.2s_ease-out]">
+                         <div class="mb-3">
+                            <p class="text-xs text-slate-500 mb-1 line-clamp-2 italic">Desc: ${sample.descricao || 'Sem descrição'}</p>
+                         </div>
+
+                         <div class="grid grid-cols-2 gap-x-2 gap-y-2 text-xs text-slate-600 mb-3 bg-white p-2 rounded border border-slate-100">
+                            <p>Vend.: <span class="font-bold text-slate-800">${sample.sellerName}</span></p>
+                            <p>Ped.: <span class="font-medium text-slate-800">${sample.pedido}</span></p>
+                            <p>NF: <span class="font-medium text-slate-800">${sample.notaFiscal}</span></p>
                             <p>Qtde: <span class="font-medium text-slate-800">${sample.qtde}</span></p>
-                        </div>
-                        
-                        ${responseTimeHtml}
+                         </div>
+                         
+                         <div class="space-y-2">
+                            <div class="text-xs bg-white p-2 rounded text-slate-700 border border-slate-200 shadow-sm">
+                                <span class="font-bold block text-slate-500 text-[10px] uppercase mb-0.5">Feedback:</span>
+                                ${sample.feedback || 'Sem feedback'}
+                            </div>
 
-                        <div class="mt-2 text-xs bg-slate-50 p-2 rounded text-slate-700 border border-slate-100">
-                            <span class="font-bold block text-slate-500 text-[10px] uppercase">Feedback:</span>
-                            ${sample.feedback || 'Sem feedback'}
-                        </div>
-
-                        ${sample.observation ? `
-                        <div class="mt-2 text-xs bg-yellow-50 p-2 rounded text-slate-700 border border-yellow-100">
-                             <span class="font-bold block text-yellow-600 text-[10px] uppercase">Observação:</span>
-                             "${sample.observation}"
-                        </div>` : ''}
-
-                        ${managerReplyHtml}
+                            ${sample.observation ? `
+                            <div class="text-xs bg-yellow-50 p-2 rounded text-slate-700 border border-yellow-100 shadow-sm">
+                                 <span class="font-bold block text-yellow-600 text-[10px] uppercase mb-0.5">Observação:</span>
+                                 "${sample.observation}"
+                            </div>` : ''}
+                            
+                            ${managerReplyHtml}
+                            ${responseTimeHtml}
+                         </div>
                     </div>
                 `;
-                card.appendChild(starBtn);
                 container.appendChild(card);
             });
+        }
+        
+        window.toggleAttentionCard = function(id, headerElement) {
+            const body = document.getElementById(id);
+            const chevron = headerElement.querySelector('.chevron-icon');
+            
+            if (body.classList.contains('hidden')) {
+                body.classList.remove('hidden');
+                chevron.style.transform = 'rotate(180deg)';
+                headerElement.classList.add('bg-amber-50/50'); // Slight highlight when open
+            } else {
+                body.classList.add('hidden');
+                chevron.style.transform = 'rotate(0deg)';
+                headerElement.classList.remove('bg-amber-50/50');
+            }
         }
         
         // Expose function globally for inline clicks if needed, though we use addEventListener now
@@ -1347,9 +1382,56 @@
         function listenForNotifications(sessionId) {
             const q = query(collection(db, "sessoes", sessionId, "notificacoes"), orderBy("timestamp", "desc"));
             notificationListenerUnsubscribe = onSnapshot(q, (snapshot) => {
-                allNotifications = snapshot.docs.map(d => ({id: d.id, ...d.data()}));
-                updateNotificationDisplay();
+                sysNotifs = snapshot.docs.map(d => ({id: d.id, ...d.data(), type: 'system'}));
+                mergeAndRenderNotifications();
             });
+        }
+        
+        // Listener ATUALIZADO para Notificar Gestor quando Vendedor Responde (com persistência)
+        function listenForSellerRepliesToManager(sessionId) {
+            const q = query(collection(db, "sessoes", sessionId, "respostasVendedor"));
+            sellerRepliesToManagerListenerUnsubscribe = onSnapshot(q, (snapshot) => {
+                 allSellerRepliesToManager = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                 
+                 // Mapeia todas as respostas para formato de notificação
+                 replyNotifs = snapshot.docs.map(doc => {
+                    const data = doc.data();
+                    return {
+                        id: doc.id,
+                        timestamp: data.timestamp,
+                        message: `<strong>${data.sellerName}</strong> respondeu: "${data.replyMessage}" (${data.produto})`,
+                        color: 'blue',
+                        type: 'reply'
+                    };
+                 });
+
+                 // Renderiza feeds e notificações
+                 if(!dashboard.classList.contains('hidden')) renderObservationsFeed(allCurrentSamples);
+                 mergeAndRenderNotifications();
+            });
+        }
+        
+        function mergeAndRenderNotifications() {
+            // Combina notificações do sistema e respostas
+            allNotifications = [...sysNotifs, ...replyNotifs].sort((a, b) => {
+                 const tA = a.timestamp?.toDate ? a.timestamp.toDate() : new Date(0);
+                 const tB = b.timestamp?.toDate ? b.timestamp.toDate() : new Date(0);
+                 return tB - tA;
+            });
+            updateNotificationDisplay();
+            updateBellIcon();
+            // Se o modal de histórico estiver aberto, atualize-o
+            if (!historyModal.classList.contains('hidden')) {
+                renderHistoryList();
+            }
+        }
+        
+        function updateBellIcon() {
+            if (allNotifications.length > 0) {
+                bellBadge.classList.remove('hidden');
+            } else {
+                bellBadge.classList.add('hidden');
+            }
         }
 
         // --- FUNÇÃO ATUALIZADA: updateNotificationDisplay com Exclusão e Data e Hora ---
@@ -1372,18 +1454,49 @@
                 }
 
                 // Layout com Flexbox: Mensagem à esquerda, Hora e Botão à direita
+                // Se for resposta de vendedor, não mostramos botão de excluir para evitar inconsistência de dados
+                // (Ou implementamos delete na collection correta. Por simplicidade, delete apenas para notificações de sistema)
+                const deleteButton = n.type === 'system' ? `
+                    <button class="text-slate-400 hover:text-red-500 transition-colors p-1" onclick="deleteNotification('${n.id}')" title="Excluir notificação">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>` : '';
+
                 div.innerHTML = `
                     <div class="flex justify-between items-start gap-2">
                         <div class="flex-1 text-slate-700">${n.message}</div>
                         <div class="flex flex-col items-end gap-1">
                             <span class="text-[10px] text-slate-400 whitespace-nowrap mt-0.5">${timeString}</span>
-                             <button class="text-slate-400 hover:text-red-500 transition-colors p-1" onclick="deleteNotification('${n.id}')" title="Excluir notificação">
-                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                            </button>
+                            ${deleteButton}
                         </div>
                     </div>
                 `;
                 notificationsList.appendChild(div);
+            });
+        }
+        
+        function renderHistoryList() {
+            historyList.innerHTML = '';
+            if (allNotifications.length === 0) {
+                historyList.innerHTML = '<p class="text-slate-400 text-center py-10">Histórico vazio.</p>';
+                return;
+            }
+            
+            allNotifications.forEach(n => {
+                 let timeString = '';
+                 if (n.timestamp) {
+                     const date = n.timestamp.toDate ? n.timestamp.toDate() : new Date(n.timestamp);
+                     timeString = date.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+                 }
+                 
+                 const div = document.createElement('div');
+                 div.className = `p-4 rounded-xl border border-slate-100 shadow-sm text-sm bg-white mb-3 flex justify-between items-start`;
+                 div.innerHTML = `
+                     <div>
+                         <div class="text-slate-800">${n.message}</div>
+                         <div class="text-xs text-slate-400 mt-1">${timeString}</div>
+                     </div>
+                 `;
+                 historyList.appendChild(div);
             });
         }
 
@@ -1543,6 +1656,7 @@
                      itemDiv.innerHTML = `
                          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
                              <div>
+                                 <p class="text-xs font-semibold text-blue-600 mb-0.5">${sample.razaoSocial || 'Cliente não informado'}</p>
                                  <h4 class="font-bold text-slate-800 text-sm">${sample.produto}</h4>
                                  <p class="text-xs text-slate-500">${sample.descricao || ''}</p>
                                  <div class="text-xs text-slate-500 mt-1 grid grid-cols-2 gap-2">
@@ -1607,6 +1721,19 @@
                  showFeedbackSamples(currentFeedbackFilter, modalSegmentFilter.value);
              }
         });
+        
+        // Bell Icon Logic
+        notificationsPermissionBtn.addEventListener('click', () => {
+            historyModal.classList.remove('hidden');
+            renderHistoryList();
+        });
+        
+        historyBtn.addEventListener('click', () => {
+             historyModal.classList.remove('hidden');
+             renderHistoryList();
+        });
+        
+        closeHistoryBtn.addEventListener('click', () => historyModal.classList.add('hidden'));
 
         // Modals Logic
         if(openSenhasGerentesBtn) openSenhasGerentesBtn.onclick = (e) => { e.preventDefault(); senhasGerentesModal.classList.remove('hidden'); }
@@ -1704,6 +1831,7 @@
                 d.innerHTML = `
                     <div class="flex justify-between items-start mb-2">
                         <div>
+                            <p class="text-xs font-semibold text-blue-600 mb-0.5">${s.razaoSocial || 'Cliente não informado'}</p>
                             <p class="font-bold text-slate-800">${s.produto}</p>
                             <p class="text-xs text-slate-500">${s.descricao || ''}</p>
                             <div class="text-xs text-slate-500 mt-1 grid grid-cols-2 gap-x-4">
@@ -1861,31 +1989,6 @@
             });
         }
         
-        // Listener ATUALIZADO para Notificar Gestor quando Vendedor Responde
-        function listenForSellerRepliesToManager(sessionId) {
-            const q = query(collection(db, "sessoes", sessionId, "respostasVendedor"));
-            sellerRepliesToManagerListenerUnsubscribe = onSnapshot(q, (snapshot) => {
-                 allSellerRepliesToManager = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                 
-                 // Check for new replies to create a "Manager Notification"
-                 snapshot.docChanges().forEach((change) => {
-                    if (change.type === "added") {
-                        const reply = change.doc.data();
-                        // Add to main notification list visually
-                        const notifMessage = `<strong>${reply.sellerName}</strong> respondeu: "${reply.replyMessage}" (${reply.produto})`;
-                        // Add to local notification array for display
-                        allNotifications.unshift({
-                            message: notifMessage,
-                            color: 'blue',
-                            timestamp: reply.timestamp
-                        });
-                        updateNotificationDisplay();
-                    }
-                 });
-
-                 if(!dashboard.classList.contains('hidden')) renderObservationsFeed(allCurrentSamples);
-            });
-        }
         function listenForDestaquesAmostras(sessionId) {
             destaquesAmostrasListenerUnsubscribe = onSnapshot(doc(db, "sessoes", sessionId, "configuracoes", "destaquesAmostras"), (docSnap) => {
                 highlightedSamplesCache = docSnap.exists() ? (docSnap.data().lista || []) : [];
@@ -1945,6 +2048,7 @@
     </script>
 </body>
 </html>
+
 
 
 
