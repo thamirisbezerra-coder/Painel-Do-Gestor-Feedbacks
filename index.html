@@ -278,6 +278,17 @@
                 </div>
             </section>
 
+             <!-- Attention List (Área de Atenção) -->
+             <section id="attention-section" class="mb-8">
+                <h2 class="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                    <svg class="w-6 h-6 text-amber-500" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588 1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                    Amostras em Atenção
+                </h2>
+                <div id="attention-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Cards de atenção gerados via JS -->
+                </div>
+            </section>
+
             <!-- Feeds: Vendedores e P&D -->
             <section class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
                 
@@ -1026,7 +1037,8 @@
             });
         }
         
-        async function toggleDestaqueAmostra(e, sampleId) {
+        // Expose function globally for inline clicks if needed, though we use addEventListener now
+        window.toggleDestaqueAmostra = async function(e, sampleId) {
             if (e) e.stopPropagation();
             if (!currentSessionId || !sampleId) return;
 
@@ -1037,9 +1049,24 @@
             } else {
                 highlightedSamplesCache.push(sampleId);
             }
+            
+            // Immediate UI update for the list
             renderAttentionArea(); 
-            if (!feedbackSamplesModal.classList.contains('hidden') && currentFeedbackFilter) {
-                 showFeedbackSamples(currentFeedbackFilter, modalSegmentFilter.value);
+            
+            // Update modal UI if open
+            if (!feedbackSamplesModal.classList.contains('hidden')) {
+                // Find button in modal and update class directly for instant feedback
+                const btn = feedbackSamplesList.querySelector(`.highlight-sample-btn[data-sample-id="${sampleId}"]`);
+                if(btn) {
+                    const icon = btn.querySelector('svg');
+                    if (highlightedSamplesCache.includes(sampleId)) {
+                        btn.className = "highlight-sample-btn p-1 rounded-full hover:bg-gray-100 ml-1 text-amber-500 fill-current";
+                        if(icon) icon.classList.remove('text-gray-300');
+                    } else {
+                         btn.className = "highlight-sample-btn p-1 rounded-full hover:bg-gray-100 ml-1 text-gray-300 hover:text-amber-500";
+                         if(icon) icon.classList.add('text-gray-300');
+                    }
+                }
             }
 
             try {
@@ -1057,6 +1084,7 @@
                 });
             } catch (error) {
                 console.error("Erro ao atualizar destaque:", error);
+                // Revert if error (optional, but good practice)
             }
         }
 
@@ -1457,7 +1485,9 @@
                     const replyButtonHtml = (sample.observation && !sample.isHistorical) ? 
                         `<button class="text-blue-600 hover:text-blue-800 text-xs font-bold uppercase tracking-wide ml-2 reply-btn" data-sample-id="${sample.id}">Responder</button>` : '';
                     
-                    const highlightButtonHtml = (sample.id && !sample.isHistorical) ? `<button class="highlight-sample-btn p-1 rounded-full hover:bg-gray-100 ml-1" data-sample-id="${sample.id}" title="Destacar"><svg class="w-5 h-5 text-gray-300 hover:text-amber-500 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.524 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.524 4.674c.3.921-.755 1.688-1.54 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.784.57-1.838-.197-1.539-1.118l1.524-4.674a1 1 0 00-.363-1.118L2.98 10.1c-.783-.57-.38-1.81.588 1.81h4.914a1 1 0 00.951-.69l1.524-4.674z"></path></svg></button>` : '';
+                    // CORREÇÃO ESTRELINHA (VISUAL): Define cor baseada no estado
+                    const starColorClass = isHighlighted ? "text-amber-500 fill-current" : "text-gray-300 hover:text-amber-500";
+                    const highlightButtonHtml = (sample.id && !sample.isHistorical) ? `<button class="highlight-sample-btn p-1 rounded-full hover:bg-gray-100 ml-1 ${starColorClass}" data-sample-id="${sample.id}" title="Destacar"><svg class="w-5 h-5 fill-inherit stroke-current" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.524 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.524 4.674c.3.921-.755 1.688-1.54 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.784.57-1.838-.197-1.539-1.118l1.524-4.674a1 1 0 00-.363-1.118L2.98 10.1c-.783-.57-.38-1.81.588 1.81h4.914a1 1 0 00.951-.69l1.524-4.674z"></path></svg></button>` : '';
 
                      // Format Seller Reply Time
                      let responseTimeHtml = '';
@@ -1636,6 +1666,9 @@
                             <div class="text-xs text-slate-500 mt-1 grid grid-cols-2 gap-x-4">
                                 <span>Qtde: <strong>${s.qtde}</strong></span>
                                 <span>NF: <strong>${s.notaFiscal}</strong> (${s.emissaoNF})</span>
+                            </div>
+                            <div class="mt-2 text-xs font-semibold text-slate-600 bg-slate-100 p-1.5 rounded inline-block">
+                                Status: <span class="text-slate-800">${s.feedback || 'Sem feedback'}</span>
                             </div>
                         </div>
                         <div class="text-right">
@@ -1869,6 +1902,7 @@
     </script>
 </body>
 </html>
+
 
 
 
