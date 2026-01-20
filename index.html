@@ -1014,6 +1014,29 @@
             container.innerHTML = '';
             
             highlightedItems.forEach(sample => {
+                // Find existing Manager Reply
+                const managerReply = !sample.isHistorical ? allSellerReplies
+                     .filter(r => r.sellerName === sample.sellerName && r.pedido === sample.pedido && r.produto === sample.produto)
+                     .sort((a, b) => (b.timestamp?.toDate() ?? 0) - (a.timestamp?.toDate() ?? 0))[0] : null;
+
+                let managerReplyHtml = '';
+                if (managerReply) {
+                    managerReplyHtml = `
+                        <div class="mt-2 bg-blue-50 p-2 rounded border-l-2 border-blue-400">
+                            <p class="text-[10px] font-bold text-blue-700 uppercase">Sua Resposta:</p>
+                            <p class="text-xs text-blue-800 italic">"${managerReply.replyMessage}"</p>
+                        </div>
+                    `;
+                }
+
+                // Format Seller Reply Time
+                let responseTimeHtml = '';
+                if (sample.lastUpdate) {
+                   const date = sample.lastUpdate.toDate ? sample.lastUpdate.toDate() : new Date(sample.lastUpdate);
+                   const formatted = date.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+                   responseTimeHtml = `<span class="text-xs text-slate-400 block mt-1">Respondido em: ${formatted}</span>`;
+                }
+
                 const card = document.createElement('div');
                 card.className = 'attention-card p-4 rounded-lg bg-white shadow-sm border border-amber-200 relative';
                 
@@ -1024,12 +1047,32 @@
 
                 card.innerHTML = `
                     <div class="pr-8">
-                        <p class="font-bold text-slate-800 text-sm mb-1 line-clamp-1" title="${sample.produto}">${sample.produto}</p>
-                        <p class="text-xs text-slate-500 mb-1">Vendedor: <span class="font-medium">${sample.sellerName}</span></p>
-                        <p class="text-xs text-slate-500 mb-2">Pedido: ${sample.pedido}</p>
-                        <div class="text-xs bg-slate-100 p-2 rounded text-slate-600 italic">
-                            "${sample.feedback || 'Sem feedback'}"
+                        <div class="flex justify-between items-start">
+                             <h4 class="font-bold text-slate-800 text-sm mb-1 line-clamp-2" title="${sample.produto}">${sample.produto}</h4>
                         </div>
+                        <p class="text-xs text-slate-500 mb-2 line-clamp-2" title="${sample.descricao}">${sample.descricao || ''}</p>
+                        
+                        <div class="grid grid-cols-2 gap-x-2 gap-y-1 text-xs text-slate-600 mb-2">
+                            <p>Vendedor: <span class="font-medium text-slate-800">${sample.sellerName}</span></p>
+                            <p>Pedido: <span class="font-medium text-slate-800">${sample.pedido}</span></p>
+                            <p>NF: <span class="font-medium text-slate-800">${sample.notaFiscal} (${sample.emissaoNF})</span></p>
+                            <p>Qtde: <span class="font-medium text-slate-800">${sample.qtde}</span></p>
+                        </div>
+                        
+                        ${responseTimeHtml}
+
+                        <div class="mt-2 text-xs bg-slate-50 p-2 rounded text-slate-700 border border-slate-100">
+                            <span class="font-bold block text-slate-500 text-[10px] uppercase">Feedback:</span>
+                            ${sample.feedback || 'Sem feedback'}
+                        </div>
+
+                        ${sample.observation ? `
+                        <div class="mt-2 text-xs bg-yellow-50 p-2 rounded text-slate-700 border border-yellow-100">
+                             <span class="font-bold block text-yellow-600 text-[10px] uppercase">Observação:</span>
+                             "${sample.observation}"
+                        </div>` : ''}
+
+                        ${managerReplyHtml}
                     </div>
                 `;
                 card.appendChild(starBtn);
@@ -1902,6 +1945,7 @@
     </script>
 </body>
 </html>
+
 
 
 
