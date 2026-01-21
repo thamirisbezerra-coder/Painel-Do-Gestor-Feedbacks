@@ -9,58 +9,23 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { 
-            font-family: 'Inter', sans-serif; 
-            background-color: #f8fafc; 
-        }
-        .glass-effect {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-        }
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .glass-effect { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
         .notification-card { animation: slideIn 0.5s ease-out; }
         @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
         canvas { cursor: pointer; }
-        
-        .feedback-sample-item {
-            border-bottom: 1px solid #f1f5f9;
-            padding-bottom: 1rem;
-            margin-bottom: 1rem;
-            transition: all 0.2s;
-        }
+        .feedback-sample-item { border-bottom: 1px solid #f1f5f9; padding-bottom: 1rem; margin-bottom: 1rem; transition: all 0.2s; }
         .feedback-sample-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
         .feedback-sample-item:hover { background-color: #f8fafc; border-radius: 0.5rem; }
-
-        .manager-reply {
-            background-color: #f0f9ff; /* Azul bem claro */
-            color: #0369a1;
-            padding: 0.75rem;
-            border-radius: 0.5rem;
-            border-left: 3px solid #0ea5e9;
-            margin-top: 0.5rem;
-            font-size: 0.85rem;
-        }
-        .seller-reply {
-            background-color: #fff7ed;
-            color: #9a3412;
-            padding: 0.75rem;
-            border-radius: 0.5rem;
-            border-left: 3px solid #f97316;
-            margin-top: 0.5rem;
-            font-size: 0.85rem;
-            margin-left: 1.5rem; /* Indentação para réplica */
-        }
-        
-        .pd-postit-card {
-            background-color: #fefce8;
-            border: 1px solid #fde047;
-            padding: 1rem;
-            border-radius: 0.75rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-            transition: transform 0.2s;
-        }
+        .pd-postit-card { background-color: #fefce8; border: 1px solid #fde047; padding: 1rem; border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); transition: transform 0.2s; }
         .pd-postit-card:hover { transform: translateY(-2px); }
+        
+        /* Estilos para respostas no feed */
+        .manager-reply { background-color: #f0f9ff; color: #0369a1; padding: 0.75rem; border-radius: 0.5rem; border-left: 3px solid #0ea5e9; margin-top: 0.5rem; font-size: 0.85rem; position: relative; }
+        .seller-reply { background-color: #fff7ed; color: #9a3412; padding: 0.75rem; border-radius: 0.5rem; border-left: 3px solid #f97316; margin-top: 0.5rem; font-size: 0.85rem; margin-left: 1.5rem; position: relative; }
+        .delete-reply-btn { position: absolute; top: 5px; right: 5px; opacity: 0.6; cursor: pointer; }
+        .delete-reply-btn:hover { opacity: 1; color: #ef4444; }
 
-        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #f1f5f9; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
@@ -99,8 +64,6 @@
     </header>
 
     <div class="container mx-auto p-4 md:p-8 max-w-7xl">
-        
-        <!-- Input Section (Inicial) -->
         <div id="input-section" class="max-w-3xl mx-auto bg-white p-8 rounded-2xl shadow-lg border border-slate-100 mb-8 hidden animate-[fadeIn_0.5s_ease-out]">
             <div class="text-center mb-8">
                 <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-50 mb-4">
@@ -112,32 +75,26 @@
                     Colunas esperadas: (Pedido) (Cód. Cliente) (Razão Social) (Produto) (Descrição) (Qtde.) (Divisão Comercial) (Vendedor(a)) (Nota Fiscal) (Emissão NF) (Divisão P&D) (Status) (Feedback)
                 </div>
             </div>
-            
             <textarea id="data-input" rows="6" class="w-full p-4 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm font-mono text-slate-600 bg-slate-50" placeholder="Cole aqui os dados copiados do Excel..."></textarea>
-            
             <button id="process-btn" class="mt-6 w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold py-3.5 rounded-xl shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed">
                 Iniciar Nova Sessão e Gerar Links
             </button>
             <p id="info-message" class="text-center text-sm mt-4 text-slate-500 min-h-[1.5rem] font-medium"></p>
         </div>
 
-        <!-- Connection Section -->
-         <div id="connection-section" class="text-center mb-10 flex flex-col items-center justify-center gap-6 hidden py-10">
+        <div id="connection-section" class="text-center mb-10 flex flex-col items-center justify-center gap-6 hidden py-10">
              <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 max-w-lg w-full">
                  <h2 class="text-xl font-bold text-slate-800 mb-4">Gestão da Sessão</h2>
                  <p class="text-slate-500 mb-6 text-sm">Existe uma sessão ativa ou você pode iniciar uma nova zerando os dados anteriores.</p>
-                 
                  <button id="new-session-btn" class="w-full bg-slate-800 text-white font-semibold py-3 px-6 rounded-xl hover:bg-slate-900 transition-all mb-4 flex items-center justify-center gap-2">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     Iniciar Nova Sessão (Requer Senha)
                  </button>
-                 
                  <div class="relative flex py-3 items-center">
                     <div class="flex-grow border-t border-slate-200"></div>
                     <span class="flex-shrink-0 mx-4 text-slate-300 text-xs uppercase">Ou conectar manual</span>
                     <div class="flex-grow border-t border-slate-200"></div>
                 </div>
-
                  <div class="flex gap-2 mt-2">
                      <input type="text" id="manual-session-id" placeholder="ID da Sessão (ex: sessao_123...)" class="flex-1 border-slate-200 rounded-lg text-sm px-4 py-2 focus:ring-blue-500 focus:border-blue-500">
                      <button id="connect-session-btn" class="bg-white border border-slate-200 text-slate-600 font-semibold py-2 px-4 rounded-lg hover:bg-slate-50 transition-colors">Conectar</button>
@@ -145,11 +102,7 @@
              </div>
          </div>
 
-
-        <!-- Dashboard Section -->
         <div id="dashboard" class="hidden space-y-8">
-            
-            <!-- Links Rápidos -->
             <section class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <!-- Card Gerentes -->
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-all group relative overflow-hidden">
@@ -204,9 +157,7 @@
                 </div>
             </section>
 
-            <!-- Notifications & Results Link -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- Notifications -->
                 <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
                      <div class="flex justify-between items-center mb-4">
                          <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
@@ -447,17 +398,7 @@
                      </button>
                  </div>
              </div>
-             <div id="feedback-samples-list" class="flex-1 overflow-y-auto p-5 space-y-3 bg-white">
-                 <div class="animate-pulse flex space-x-4">
-                    <div class="flex-1 space-y-4 py-1">
-                      <div class="h-4 bg-slate-200 rounded w-3/4"></div>
-                      <div class="space-y-2">
-                        <div class="h-4 bg-slate-200 rounded"></div>
-                        <div class="h-4 bg-slate-200 rounded w-5/6"></div>
-                      </div>
-                    </div>
-                  </div>
-             </div>
+             <div id="feedback-samples-list" class="flex-1 overflow-y-auto p-5 space-y-3 bg-white"></div>
              <div class="p-4 border-t border-slate-100 bg-slate-50 flex justify-end">
                  <button id="close-feedback-samples-btn-bottom" class="bg-slate-200 text-slate-700 font-bold py-2 px-6 rounded-lg hover:bg-slate-300">Fechar</button>
              </div>
@@ -556,13 +497,22 @@
          </div>
      </div>
 
+     <div id="custom-alert" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 hidden z-50">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+            <h3 id="custom-alert-title" class="text-xl font-bold mb-4 text-red-600">Erro na Operação</h3>
+            <p id="custom-alert-message" class="text-gray-700 mb-6">Ocorreu um erro. Tente novamente.</p>
+            <div class="flex justify-end">
+                <button id="custom-alert-ok-btn" class="bg-blue-600 text-white font-bold py-2 px-5 rounded-lg">OK</button>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, onSnapshot, doc, writeBatch, setDoc, getDoc, getDocs, updateDoc, query, orderBy, serverTimestamp, addDoc, limit, where, runTransaction, Timestamp, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-        // CONFIGURAÇÃO FIREBASE
         const firebaseConfig = {
              apiKey: "AIzaSyAF_TE28Tbp2nakBGTva1yEEbBCqWvRdJQ",
              authDomain: "feedback-vendedores.firebaseapp.com",
@@ -578,10 +528,10 @@
         const auth = getAuth(app);
 
         const PENDING_STATUSES = ['EM ANÁLISE', 'AMOSTRA SEM FEEDBACK', 'SEM RETORNO DO CLIENTE', 'AMOSTRA NÃO TESTADA', 'PENDENTE', 'ENVIADO', 'EM ABERTO'];
-        const SEGMENTS = ['CÁRNEOS', 'EXPORTACAO', 'FARMA', 'FOOD SERVICE', 'LACTEOS', 'NUTRICAO ANIMAL', 'NUTRIÇÃO ESPORTIVA', 'PANIFICACAO', 'SMB', 'SORVETES', 'SUPPLY/FIS'];
+        const SEGMENTS = ['CÁRNEOS', 'EXPORTACAO', 'FARMA', 'FOOD SERVICE', 'LACTEOS', 'NUTRACEUTICOS', 'NUTRICAO ANIMAL', 'NUTRIÇÃO ESPORTIVA', 'PANIFICACAO', 'SMB', 'SORVETES', 'SUPPLY/FIS'];
         const AROMA_FILTER_VALUE = 'AROMAS_FILTER';
 
-        // --- DOM Elements ---
+        // DOM
         const processBtn = document.getElementById('process-btn');
         const dataInput = document.getElementById('data-input');
         const infoMessage = document.getElementById('info-message');
@@ -632,40 +582,28 @@
         const sendReplyBtn = document.getElementById('send-reply-btn');
         const liveIndicator = document.getElementById('live-indicator');
         const attentionList = document.getElementById('attention-list');
-        
-        // Internal Note Elements
         const saveInternalNoteBtn = document.getElementById('save-internal-note-btn');
         const internalNoteManager = document.getElementById('internal-note-manager');
         const internalNoteMessage = document.getElementById('internal-note-message');
-        
-        // Password Modal Elements
         const passwordModal = document.getElementById('password-modal');
         const sessionPasswordInput = document.getElementById('session-password-input');
         const passwordError = document.getElementById('password-error');
         const confirmPasswordBtn = document.getElementById('confirm-password-btn');
         const cancelPasswordBtn = document.getElementById('cancel-password-btn');
-
-        // Senhas Modals
         const senhasGerentesModal = document.getElementById('senhas-gerentes-modal');
         const openSenhasGerentesBtn = document.getElementById('open-senhas-gerentes-btn');
         const closeSenhasGerentesBtns = document.querySelectorAll('.close-senhas-gerentes-btn');
         const senhasPdModal = document.getElementById('senhas-pd-modal');
         const openSenhasPdBtn = document.getElementById('open-senhas-pd-btn');
         const closeSenhasPdBtns = document.querySelectorAll('.close-senhas-pd-btn');
-
-        // P&D Elements
+        const customAlert = document.getElementById('custom-alert');
+        const customAlertTitle = document.getElementById('custom-alert-title');
+        const customAlertMessage = document.getElementById('custom-alert-message');
+        const customAlertOkBtn = document.getElementById('custom-alert-ok-btn');
         const pdPostitsList = document.getElementById('pd-postits-list');
         const pdPostitSegmentFilter = document.getElementById('pd-postit-segment-filter');
 
-        // State Variables
-        let dataListenerUnsubscribe = null;
-        let notificationListenerUnsubscribe = null;
-        let sellerRepliesListenerUnsubscribe = null;
-        let sellerRepliesToManagerListenerUnsubscribe = null;
-        let destaquesAmostrasListenerUnsubscribe = null;
-        let historicalAromaDataUnsubscribe = null;
-        let pdPostitsListenerUnsubscribe = null;
-        let internalNotesListenerUnsubscribe = null; // New listener
+        let dataListenerUnsubscribe = null, notificationListenerUnsubscribe = null, sellerRepliesListenerUnsubscribe = null, sellerRepliesToManagerListenerUnsubscribe = null, destaquesAmostrasListenerUnsubscribe = null, historicalAromaDataUnsubscribe = null, pdPostitsListenerUnsubscribe = null, internalNotesListenerUnsubscribe = null;
         let currentSessionId = null;
         let chartInstances = {};
         let modalChartInstance = null;
@@ -673,256 +611,100 @@
         let allCurrentSamples = [];
         let sellerSegmentsCache = {};
         let currentFeedbackFilter = '';
-        let allSellerReplies = []; // Respostas do Gestor
-        let allSellerRepliesToManager = []; // Respostas do Vendedor
+        let allSellerReplies = []; 
+        let allSellerRepliesToManager = []; 
         let highlightedSamplesCache = [];
         let allPdPostits = [];
         let currentSampleForReply = null;
         let allNotifications = [];
         let areAllNotificationsVisible = false;
         let historicalAromaData = [];
-        
-        let sysNotifs = []; 
-        let replyNotifs = [];
-        let internalNotes = []; // Stores internal notes
+        let sysNotifs = [], replyNotifs = [], internalNotes = [];
+        let managerReplies = [];
 
         const normalizeText = (text = '') => text ? text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim() : '';
         const sanitizeForFirebaseId = (text) => normalizeText(text).replace(/[\/\.]/g, "-");
-
-        function isAroma(produto, descricao) {
-            const normalizedProduto = normalizeText(produto);
-            const normalizedDescricao = normalizeText(descricao);
-            return normalizedProduto.startsWith('DAR ') || normalizedProduto.startsWith('AROMAS ') || normalizedDescricao.includes('AROMA');
-        }
-
-        function getCanonicalFeedback(feedback) {
-             if (!feedback) return '';
-             const normalized = normalizeText(feedback.replace(/^(A - |R - |E - |P - )/, '').trim());
-             const mapping = {
-                 'APROVADO COM PEDIDO': 'COM PEDIDO',
-                 'APROVADA SEM PEDIDO': 'APROVADO SEM PEDIDO',
-                 'INNOVATION / EVENTOS': 'EVENTO',
-                 'AMOSTRA NAO TESTADA': 'AMOSTRA NÃO TESTADA',
-                 'EM ANALISE': 'EM ANÁLISE'
-             };
-             return mapping[normalized] || normalized;
-         }
-         
-        function getSellerNameFromPdContext(context = '') {
-            if (!context || !context.includes('(')) return null;
-            try {
-                let name = context.split('(').pop(); 
-                return normalizeText(name.replace(')', ''));
-            } catch (e) {
-                return null;
+        function isAroma(produto, descricao) { const normalizedProduto = normalizeText(produto); const normalizedDescricao = normalizeText(descricao); return normalizedProduto.startsWith('DAR ') || normalizedProduto.startsWith('AROMAS ') || normalizedDescricao.includes('AROMA'); }
+        function getCanonicalFeedback(feedback) { if (!feedback) return ''; const normalized = normalizeText(feedback.replace(/^(A - |R - |E - |P - )/, '').trim()); const mapping = { 'APROVADO COM PEDIDO': 'COM PEDIDO', 'APROVADA SEM PEDIDO': 'APROVADO SEM PEDIDO', 'INNOVATION / EVENTOS': 'EVENTO', 'AMOSTRA NAO TESTADA': 'AMOSTRA NÃO TESTADA', 'EM ANALISE': 'EM ANÁLISE' }; return mapping[normalized] || normalized; }
+        function getSellerNameFromPdContext(context = '') { if (!context || !context.includes('(')) return null; try { let name = context.split('(').pop(); return normalizeText(name.replace(')', '')); } catch (e) { return null; } }
+        function showAlert(message) { customAlertMessage.innerHTML = message; customAlert.classList.remove('hidden'); }
+        customAlertOkBtn.addEventListener('click', () => customAlert.classList.add('hidden'));
+        
+        window.deleteConversationItem = async (collectionName, id) => {
+            if(confirm("Excluir esta resposta?")) {
+                await deleteDoc(doc(db, "sessoes", currentSessionId, collectionName, id));
             }
         }
 
-        // --- Logic: New Session & Password ---
-        const openPasswordModal = () => {
-            passwordModal.classList.remove('hidden');
-            sessionPasswordInput.value = '';
-            passwordError.classList.add('hidden');
-            sessionPasswordInput.focus();
-        };
-
+        const openPasswordModal = () => { passwordModal.classList.remove('hidden'); sessionPasswordInput.value = ''; passwordError.classList.add('hidden'); sessionPasswordInput.focus(); };
         newSessionBtn.addEventListener('click', openPasswordModal);
-        if (headerNewSessionBtn) {
-            headerNewSessionBtn.addEventListener('click', openPasswordModal);
-        }
-
-        cancelPasswordBtn.addEventListener('click', () => {
-            passwordModal.classList.add('hidden');
-        });
-
-        confirmPasswordBtn.addEventListener('click', async () => {
-            const password = sessionPasswordInput.value;
-            if (password === 'admin123') { // Simple password check
-                passwordModal.classList.add('hidden');
-                await clearGlobalSession();
-            } else {
-                passwordError.classList.remove('hidden');
-            }
-        });
+        if (headerNewSessionBtn) { headerNewSessionBtn.addEventListener('click', openPasswordModal); }
+        cancelPasswordBtn.addEventListener('click', () => { passwordModal.classList.add('hidden'); });
+        confirmPasswordBtn.addEventListener('click', async () => { if (sessionPasswordInput.value === 'admin123') { passwordModal.classList.add('hidden'); await clearGlobalSession(); } else { passwordError.classList.remove('hidden'); } });
 
         async function clearGlobalSession() {
-            try {
-                const activeSessionRef = doc(db, "configuracoes", "sessaoAtiva");
-                await setDoc(activeSessionRef, { current: null }); 
-                console.log("Sessão ativa global limpa.");
-                resetToInitialState(); 
-                inputSection.classList.remove('hidden');
-                connectionSection.classList.add('hidden');
-                infoMessage.textContent = 'Sessão anterior finalizada. Cole os novos dados para iniciar.';
-                infoMessage.className = "text-center text-sm mt-4 text-green-600 font-bold";
-            } catch (error) {
-                console.error("Erro ao limpar sessão:", error);
-                alert("Erro ao conectar com servidor.");
-            }
+            try { await setDoc(doc(db, "configuracoes", "sessaoAtiva"), { current: null }); resetToInitialState(); inputSection.classList.remove('hidden'); connectionSection.classList.add('hidden'); infoMessage.textContent = 'Sessão anterior finalizada.'; infoMessage.className = "text-center text-sm mt-4 text-green-600 font-bold"; } catch (error) { console.error("Erro:", error); alert("Erro ao conectar."); }
         }
 
-        // --- Data Processing (Updated Columns) ---
-        processBtn.addEventListener('click', () => {
-            const data = dataInput.value.trim();
-            if (data) parseAndCreateNewSession(data);
-        });
+        processBtn.addEventListener('click', () => { const data = dataInput.value.trim(); if (data) parseAndCreateNewSession(data); });
 
         function parseAndCreateNewSession(data) {
-            infoMessage.textContent = "A processar...";
-            processBtn.disabled = true;
-
+            infoMessage.textContent = "A processar..."; processBtn.disabled = true;
             Papa.parse(data, {
-                header: true,
-                skipEmptyLines: true,
-                transformHeader: h => h.trim(),
+                header: true, skipEmptyLines: true, transformHeader: h => h.trim(),
                 complete: (results) => {
-                    if (results.errors.length > 0) {
-                        infoMessage.textContent = `Erro: ${results.errors[0].message}`;
-                        processBtn.disabled = false;
-                        return;
-                    }
-
-                    // Objeto para armazenar segmentos extraídos (Vendedor -> Segmento)
+                    if (results.errors.length > 0) { infoMessage.textContent = `Erro: ${results.errors[0].message}`; processBtn.disabled = false; return; }
                     const extractedSegments = {};
-
                     const allSamplesData = results.data.map((row, index) => {
                         const sellerName = row['Vendedor(a)'];
                         if (!sellerName || !row['Pedido']) return null; 
-                        
-                        // Extrair segmento da coluna 'Divisão Comercial'
                         const divisaoComercial = String(row['Divisão Comercial'] || '').trim();
-                        // Se houver um segmento válido, guardar para este vendedor
-                        if (divisaoComercial) {
-                            extractedSegments[normalizeText(sellerName)] = divisaoComercial;
-                        }
-
-                        return {
-                            id: `sample_${Date.now()}_${index}`,
-                            sellerName: String(sellerName),
-                            isPending: true, // FORÇA PENDENTE INICIALMENTE
-                            
-                            pedido: String(row['Pedido'] || ''),
-                            codCliente: String(row['Cód. Cliente'] || ''),
-                            razaoSocial: String(row['Razão Social'] || ''),
-                            produto: String(row['Produto'] || ''),
-                            descricao: String(row['Descrição'] || ''),
-                            qtde: String(row['Qtde.'] || ''),
-                            divisaoComercial: divisaoComercial, // Guardar no objeto também
-                            notaFiscal: String(row['Nota Fiscal'] || ''),
-                            emissaoNF: String(row['Emissão NF'] || ''),
-                            divisaoPD: String(row['Divisão P&D'] || ''),
-                            originalStatus: String(row['Status'] || ''),
-                            
-                            feedback: '',
-                            observation: '',
-                            finalizedByVendor: false,
-                            systemStatus: 'pending',
-                            lastUpdate: Timestamp.now()
-                        };
+                        if (divisaoComercial) { extractedSegments[normalizeText(sellerName)] = divisaoComercial; }
+                        return { id: `sample_${Date.now()}_${index}`, sellerName: String(sellerName), isPending: true, pedido: String(row['Pedido'] || ''), codCliente: String(row['Cód. Cliente'] || ''), razaoSocial: String(row['Razão Social'] || ''), produto: String(row['Produto'] || ''), descricao: String(row['Descrição'] || ''), qtde: String(row['Qtde.'] || ''), divisaoComercial: divisaoComercial, notaFiscal: String(row['Nota Fiscal'] || ''), emissaoNF: String(row['Emissão NF'] || ''), divisaoPD: String(row['Divisão P&D'] || ''), originalStatus: String(row['Status'] || ''), feedback: '', observation: '', finalizedByVendor: false, systemStatus: 'pending', lastUpdate: Timestamp.now() };
                     }).filter(Boolean);
-
-                    if (allSamplesData.length === 0) {
-                        infoMessage.textContent = "Nenhum dado válido. Verifique os nomes das colunas.";
-                        processBtn.disabled = false;
-                        return;
-                    }
-
-                    const sessionId = `sessao_${Date.now()}`;
-                    allCurrentSamples = allSamplesData;
-
-                    inputSection.classList.add('hidden');
-                    infoMessage.textContent = "Painel gerado! A sincronizar com a nuvem...";
-                    
-                    // Passar os segmentos extraídos para a função de salvamento
+                    if (allSamplesData.length === 0) { infoMessage.textContent = "Nenhum dado válido."; processBtn.disabled = false; return; }
+                    const sessionId = `sessao_${Date.now()}`; allCurrentSamples = allSamplesData;
+                    inputSection.classList.add('hidden'); infoMessage.textContent = "Sincronizando...";
                     saveDataAndUpdateActiveSession(allSamplesData, sessionId, extractedSegments);
                 }
             });
         }
 
         async function saveDataAndUpdateActiveSession(samples, sessionId, extractedSegments) {
-            const sellersData = samples.reduce((acc, sample) => {
-                if (!acc[sample.sellerName]) {
-                    acc[sample.sellerName] = { amostras: [], originalName: sample.sellerName, accessCode: null };
-                }
-                acc[sample.sellerName].amostras.push(sample);
-                return acc;
-            }, {});
-
-            // 1. Salvar dados da sessão (Vendedores e Amostras)
+            const sellersData = samples.reduce((acc, sample) => { if (!acc[sample.sellerName]) { acc[sample.sellerName] = { amostras: [], originalName: sample.sellerName, accessCode: null }; } acc[sample.sellerName].amostras.push(sample); return acc; }, {});
             const sellersArray = Object.entries(sellersData);
             const batchSize = 5; 
             for (let i = 0; i < sellersArray.length; i += batchSize) {
                 const chunk = sellersArray.slice(i, i + batchSize);
-                infoMessage.textContent = `A sincronizar vendedores ${i + 1}-${i + chunk.length}...`;
+                infoMessage.textContent = `Sincronizando ${i + 1}-${i + chunk.length}...`;
                 const batch = writeBatch(db);
-                chunk.forEach(([sellerName, data]) => {
-                    const sellerId = sanitizeForFirebaseId(sellerName);
-                    const docRef = doc(db, "sessoes", sessionId, "vendedores", sellerId);
-                    data.accessCode = Math.floor(100000 + Math.random() * 900000).toString();
-                    batch.set(docRef, data);
-                });
+                chunk.forEach(([sellerName, data]) => { const sellerId = sanitizeForFirebaseId(sellerName); const docRef = doc(db, "sessoes", sessionId, "vendedores", sellerId); data.accessCode = Math.floor(100000 + Math.random() * 900000).toString(); batch.set(docRef, data); });
                 await batch.commit();
             }
-
-            // 2. Salvar/Atualizar Segmentos Extraídos (vendedorConfig)
             const segmentEntries = Object.entries(extractedSegments);
             if (segmentEntries.length > 0) {
-                infoMessage.textContent = `A atualizar vínculos de segmentos...`;
                 const configBatch = writeBatch(db);
-                segmentEntries.forEach(([normalizedSellerName, segment]) => {
-                    const sellerId = sanitizeForFirebaseId(normalizedSellerName); 
-                    const configRef = doc(db, "vendedorConfig", sellerId);
-                    configBatch.set(configRef, { segmento: segment }, { merge: true });
-                    sellerSegmentsCache[normalizedSellerName] = segment;
-                });
+                segmentEntries.forEach(([normalizedSellerName, segment]) => { const sellerId = sanitizeForFirebaseId(normalizedSellerName); const configRef = doc(db, "vendedorConfig", sellerId); configBatch.set(configRef, { segmento: segment }, { merge: true }); sellerSegmentsCache[normalizedSellerName] = segment; });
                 await configBatch.commit();
             }
-
-            // 3. Definir Sessão Ativa
-            const activeSessionRef = doc(db, "configuracoes", "sessaoAtiva");
-            await setDoc(activeSessionRef, { current: sessionId });
-
-             infoMessage.textContent = `Sessão iniciada!`;
-             
-             listenForDataUpdates(sessionId);
-             listenForNotifications(sessionId);
-             listenForSellerReplies(sessionId);
-             listenForSellerRepliesToManager(sessionId);
-             listenForDestaquesAmostras(sessionId);
-             listenForHistoricalAromaData(sessionId);
-             listenForPdPostits(sessionId);
-             listenForInternalNotes(sessionId);
+            await setDoc(doc(db, "configuracoes", "sessaoAtiva"), { current: sessionId });
+            infoMessage.textContent = `Sessão iniciada!`;
+            listenForDataUpdates(sessionId); listenForNotifications(sessionId); listenForSellerReplies(sessionId); listenForSellerRepliesToManager(sessionId); listenForDestaquesAmostras(sessionId); listenForHistoricalAromaData(sessionId); listenForPdPostits(sessionId); listenForInternalNotes(sessionId);
         }
 
         function listenForDataUpdates(sessionId) {
-            currentSessionId = sessionId;
-            liveIndicator.classList.remove('hidden');
+            currentSessionId = sessionId; liveIndicator.classList.remove('hidden');
             const q = collection(db, "sessoes", sessionId, "vendedores");
             if (dataListenerUnsubscribe) dataListenerUnsubscribe();
-
             let isInitialDataLoad = true;
-
             dataListenerUnsubscribe = onSnapshot(q, async (snapshot) => {
-                 if (snapshot.empty && isInitialDataLoad) {
-                     resetToInitialState(true);
-                     return;
-                 }
-
+                 if (snapshot.empty && isInitialDataLoad) { resetToInitialState(true); return; }
                 const allSamples = snapshot.docs.flatMap(doc => doc.data().amostras || []);
                 allCurrentSamples = allSamples;
-
                 if (!snapshot.empty || !isInitialDataLoad) {
-                    inputSection.classList.add('hidden');
-                    connectionSection.classList.add('hidden');
-                    dashboard.classList.remove('hidden');
-                    sessionIdText.textContent = `Sessão: ${sessionId.split('_')[1] || sessionId}`;
-
-                    // Carregar Segmentos
+                    inputSection.classList.add('hidden'); connectionSection.classList.add('hidden'); dashboard.classList.remove('hidden'); sessionIdText.textContent = `Sessão: ${sessionId.split('_')[1] || sessionId}`;
                     const sellerDocs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    if (sellerDocs.length > 0) {
-                        await loadAllSellerSegments([...new Set(allSamples.map(s => s.sellerName))]);
-                    }
-
+                    if (sellerDocs.length > 0) { await loadAllSellerSegments([...new Set(allSamples.map(s => s.sellerName))]); }
                     processAndDisplayDashboard(allSamples, sessionId, sellerDocs);
                     infoMessage.textContent = '';
                 }
@@ -933,27 +715,12 @@
         async function loadAllSellerSegments(sellerNames) {
             const uniqueSellers = [...new Set(sellerNames.map(name => normalizeText(name)))];
             const sellersToFetch = uniqueSellers.filter(normalizedName => !sellerSegmentsCache.hasOwnProperty(normalizedName));
-            
-            if (sellersToFetch.length === 0) {
-                 populateSegmentFilters();
-                 return;
-            }
-
-            const fetchedConfigs = {};
+            if (sellersToFetch.length === 0) { populateSegmentFilters(); return; }
             try {
-                const q = collection(db, "vendedorConfig");
-                const snapshot = await getDocs(q);
-                snapshot.forEach(doc => {
-                    fetchedConfigs[doc.id] = doc.data().segmento;
-                });
-            } catch (error) {
-                console.error("Erro ao carregar configurações de segmento:", error);
-            }
-
-            uniqueSellers.forEach(normalizedName => {
-                sellerSegmentsCache[normalizedName] = fetchedConfigs[normalizedName] || null;
-            });
-
+                const q = collection(db, "vendedorConfig"); const snapshot = await getDocs(q);
+                const fetchedConfigs = {}; snapshot.forEach(doc => { fetchedConfigs[doc.id] = doc.data().segmento; });
+                uniqueSellers.forEach(normalizedName => { sellerSegmentsCache[normalizedName] = fetchedConfigs[normalizedName] || null; });
+            } catch (error) { console.error("Erro:", error); }
             populateSegmentFilters();
         }
 
@@ -961,170 +728,62 @@
              const currentSegments = [...new Set(Object.values(sellerSegmentsCache).filter(Boolean))].sort();
              const obsSelect = document.getElementById('observation-segment-filter');
              const pdSelect = document.getElementById('pd-postit-segment-filter');
-
              const populateSelect = (selectEl) => {
                  if (!selectEl) return;
                  const currentValue = selectEl.value; 
                  selectEl.innerHTML = '<option value="">Todos os Segmentos</option>';
-
-                 const aromaOption = document.createElement('option');
-                 aromaOption.value = AROMA_FILTER_VALUE;
-                 aromaOption.textContent = 'Aromas (DAR / AROMAS)';
-                 selectEl.appendChild(aromaOption);
-
-                 if (currentSegments.length > 0) {
-                     const separator = document.createElement('option');
-                     separator.disabled = true;
-                     separator.textContent = '--- Segmentos ---';
-                     selectEl.appendChild(separator);
-                 }
-
-                 currentSegments.forEach(segment => {
-                     const option = document.createElement('option');
-                     option.value = segment;
-                     option.textContent = segment;
-                     selectEl.appendChild(option);
-                 });
-                 
-                 if (selectEl.querySelector(`option[value="${currentValue}"]`)) {
-                     selectEl.value = currentValue;
-                 }
+                 const aromaOption = document.createElement('option'); aromaOption.value = AROMA_FILTER_VALUE; aromaOption.textContent = 'Aromas (DAR / AROMAS)'; selectEl.appendChild(aromaOption);
+                 if (currentSegments.length > 0) { const separator = document.createElement('option'); separator.disabled = true; separator.textContent = '--- Segmentos ---'; selectEl.appendChild(separator); }
+                 currentSegments.forEach(segment => { const option = document.createElement('option'); option.value = segment; option.textContent = segment; selectEl.appendChild(option); });
+                 if (selectEl.querySelector(`option[value="${currentValue}"]`)) { selectEl.value = currentValue; }
              };
-
-             populateSelect(obsSelect);
-             populateSelect(pdSelect);
-             populateModalSegmentFilter();
+             populateSelect(obsSelect); populateSelect(pdSelect); populateModalSegmentFilter();
         }
 
         function populateModalSegmentFilter() {
             const currentSegments = [...new Set(Object.values(sellerSegmentsCache).filter(Boolean))].sort();
             const currentValue = modalSegmentFilter.value;
-
             modalSegmentFilter.innerHTML = '<option value="">Todos os Segmentos</option>';
-            const aromaOption = document.createElement('option');
-            aromaOption.value = AROMA_FILTER_VALUE;
-            aromaOption.textContent = 'Aromas (DAR / AROMAS)';
-            modalSegmentFilter.appendChild(aromaOption);
-
-            if (currentSegments.length > 0) {
-                 const separator = document.createElement('option');
-                 separator.disabled = true;
-                 separator.textContent = '--- Segmentos ---';
-                 modalSegmentFilter.appendChild(separator);
-            }
-
-            currentSegments.forEach(segment => {
-                const option = document.createElement('option');
-                option.value = segment;
-                option.textContent = segment;
-                modalSegmentFilter.appendChild(option);
-            });
-
-            if (modalSegmentFilter.querySelector(`option[value="${currentValue}"]`)) {
-                modalSegmentFilter.value = currentValue;
-            }
+            const aromaOption = document.createElement('option'); aromaOption.value = AROMA_FILTER_VALUE; aromaOption.textContent = 'Aromas (DAR / AROMAS)'; modalSegmentFilter.appendChild(aromaOption);
+            if (currentSegments.length > 0) { const separator = document.createElement('option'); separator.disabled = true; separator.textContent = '--- Segmentos ---'; modalSegmentFilter.appendChild(separator); }
+            currentSegments.forEach(segment => { const option = document.createElement('option'); option.value = segment; option.textContent = segment; modalSegmentFilter.appendChild(option); });
+            if (modalSegmentFilter.querySelector(`option[value="${currentValue}"]`)) { modalSegmentFilter.value = currentValue; }
         }
-
 
         function processAndDisplayDashboard(samples, sessionId, sellerDocs) {
             const combinedSamples = [...samples, ...historicalAromaData];
-            renderAttentionArea(); 
-            renderCharts(combinedSamples);
-            renderFeedbackDetails(combinedSamples);
-            renderSegmentCharts(samples);
-            renderSellersList(samples, sessionId, sellerDocs);
-            renderObservationsFeed(samples);
-            renderPdPostits();
-            populateSegmentFilters();
+            renderAttentionArea(); renderCharts(combinedSamples); renderFeedbackDetails(combinedSamples); renderSegmentCharts(samples); renderSellersList(samples, sessionId, sellerDocs); renderObservationsFeed(samples); renderPdPostits(); populateSegmentFilters();
         }
         
         function renderAttentionArea() {
-            const container = document.getElementById('attention-list');
-            if (!container) return;
-            
+            const container = document.getElementById('attention-list'); if (!container) return;
             const allData = [...allCurrentSamples, ...historicalAromaData];
             const highlightedItems = allData.filter(s => highlightedSamplesCache.includes(s.id));
-
-            if (highlightedItems.length === 0) {
-                container.innerHTML = '<p class="text-slate-400 text-sm italic col-span-full text-center py-4">Nenhuma amostra em atenção no momento.</p>';
-                return;
-            }
-
+            if (highlightedItems.length === 0) { container.innerHTML = '<p class="text-slate-400 text-sm italic col-span-full text-center py-4">Nenhuma amostra em atenção no momento.</p>'; return; }
             container.innerHTML = '';
-            
             highlightedItems.forEach(sample => {
-                // Find existing Manager Reply
+                const card = document.createElement('div');
+                card.className = 'attention-card bg-white rounded-lg shadow-sm border border-amber-200 overflow-hidden group transition-all duration-200';
+                
                 const managerReply = !sample.isHistorical ? allSellerReplies
                      .filter(r => r.sellerName === sample.sellerName && r.pedido === sample.pedido && r.produto === sample.produto)
                      .sort((a, b) => (b.timestamp?.toDate() ?? 0) - (a.timestamp?.toDate() ?? 0))[0] : null;
 
                 let managerReplyHtml = '';
                 if (managerReply) {
-                    managerReplyHtml = `
-                        <div class="mt-2 bg-blue-50 p-2 rounded border-l-2 border-blue-400">
-                            <p class="text-[10px] font-bold text-blue-700 uppercase">Sua Resposta:</p>
-                            <p class="text-xs text-blue-800 italic">"${managerReply.replyMessage}"</p>
-                        </div>
-                    `;
+                    managerReplyHtml = `<div class="mt-2 bg-blue-50 p-2 rounded border-l-2 border-blue-400"><p class="text-[10px] font-bold text-blue-700 uppercase">Sua Resposta:</p><p class="text-xs text-blue-800 italic">"${managerReply.replyMessage}"</p></div>`;
                 }
 
-                // Format Seller Reply Time
                 let responseTimeHtml = '';
                 if (sample.lastUpdate) {
                    const date = sample.lastUpdate.toDate ? sample.lastUpdate.toDate() : new Date(sample.lastUpdate);
                    const formatted = date.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
                    responseTimeHtml = `<span class="text-xs text-slate-400 block mt-1 text-right">Respondido em: ${formatted}</span>`;
                 }
-
-                const card = document.createElement('div');
-                card.className = 'attention-card bg-white rounded-lg shadow-sm border border-amber-200 overflow-hidden group transition-all duration-200';
                 
                 const bodyId = `attention-body-${sample.id}`;
 
-                card.innerHTML = `
-                    <div class="attention-header p-3 cursor-pointer hover:bg-slate-50 transition-colors flex justify-between items-center gap-3 relative" onclick="toggleAttentionCard('${bodyId}', this)">
-                        <div class="flex-1 min-w-0 pr-8">
-                             <p class="text-xs text-blue-600 font-bold uppercase tracking-wide truncate mb-0.5">${sample.razaoSocial || 'Cliente não informado'}</p>
-                             <p class="font-bold text-slate-800 text-sm truncate" title="${sample.produto}">${sample.produto}</p>
-                        </div>
-                        
-                        <div class="absolute top-2 right-2 flex items-center gap-2">
-                             <button class="star-btn p-1 text-amber-500 hover:text-amber-600 transition-colors z-20" onclick="toggleDestaqueAmostra(event, '${sample.id}')">
-                                <svg class="w-5 h-5 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588 1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
-                            </button>
-                        </div>
-                        <svg class="chevron-icon w-4 h-4 text-slate-300 transition-transform duration-200 absolute bottom-2 right-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
-                    </div>
-                    
-                    <div id="${bodyId}" class="hidden border-t border-slate-100 bg-slate-50/50 p-4 text-sm animate-[fadeIn_0.2s_ease-out]">
-                         <div class="mb-3">
-                            <p class="text-xs text-slate-500 mb-1 line-clamp-2 italic">Desc: ${sample.descricao || 'Sem descrição'}</p>
-                         </div>
-
-                         <div class="grid grid-cols-2 gap-x-2 gap-y-2 text-xs text-slate-600 mb-3 bg-white p-2 rounded border border-slate-100">
-                            <p>Vend.: <span class="font-bold text-slate-800">${sample.sellerName}</span></p>
-                            <p>Ped.: <span class="font-medium text-slate-800">${sample.pedido}</span></p>
-                            <p>NF: <span class="font-medium text-slate-800">${sample.notaFiscal}</span></p>
-                            <p>Qtde: <span class="font-medium text-slate-800">${sample.qtde}</span></p>
-                         </div>
-                         
-                         <div class="space-y-2">
-                            <div class="text-xs bg-white p-2 rounded text-slate-700 border border-slate-200 shadow-sm">
-                                <span class="font-bold block text-slate-500 text-[10px] uppercase mb-0.5">Feedback:</span>
-                                ${sample.feedback || 'Sem feedback'}
-                            </div>
-
-                            ${sample.observation ? `
-                            <div class="text-xs bg-yellow-50 p-2 rounded text-slate-700 border border-yellow-100 shadow-sm">
-                                 <span class="font-bold block text-yellow-600 text-[10px] uppercase mb-0.5">Observação:</span>
-                                 "${sample.observation}"
-                            </div>` : ''}
-                            
-                            ${managerReplyHtml}
-                            ${responseTimeHtml}
-                         </div>
-                    </div>
-                `;
+                card.innerHTML = `<div class="attention-header p-3 cursor-pointer hover:bg-slate-50 transition-colors flex justify-between items-center gap-3 relative" onclick="toggleAttentionCard('${bodyId}', this)"><div class="flex-1 min-w-0 pr-8"><p class="text-xs text-blue-600 font-bold uppercase tracking-wide truncate mb-0.5">${sample.razaoSocial || 'Cliente não informado'}</p><p class="font-bold text-slate-800 text-sm truncate" title="${sample.produto}">${sample.produto}</p></div><div class="absolute top-2 right-2 flex items-center gap-2"><button class="star-btn p-1 text-amber-500 hover:text-amber-600 transition-colors z-20" onclick="toggleDestaqueAmostra(event, '${sample.id}')"><svg class="w-5 h-5 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588 1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg></button></div><svg class="chevron-icon w-4 h-4 text-slate-300 transition-transform duration-200 absolute bottom-2 right-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg></div><div id="${bodyId}" class="hidden border-t border-slate-100 bg-slate-50/50 p-4 text-sm animate-[fadeIn_0.2s_ease-out]"><div class="mb-3"><p class="text-xs text-slate-500 mb-1 line-clamp-2 italic">Desc: ${sample.descricao || 'Sem descrição'}</p></div><div class="grid grid-cols-2 gap-x-2 gap-y-2 text-xs text-slate-600 mb-3 bg-white p-2 rounded border border-slate-100"><p>Vend.: <span class="font-bold text-slate-800">${sample.sellerName}</span></p><p>Ped.: <span class="font-medium text-slate-800">${sample.pedido}</span></p><p>NF: <span class="font-medium text-slate-800">${sample.notaFiscal}</span></p><p>Qtde: <span class="font-medium text-slate-800">${sample.qtde}</span></p></div><div class="space-y-2"><div class="text-xs bg-white p-2 rounded text-slate-700 border border-slate-200 shadow-sm"><span class="font-bold block text-slate-500 text-[10px] uppercase mb-0.5">Feedback:</span>${sample.feedback || 'Sem feedback'}</div>${sample.observation ? `<div class="text-xs bg-yellow-50 p-2 rounded text-slate-700 border border-yellow-100 shadow-sm"><span class="font-bold block text-yellow-600 text-[10px] uppercase mb-0.5">Observação:</span>"${sample.observation}"</div>` : ''}${managerReplyHtml}${responseTimeHtml}</div></div>`;
                 container.appendChild(card);
             });
         }
@@ -1132,19 +791,9 @@
         window.toggleAttentionCard = function(id, headerElement) {
             const body = document.getElementById(id);
             const chevron = headerElement.querySelector('.chevron-icon');
-            
-            if (body.classList.contains('hidden')) {
-                body.classList.remove('hidden');
-                chevron.style.transform = 'rotate(180deg)';
-                headerElement.classList.add('bg-amber-50/50'); // Slight highlight when open
-            } else {
-                body.classList.add('hidden');
-                chevron.style.transform = 'rotate(0deg)';
-                headerElement.classList.remove('bg-amber-50/50');
-            }
+            if (body.classList.contains('hidden')) { body.classList.remove('hidden'); chevron.style.transform = 'rotate(180deg)'; headerElement.classList.add('bg-amber-50/50'); } else { body.classList.add('hidden'); chevron.style.transform = 'rotate(0deg)'; headerElement.classList.remove('bg-amber-50/50'); }
         }
         
-        // Expose function globally for inline clicks if needed, though we use addEventListener now
         window.toggleDestaqueAmostra = async function(e, sampleId) {
             if (e) e.stopPropagation();
             if (!currentSessionId || !sampleId) return;
@@ -1162,18 +811,18 @@
             
             // Update modal UI if open
             if (!feedbackSamplesModal.classList.contains('hidden')) {
-                // Find button in modal and update class directly for instant feedback
-                const btn = feedbackSamplesList.querySelector(`.highlight-sample-btn[data-sample-id="${sampleId}"]`);
-                if(btn) {
-                    const icon = btn.querySelector('svg');
-                    if (highlightedSamplesCache.includes(sampleId)) {
-                        btn.className = "highlight-sample-btn p-1 rounded-full hover:bg-gray-100 ml-1 text-amber-500 fill-current";
-                        if(icon) icon.classList.remove('text-gray-300');
-                    } else {
-                         btn.className = "highlight-sample-btn p-1 rounded-full hover:bg-gray-100 ml-1 text-gray-300 hover:text-amber-500";
-                         if(icon) icon.classList.add('text-gray-300');
-                    }
-                }
+                 // Update icon styles immediately
+                 const btn = feedbackSamplesList.querySelector(`.highlight-sample-btn[data-sample-id="${sampleId}"]`);
+                 if(btn) {
+                     const icon = btn.querySelector('svg');
+                     if (highlightedSamplesCache.includes(sampleId)) {
+                         btn.classList.remove('text-gray-300', 'hover:text-amber-500');
+                         btn.classList.add('text-amber-500', 'fill-current');
+                     } else {
+                         btn.classList.add('text-gray-300', 'hover:text-amber-500');
+                         btn.classList.remove('text-amber-500', 'fill-current');
+                     }
+                 }
             }
 
             try {
@@ -1191,7 +840,6 @@
                 });
             } catch (error) {
                 console.error("Erro ao atualizar destaque:", error);
-                // Revert if error (optional, but good practice)
             }
         }
 
@@ -1199,7 +847,7 @@
         function renderCharts(samples) {
             let pending = 0, resolved = 0, approved = 0, rejected = 0, events = 0;
             const APPROVED = ['COM PEDIDO', 'APROVADO SEM PEDIDO'];
-            const REJECTED = ['APRESENTAÇÃO PRÓ ATIVA', 'CALIBRE', 'EXTRAVIADA', 'FORA DA ESPECIFICAÇÃO', 'FORA DO PERFIL', 'PRODUTO DESCONTINUADO', 'QUANTIDADE INSUFICIENTE', 'REPRESENTAÇÃO', 'SEM RETORNO', 'EXPORTACAO'];
+            const REJECTED = ['APRESENTAÇÃO PRÓ ATIVA', 'CALIBRE', 'EXTRAVIADA', 'FORA DA ESPECIFICAÇÃO DO CLIENTE', 'FORA DO PERFIL DO CLIENTE', 'FRACA / ESTOURANDO / COM CHUVEIRO', 'PRODUTO DESCONTINUADO', 'QUANTIDADE INSUFICIENTE', 'REPRESENTAÇÃO / DISTRIBUIDOR', 'SEM RETORNO DO CLIENTE', 'EXPORTACAO'];
             const EVENTS = ['INNOVATION / EVENTOS', 'EVENTO'];
 
             samples.forEach(s => {
@@ -1679,15 +1327,21 @@
 
             let filteredSamples = dataSource.filter(sample => {
                  if (feedbackText === 'PENDENTE (SISTEMA)') {
-                     return sample.isPending && (!sample.feedback || sample.feedback.trim() === '');
+                     let isSamplePending = sample.isPending;
+                     if (typeof isSamplePending === 'undefined') {
+                         isSamplePending = PENDING_STATUSES.includes(normalizeText(sample.originalStatus));
+                     }
+                     return isSamplePending && (!sample.feedback || sample.feedback.trim() === '');
                  }
                 return getCanonicalFeedback(sample.feedback) === feedbackText;
             });
 
             if (segmentFilter) {
                 if (segmentFilter === AROMA_FILTER_VALUE) {
+                    // Filter specifically for aromas based on product/description
                     filteredSamples = filteredSamples.filter(sample => isAroma(sample.produto, sample.descricao));
                 } else {
+                    // Filter by actual seller segment (using LIVE cache)
                     filteredSamples = filteredSamples.filter(sample => sellerSegmentsCache[normalizeText(sample.sellerName)] === segmentFilter);
                 }
             }
@@ -1740,7 +1394,7 @@
                      if (sample.lastUpdate) {
                         const date = sample.lastUpdate.toDate ? sample.lastUpdate.toDate() : new Date(sample.lastUpdate);
                         const formatted = date.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
-                        responseTimeHtml = `<span class="text-xs text-slate-400 block mt-1">Resp. em: ${formatted}</span>`;
+                        responseTimeHtml = `<span class="text-xs text-slate-400 block mt-1 text-right">Respondido em: ${formatted}</span>`;
                      }
 
                      itemDiv.innerHTML = `
@@ -1917,6 +1571,14 @@
                    const formatted = date.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
                    responseTimeHtml = `<span class="text-xs text-slate-400 block">Resp. em: ${formatted}</span>`;
                 }
+                
+                // Botão de excluir para o gestor
+                const deleteHtml = `
+                    <div class="flex justify-end gap-2 mt-2">
+                         ${replyBadge}
+                         <button class="delete-conversation-btn bg-red-100 text-red-600 px-2 py-1 rounded text-xs hover:bg-red-200" data-sample-id="${s.id}">Excluir Conversa</button>
+                         <button class="text-blue-600 hover:text-blue-800 font-bold text-xs uppercase tracking-wide reply-btn" data-sample-id="${s.id}">Responder</button>
+                    </div>`;
 
                 d.innerHTML = `
                     <div class="flex justify-between items-start mb-2">
@@ -1939,18 +1601,45 @@
                     </div>
                     <p class="text-slate-600 mt-2 border-l-4 border-blue-200 pl-3 italic">"${s.observation}"</p>
                     
-                    <div class="mt-3 flex justify-between items-center pt-2 border-t border-slate-50">
-                        <div>${replyBadge}</div>
-                        <button class="text-blue-600 hover:text-blue-800 font-bold text-xs uppercase tracking-wide reply-btn" data-id="${s.id}">Responder</button>
-                    </div>
+                    ${deleteHtml}
                 `;
                 container.appendChild(d);
             });
             
             container.querySelectorAll('.reply-btn').forEach(b => {
                 b.onclick = (e) => {
-                    const s = allCurrentSamples.find(x => x.id === e.target.dataset.id);
+                    const s = allCurrentSamples.find(x => x.id === e.target.dataset.sampleId);
                     if(s) openReplyModalWithSample(s);
+                }
+            });
+            
+            // Adicionar Listener para botão de excluir
+            container.querySelectorAll('.delete-conversation-btn').forEach(b => {
+                b.onclick = async (e) => {
+                    const sampleId = e.target.dataset.sampleId;
+                    const sample = allCurrentSamples.find(x => x.id === sampleId);
+                    if(!sample) return;
+                    
+                    if(confirm("Deseja apagar todas as respostas desta conversa?")) {
+                        try {
+                            const q = query(
+                                collection(db, "sessoes", currentSessionId, "notificacoesVendedor"),
+                                where("sellerName", "==", sample.sellerName),
+                                where("pedido", "==", sample.pedido),
+                                where("produto", "==", sample.produto)
+                            );
+                            const snapshot = await getDocs(q);
+                            const batch = writeBatch(db);
+                            snapshot.docs.forEach(doc => {
+                                batch.delete(doc.ref);
+                            });
+                            await batch.commit();
+                            alert("Conversa limpa com sucesso.");
+                        } catch(err) {
+                            console.error("Erro ao apagar conversa:", err);
+                            alert("Erro ao apagar conversa.");
+                        }
+                    }
                 }
             });
         }
@@ -2139,6 +1828,7 @@
     </script>
 </body>
 </html>
+
 
 
 
