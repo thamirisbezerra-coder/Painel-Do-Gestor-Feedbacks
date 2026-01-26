@@ -69,6 +69,29 @@
         }
         .pd-postit-card:hover { transform: translateY(-2px); }
 
+        /* Estilos para Notas de Item (Lembretes) */
+        .item-note-area {
+            display: none;
+            margin-top: 0.75rem;
+            background-color: #fffbeb;
+            border: 1px solid #fcd34d;
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            animation: fadeIn 0.3s ease-out;
+        }
+        .item-note-area.active { display: block; }
+        
+        .saved-note {
+            background-color: #fff7ed; /* Orange-50 */
+            border-left: 3px solid #f97316; /* Orange-500 */
+            color: #9a3412;
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.375rem;
+            font-size: 0.75rem;
+            margin-top: 0.5rem;
+            position: relative;
+        }
+
         /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #f1f5f9; }
@@ -238,7 +261,7 @@
                      <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 mb-4">
                         <div class="flex items-center justify-between mb-2 cursor-pointer" onclick="document.getElementById('internal-note-form').classList.toggle('hidden')">
                             <h3 class="text-sm font-bold text-slate-700 flex items-center gap-2">
-                                <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                                <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
                                 Adicionar Nota Interna
                             </h3>
                             <svg class="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
@@ -655,7 +678,7 @@
         const replyModal = document.getElementById('reply-modal');
         const replyModalProduct = document.getElementById('reply-modal-product');
         const replyModalSeller = document.getElementById('reply-modal-seller');
-        const replyModalObservation = replyModal.querySelector('.italic');
+        const replyModalObservation = replyModal ? replyModal.querySelector('.italic') : null;
         const managerNameInput = document.getElementById('manager-name-input');
         const replyMessageInput = document.getElementById('reply-message-input');
         const cancelReplyBtn = document.getElementById('cancel-reply-btn');
@@ -726,6 +749,7 @@
         let sysNotifs = []; 
         let replyNotifs = [];
         let internalNotes = [];
+        let gestorItemNotes = {}; 
 
         const normalizeText = (text = '') => text ? text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim() : '';
         const sanitizeForFirebaseId = (text) => normalizeText(text).replace(/[\/\.]/g, "-");
@@ -759,57 +783,175 @@
             }
         }
 
-        // --- Logic: Admin Login ---
-        adminLoginBtn.addEventListener('click', () => {
-            adminLoginModal.classList.remove('hidden');
-            adminPasswordLoginInput.value = '';
-            adminLoginError.classList.add('hidden');
-            adminPasswordLoginInput.focus();
-        });
+        // --- Helper Functions ---
+        // DEFINITION OF THE MISSING FUNCTION
+        function openReplyModalWithSample(sample) {
+            if (!sample) return;
+            currentSampleForReply = sample; 
+            
+            if(replyModalProduct) replyModalProduct.textContent = sample.produto; 
+            if(replyModalSeller) replyModalSeller.textContent = `Vendedor: ${sample.sellerName}`; 
+            if(replyModalObservation) replyModalObservation.textContent = `"${sample.observation || ''}"`; 
+            
+            const savedName = localStorage.getItem('managerName'); 
+            if (savedName && managerNameInput) managerNameInput.value = savedName; 
+            
+            if(replyMessageInput) replyMessageInput.value = '';
+            if(replyModal) replyModal.classList.remove('hidden');
+        }
 
-        cancelAdminLoginBtn.addEventListener('click', () => adminLoginModal.classList.add('hidden'));
+        function renderFeedbackDetails(samples) {
+            const lists = { approved: document.getElementById('approved-feedback-list'), rejected: document.getElementById('rejected-feedback-list'), events: document.getElementById('events-feedback-list'), pending: document.getElementById('pending-feedback-list') };
+            Object.values(lists).forEach(list => { if(list) list.innerHTML = ''; });
+            const counts = { approved: {}, rejected: {}, events: {}, pending: {} };
+            const CANONICAL_APPROVED = ['COM PEDIDO', 'APROVADO SEM PEDIDO'];
+            const CANONICAL_REJECTED = ['APRESENTAÇÃO PRÓ ATIVA', 'CALIBRE', 'EXTRAVIADA', 'FORA DA ESPECIFICAÇÃO DO CLIENTE', 'FORA DO PERFIL DO CLIENTE', 'FRACA / ESTOURANDO / COM CHUVEIRO', 'PRODUTO DESCONTINUADO', 'QUANTIDADE INSUFICIENTE', 'REPRESENTAÇÃO / DISTRIBUIDOR', 'SEM RETORNO DO CLIENTE', 'EXPORTACAO'];
+            const CANONICAL_EVENTS = ['EVENTO'];
+            const CANONICAL_PENDING = ['AMOSTRA NÃO TESTADA', 'EM ANÁLISE', 'AMOSTRA SEM FEEDBACK'];
+            samples.forEach(sample => { const feedback = sample.feedback ? sample.feedback.trim() : ''; if (feedback === '') { if(sample.isPending) counts.pending['PENDENTE (SISTEMA)'] = (counts.pending['PENDENTE (SISTEMA)'] || 0) + 1; return; } const canonicalFeedback = getCanonicalFeedback(feedback); let category = null; if (feedback.startsWith('A -') || CANONICAL_APPROVED.includes(canonicalFeedback)) category = 'approved'; else if (feedback.startsWith('R -') || CANONICAL_REJECTED.includes(canonicalFeedback)) category = 'rejected'; else if (feedback.startsWith('E -') || CANONICAL_EVENTS.includes(canonicalFeedback)) category = 'events'; else if (feedback.startsWith('P -') || CANONICAL_PENDING.includes(canonicalFeedback)) category = 'pending'; if (category) counts[category][canonicalFeedback] = (counts[category][canonicalFeedback] || 0) + 1; });
+            const renderList = (listElement, data) => { if (!listElement) return; const sortedData = Object.entries(data).sort(([, a], [, b]) => b - a); if (sortedData.length === 0) { listElement.innerHTML = '<li>Nenhum feedback.</li>'; return; } listElement.innerHTML = sortedData.map(([text, count]) => `<li><button class="w-full text-left hover:bg-slate-50 px-2 py-1 rounded flex justify-between items-center group feedback-filter-btn" data-feedback="${text}"><span class="text-xs font-medium text-slate-600 group-hover:text-blue-600 transition-colors">- ${text}</span><span class="bg-slate-100 text-slate-600 text-xs px-2 py-0.5 rounded-full font-bold group-hover:bg-blue-100 group-hover:text-blue-700">${count}</span></button></li>`).join(''); listElement.querySelectorAll('.feedback-filter-btn').forEach(btn => btn.addEventListener('click', () => showFeedbackSamples(btn.dataset.feedback))); };
+            renderList(lists.approved, counts.approved); renderList(lists.rejected, counts.rejected); renderList(lists.events, counts.events); renderList(lists.pending, counts.pending);
+        }
 
-        confirmAdminLoginBtn.addEventListener('click', () => {
-            if(adminPasswordLoginInput.value === 'admin123') {
-                isAdmin = true;
-                adminBadge.classList.remove('hidden');
-                adminLoginModal.classList.add('hidden');
-                clearAllNotifsBtn.classList.remove('hidden');
+        function listenForSellerRepliesToManager(sessionId) {
+            const q = query(collection(db, "sessoes", sessionId, "respostasVendedor"));
+            sellerRepliesToManagerListenerUnsubscribe = onSnapshot(q, (snapshot) => {
+                 allSellerRepliesToManager = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                 
+                 // Map to notification format
+                 replyNotifs = snapshot.docs.map(doc => { 
+                     const data = doc.data(); 
+                     return { 
+                         id: doc.id, 
+                         timestamp: data.timestamp, 
+                         message: `<strong>${data.sellerName}</strong> respondeu: "${data.replyMessage}" (${data.produto})`, 
+                         color: 'blue', 
+                         type: 'reply' 
+                     }; 
+                 });
+                 
+                 if(!dashboard.classList.contains('hidden')) renderObservationsFeed(allCurrentSamples);
+                 mergeAndRenderNotifications();
+            });
+        }
+
+        function listenForInternalNotes(sessionId) {
+            const q = query(collection(db, "sessoes", sessionId, "notasInternas"), orderBy("timestamp", "desc"));
+            internalNotesListenerUnsubscribe = onSnapshot(q, (snapshot) => {
+                internalNotes = snapshot.docs.map(d => ({ id: d.id, ...d.data(), type: 'internal_note', color: 'gray' }));
+                mergeAndRenderNotifications();
+            });
+        }
+
+        function mergeAndRenderNotifications() {
+            allNotifications = [...sysNotifs, ...replyNotifs, ...internalNotes].sort((a, b) => { 
+                const tA = a.timestamp?.toDate ? a.timestamp.toDate() : new Date(0); 
+                const tB = b.timestamp?.toDate ? b.timestamp.toDate() : new Date(0); 
+                return tB - tA; 
+            });
+            updateNotificationDisplay();
+            updateBellIcon();
+            if (!historyModal.classList.contains('hidden')) renderHistoryList();
+        }
+
+        function updateBellIcon() { 
+            if (allNotifications.length > 0) bellBadge.classList.remove('hidden'); 
+            else bellBadge.classList.add('hidden'); 
+        }
+
+        function updateNotificationDisplay() {
+            notificationsList.innerHTML = '';
+            if (allNotifications.length === 0) { 
+                notificationsList.innerHTML = '<p class="text-slate-400 text-sm text-center py-4">Nenhuma notificação.</p>'; 
+                return; 
+            }
+            const display = areAllNotificationsVisible ? allNotifications : allNotifications.slice(0, 5); 
+            display.forEach(n => {
+                const div = document.createElement('div');
+                let borderClass = 'border-blue-500'; 
+                if(n.color === 'green') borderClass = 'border-green-500'; 
+                if(n.color === 'purple') borderClass = 'border-purple-500'; 
+                if(n.color === 'gray') borderClass = 'border-slate-500 bg-slate-100';
                 
-                // Re-render interfaces to show admin controls
-                if(!dashboard.classList.contains('hidden')) {
-                    renderObservationsFeed(allCurrentSamples);
-                    processAndDisplayDashboard(allCurrentSamples, currentSessionId, []); // Simplified reload
+                div.className = `p-3 rounded-lg border-l-4 text-sm bg-slate-50 mb-2 ${borderClass}`;
+                let timeString = ''; 
+                if (n.timestamp) { 
+                    const date = n.timestamp.toDate ? n.timestamp.toDate() : new Date(n.timestamp); 
+                    timeString = date.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }); 
                 }
-            } else {
-                adminLoginError.classList.remove('hidden');
+                
+                let icon = ''; 
+                if(n.type === 'internal_note') icon = '<svg class="w-3 h-3 text-slate-500 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>';
+                
+                const canDelete = isAdmin || n.type === 'internal_note'; 
+                const deleteButton = canDelete ? `<button class="text-slate-400 hover:text-red-500 transition-colors p-1" onclick="deleteNotification('${n.id}', '${n.type}')" title="Excluir"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>` : '';
+                
+                div.innerHTML = `<div class="flex justify-between items-start gap-2"><div class="flex-1 text-slate-700">${icon}${n.message}</div><div class="flex flex-col items-end gap-1"><span class="text-[10px] text-slate-400 whitespace-nowrap mt-0.5">${timeString}</span>${deleteButton}</div></div>`;
+                notificationsList.appendChild(div);
+            });
+        }
+
+        function listenForNotifications(sessionId) {
+            const q = query(collection(db, "sessoes", sessionId, "notificacoes"), orderBy("timestamp", "desc"));
+            notificationListenerUnsubscribe = onSnapshot(q, (snapshot) => {
+                sysNotifs = snapshot.docs.map(d => ({id: d.id, ...d.data(), type: 'system'}));
+                mergeAndRenderNotifications();
+            });
+        }
+
+        // --- Logic: Listeners with Safety Guards ---
+        if(adminLoginBtn) adminLoginBtn.addEventListener('click', () => {
+            adminLoginModal.classList.remove('hidden');
+            if(adminPasswordLoginInput) {
+                adminPasswordLoginInput.value = '';
+                adminLoginError.classList.add('hidden');
+                adminPasswordLoginInput.focus();
             }
         });
 
-        // --- Logic: New Session & Password ---
+        if(cancelAdminLoginBtn) cancelAdminLoginBtn.addEventListener('click', () => adminLoginModal.classList.add('hidden'));
+
+        if(confirmAdminLoginBtn) confirmAdminLoginBtn.addEventListener('click', () => {
+            if(adminPasswordLoginInput.value === 'admin123') {
+                isAdmin = true;
+                if(adminBadge) adminBadge.classList.remove('hidden');
+                adminLoginModal.classList.add('hidden');
+                if(clearAllNotifsBtn) clearAllNotifsBtn.classList.remove('hidden');
+                
+                if(dashboard && !dashboard.classList.contains('hidden')) {
+                    renderObservationsFeed(allCurrentSamples);
+                    processAndDisplayDashboard(allCurrentSamples, currentSessionId, []); 
+                }
+            } else {
+                if(adminLoginError) adminLoginError.classList.remove('hidden');
+            }
+        });
+
         const openPasswordModal = () => {
-            passwordModal.classList.remove('hidden');
-            sessionPasswordInput.value = '';
-            passwordError.classList.add('hidden');
-            sessionPasswordInput.focus();
+            if(passwordModal) passwordModal.classList.remove('hidden');
+            if(sessionPasswordInput) {
+                sessionPasswordInput.value = '';
+                if(passwordError) passwordError.classList.add('hidden');
+                sessionPasswordInput.focus();
+            }
         };
 
-        newSessionBtn.addEventListener('click', openPasswordModal);
+        if(newSessionBtn) newSessionBtn.addEventListener('click', openPasswordModal);
         if (headerNewSessionBtn) {
             headerNewSessionBtn.addEventListener('click', openPasswordModal);
         }
 
-        cancelPasswordBtn.addEventListener('click', () => {
-            passwordModal.classList.add('hidden');
+        if(cancelPasswordBtn) cancelPasswordBtn.addEventListener('click', () => {
+            if(passwordModal) passwordModal.classList.add('hidden');
         });
 
-        confirmPasswordBtn.addEventListener('click', async () => {
+        if(confirmPasswordBtn) confirmPasswordBtn.addEventListener('click', async () => {
             const password = sessionPasswordInput.value;
-            if (password === 'admin123') { // Simple password check
-                passwordModal.classList.add('hidden');
+            if (password === 'admin123') { 
+                if(passwordModal) passwordModal.classList.add('hidden');
                 await clearGlobalSession();
             } else {
-                passwordError.classList.remove('hidden');
+                if(passwordError) passwordError.classList.remove('hidden');
             }
         });
 
@@ -817,27 +959,27 @@
             try {
                 const activeSessionRef = doc(db, "configuracoes", "sessaoAtiva");
                 await setDoc(activeSessionRef, { current: null }); 
-                console.log("Sessão ativa global limpa.");
                 resetToInitialState(); 
-                inputSection.classList.remove('hidden');
-                connectionSection.classList.add('hidden');
-                infoMessage.textContent = 'Sessão anterior finalizada. Cole os novos dados para iniciar.';
-                infoMessage.className = "text-center text-sm mt-4 text-green-600 font-bold";
+                if(inputSection) inputSection.classList.remove('hidden');
+                if(connectionSection) connectionSection.classList.add('hidden');
+                if(infoMessage) {
+                    infoMessage.textContent = 'Sessão anterior finalizada. Cole os novos dados para iniciar.';
+                    infoMessage.className = "text-center text-sm mt-4 text-green-600 font-bold";
+                }
             } catch (error) {
                 console.error("Erro ao limpar sessão:", error);
                 alert("Erro ao conectar com servidor.");
             }
         }
 
-        // --- Data Processing (Updated Columns) ---
-        processBtn.addEventListener('click', () => {
+        if(processBtn) processBtn.addEventListener('click', () => {
             const data = dataInput.value.trim();
             if (data) parseAndCreateNewSession(data);
         });
 
         function parseAndCreateNewSession(data) {
-            infoMessage.textContent = "A processar...";
-            processBtn.disabled = true;
+            if(infoMessage) infoMessage.textContent = "A processar...";
+            if(processBtn) processBtn.disabled = true;
 
             Papa.parse(data, {
                 header: true,
@@ -845,21 +987,18 @@
                 transformHeader: h => h.trim(),
                 complete: (results) => {
                     if (results.errors.length > 0) {
-                        infoMessage.textContent = `Erro: ${results.errors[0].message}`;
-                        processBtn.disabled = false;
+                        if(infoMessage) infoMessage.textContent = `Erro: ${results.errors[0].message}`;
+                        if(processBtn) processBtn.disabled = false;
                         return;
                     }
 
-                    // Objeto para armazenar segmentos extraídos (Vendedor -> Segmento)
                     const extractedSegments = {};
 
                     const allSamplesData = results.data.map((row, index) => {
                         const sellerName = row['Vendedor(a)'];
                         if (!sellerName || !row['Pedido']) return null; 
                         
-                        // Extrair segmento da coluna 'Divisão Comercial'
                         const divisaoComercial = String(row['Divisão Comercial'] || '').trim();
-                        // Se houver um segmento válido, guardar para este vendedor
                         if (divisaoComercial) {
                             extractedSegments[normalizeText(sellerName)] = divisaoComercial;
                         }
@@ -867,7 +1006,7 @@
                         return {
                             id: `sample_${Date.now()}_${index}`,
                             sellerName: String(sellerName),
-                            isPending: true, // FORÇA PENDENTE INICIALMENTE
+                            isPending: true, 
                             
                             pedido: String(row['Pedido'] || ''),
                             codCliente: String(row['Cód. Cliente'] || ''),
@@ -875,7 +1014,7 @@
                             produto: String(row['Produto'] || ''),
                             descricao: String(row['Descrição'] || ''),
                             qtde: String(row['Qtde.'] || ''),
-                            divisaoComercial: divisaoComercial, // Guardar no objeto também
+                            divisaoComercial: divisaoComercial, 
                             notaFiscal: String(row['Nota Fiscal'] || ''),
                             emissaoNF: String(row['Emissão NF'] || ''),
                             divisaoPD: String(row['Divisão P&D'] || ''),
@@ -890,18 +1029,17 @@
                     }).filter(Boolean);
 
                     if (allSamplesData.length === 0) {
-                        infoMessage.textContent = "Nenhum dado válido. Verifique os nomes das colunas.";
-                        processBtn.disabled = false;
+                        if(infoMessage) infoMessage.textContent = "Nenhum dado válido. Verifique os nomes das colunas.";
+                        if(processBtn) processBtn.disabled = false;
                         return;
                     }
 
                     const sessionId = `sessao_${Date.now()}`;
                     allCurrentSamples = allSamplesData;
 
-                    inputSection.classList.add('hidden');
-                    infoMessage.textContent = "Painel gerado! A sincronizar com a nuvem...";
+                    if(inputSection) inputSection.classList.add('hidden');
+                    if(infoMessage) infoMessage.textContent = "Painel gerado! A sincronizar com a nuvem...";
                     
-                    // Passar os segmentos extraídos para a função de salvamento
                     saveDataAndUpdateActiveSession(allSamplesData, sessionId, extractedSegments);
                 }
             });
@@ -916,12 +1054,11 @@
                 return acc;
             }, {});
 
-            // 1. Salvar dados da sessão (Vendedores e Amostras)
             const sellersArray = Object.entries(sellersData);
             const batchSize = 5; 
             for (let i = 0; i < sellersArray.length; i += batchSize) {
                 const chunk = sellersArray.slice(i, i + batchSize);
-                infoMessage.textContent = `A sincronizar vendedores ${i + 1}-${i + chunk.length}...`;
+                if(infoMessage) infoMessage.textContent = `A sincronizar vendedores ${i + 1}-${i + chunk.length}...`;
                 const batch = writeBatch(db);
                 chunk.forEach(([sellerName, data]) => {
                     const sellerId = sanitizeForFirebaseId(sellerName);
@@ -932,10 +1069,9 @@
                 await batch.commit();
             }
 
-            // 2. Salvar/Atualizar Segmentos Extraídos (vendedorConfig)
             const segmentEntries = Object.entries(extractedSegments);
             if (segmentEntries.length > 0) {
-                infoMessage.textContent = `A atualizar vínculos de segmentos...`;
+                if(infoMessage) infoMessage.textContent = `A atualizar vínculos de segmentos...`;
                 const configBatch = writeBatch(db);
                 segmentEntries.forEach(([normalizedSellerName, segment]) => {
                     const sellerId = sanitizeForFirebaseId(normalizedSellerName); 
@@ -946,11 +1082,10 @@
                 await configBatch.commit();
             }
 
-            // 3. Definir Sessão Ativa
             const activeSessionRef = doc(db, "configuracoes", "sessaoAtiva");
             await setDoc(activeSessionRef, { current: sessionId });
 
-             infoMessage.textContent = `Sessão iniciada!`;
+             if(infoMessage) infoMessage.textContent = `Sessão iniciada!`;
              
              listenForDataUpdates(sessionId);
              listenForNotifications(sessionId);
@@ -960,11 +1095,12 @@
              listenForHistoricalAromaData(sessionId);
              listenForPdPostits(sessionId);
              listenForInternalNotes(sessionId);
+             listenForGestorItemNotes(sessionId); 
         }
 
         function listenForDataUpdates(sessionId) {
             currentSessionId = sessionId;
-            liveIndicator.classList.remove('hidden');
+            if(liveIndicator) liveIndicator.classList.remove('hidden');
             const q = collection(db, "sessoes", sessionId, "vendedores");
             if (dataListenerUnsubscribe) dataListenerUnsubscribe();
 
@@ -980,19 +1116,18 @@
                 allCurrentSamples = allSamples;
 
                 if (!snapshot.empty || !isInitialDataLoad) {
-                    inputSection.classList.add('hidden');
-                    connectionSection.classList.add('hidden');
-                    dashboard.classList.remove('hidden');
-                    sessionIdText.textContent = `Sessão: ${sessionId.split('_')[1] || sessionId}`;
+                    if(inputSection) inputSection.classList.add('hidden');
+                    if(connectionSection) connectionSection.classList.add('hidden');
+                    if(dashboard) dashboard.classList.remove('hidden');
+                    if(sessionIdText) sessionIdText.textContent = `Sessão: ${sessionId.split('_')[1] || sessionId}`;
 
-                    // Carregar Segmentos
                     const sellerDocs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     if (sellerDocs.length > 0) {
                         await loadAllSellerSegments([...new Set(allSamples.map(s => s.sellerName))]);
                     }
 
                     processAndDisplayDashboard(allSamples, sessionId, sellerDocs);
-                    infoMessage.textContent = '';
+                    if(infoMessage) infoMessage.textContent = '';
                 }
                 isInitialDataLoad = false;
             });
@@ -1065,6 +1200,7 @@
         }
 
         function populateModalSegmentFilter() {
+            if(!modalSegmentFilter) return;
             const currentSegments = [...new Set(Object.values(sellerSegmentsCache).filter(Boolean))].sort();
             const currentValue = modalSegmentFilter.value;
 
@@ -1121,7 +1257,6 @@
             container.innerHTML = '';
             
             highlightedItems.forEach(sample => {
-                // Find existing Manager Reply
                 const managerReply = !sample.isHistorical ? allSellerReplies
                      .filter(r => r.sellerName === sample.sellerName && r.pedido === sample.pedido && r.produto === sample.produto)
                      .sort((a, b) => (b.timestamp?.toDate() ?? 0) - (a.timestamp?.toDate() ?? 0))[0] : null;
@@ -1136,7 +1271,6 @@
                     `;
                 }
 
-                // Format Seller Reply Time
                 let responseTimeHtml = '';
                 if (sample.lastUpdate) {
                    const date = sample.lastUpdate.toDate ? sample.lastUpdate.toDate() : new Date(sample.lastUpdate);
@@ -1146,123 +1280,27 @@
 
                 const card = document.createElement('div');
                 card.className = 'attention-card bg-white rounded-lg shadow-sm border border-amber-200 overflow-hidden group transition-all duration-200';
-                
-                const bodyId = `attention-body-${sample.id}`;
-
                 card.innerHTML = `
-                    <div class="attention-header p-3 cursor-pointer hover:bg-slate-50 transition-colors flex justify-between items-center gap-3 relative" onclick="toggleAttentionCard('${bodyId}', this)">
-                        <div class="flex-1 min-w-0 pr-8">
-                             <p class="text-xs text-blue-600 font-bold uppercase tracking-wide truncate mb-0.5">${sample.razaoSocial || 'Cliente não informado'}</p>
-                             <p class="font-bold text-slate-800 text-sm truncate" title="${sample.produto}">${sample.produto}</p>
+                    <div class="p-3">
+                        <div class="flex justify-between items-start mb-2">
+                             <div>
+                                 <p class="text-xs text-blue-600 font-bold uppercase tracking-wide truncate mb-0.5">${sample.razaoSocial || 'Cliente não informado'}</p>
+                                 <p class="font-bold text-slate-800 text-sm truncate" title="${sample.produto}">${sample.produto}</p>
+                             </div>
                         </div>
-                        
-                        <div class="absolute top-2 right-2 flex items-center gap-2">
-                             <button class="star-btn p-1 text-amber-500 hover:text-amber-600 transition-colors z-20" onclick="toggleDestaqueAmostra(event, '${sample.id}')">
-                                <svg class="w-5 h-5 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588 1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
-                            </button>
+                        <div class="bg-slate-50 p-2 rounded text-xs italic text-slate-600 border-l-2 border-amber-300 mb-2">
+                             "${sample.observation || 'Sem observação'}"
                         </div>
-                        <svg class="chevron-icon w-4 h-4 text-slate-300 transition-transform duration-200 absolute bottom-2 right-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
-                    </div>
-                    
-                    <div id="${bodyId}" class="hidden border-t border-slate-100 bg-slate-50/50 p-4 text-sm animate-[fadeIn_0.2s_ease-out]">
-                         <div class="mb-3">
-                            <p class="text-xs text-slate-500 mb-1 line-clamp-2 italic">Desc: ${sample.descricao || 'Sem descrição'}</p>
-                         </div>
-
-                         <div class="grid grid-cols-2 gap-x-2 gap-y-2 text-xs text-slate-600 mb-3 bg-white p-2 rounded border border-slate-100">
-                            <p>Vend.: <span class="font-bold text-slate-800">${sample.sellerName}</span></p>
-                            <p>Ped.: <span class="font-medium text-slate-800">${sample.pedido}</span></p>
-                            <p>NF: <span class="font-medium text-slate-800">${sample.notaFiscal}</span></p>
-                            <p>Qtde: <span class="font-medium text-slate-800">${sample.qtde}</span></p>
-                         </div>
-                         
-                         <div class="space-y-2">
-                            <div class="text-xs bg-white p-2 rounded text-slate-700 border border-slate-200 shadow-sm">
-                                <span class="font-bold block text-slate-500 text-[10px] uppercase mb-0.5">Feedback:</span>
-                                ${sample.feedback || 'Sem feedback'}
-                            </div>
-
-                            ${sample.observation ? `
-                            <div class="text-xs bg-yellow-50 p-2 rounded text-slate-700 border border-yellow-100 shadow-sm">
-                                 <span class="font-bold block text-yellow-600 text-[10px] uppercase mb-0.5">Observação:</span>
-                                 "${sample.observation}"
-                            </div>` : ''}
-                            
-                            ${managerReplyHtml}
-                            ${responseTimeHtml}
-                         </div>
+                        <div class="text-[10px] text-right text-slate-400">
+                             Status: <strong class="${sample.isPending ? 'text-yellow-600' : 'text-green-600'}">${sample.feedback || 'Pendente'}</strong>
+                        </div>
+                        ${managerReplyHtml}
+                        ${responseTimeHtml}
                     </div>
                 `;
                 container.appendChild(card);
             });
         }
-        
-        window.toggleAttentionCard = function(id, headerElement) {
-            const body = document.getElementById(id);
-            const chevron = headerElement.querySelector('.chevron-icon');
-            
-            if (body.classList.contains('hidden')) {
-                body.classList.remove('hidden');
-                chevron.style.transform = 'rotate(180deg)';
-                headerElement.classList.add('bg-amber-50/50'); // Slight highlight when open
-            } else {
-                body.classList.add('hidden');
-                chevron.style.transform = 'rotate(0deg)';
-                headerElement.classList.remove('bg-amber-50/50');
-            }
-        }
-        
-        // Expose function globally for inline clicks if needed, though we use addEventListener now
-        window.toggleDestaqueAmostra = async function(e, sampleId) {
-            if (e) e.stopPropagation();
-            if (!currentSessionId || !sampleId) return;
-
-            const destaquesRef = doc(db, "sessoes", currentSessionId, "configuracoes", "destaquesAmostras");
-            
-            if (highlightedSamplesCache.includes(sampleId)) {
-                highlightedSamplesCache = highlightedSamplesCache.filter(id => id !== sampleId);
-            } else {
-                highlightedSamplesCache.push(sampleId);
-            }
-            
-            // Immediate UI update for the list
-            renderAttentionArea(); 
-            
-            // Update modal UI if open
-            if (!feedbackSamplesModal.classList.contains('hidden')) {
-                // Find button in modal and update class directly for instant feedback
-                const btn = feedbackSamplesList.querySelector(`.highlight-sample-btn[data-sample-id="${sampleId}"]`);
-                if(btn) {
-                    const icon = btn.querySelector('svg');
-                    if (highlightedSamplesCache.includes(sampleId)) {
-                        btn.className = "highlight-sample-btn p-1 rounded-full hover:bg-gray-100 ml-1 text-amber-500 fill-current";
-                        if(icon) icon.classList.remove('text-gray-300');
-                    } else {
-                         btn.className = "highlight-sample-btn p-1 rounded-full hover:bg-gray-100 ml-1 text-gray-300 hover:text-amber-500";
-                         if(icon) icon.classList.add('text-gray-300');
-                    }
-                }
-            }
-
-            try {
-                await runTransaction(db, async (transaction) => {
-                    const docSnap = await transaction.get(destaquesRef);
-                    const currentList = docSnap.exists() ? (docSnap.data().lista || []) : [];
-                    let updatedList = [...currentList];
-
-                    if (updatedList.includes(sampleId)) {
-                        updatedList = updatedList.filter(id => id !== sampleId);
-                    } else {
-                        updatedList.push(sampleId);
-                    }
-                    transaction.set(destaquesRef, { lista: updatedList });
-                });
-            } catch (error) {
-                console.error("Erro ao atualizar destaque:", error);
-                // Revert if error (optional, but good practice)
-            }
-        }
-
 
         function renderCharts(samples) {
             let pending = 0, resolved = 0, approved = 0, rejected = 0, events = 0;
@@ -1325,6 +1363,7 @@
         }
 
         function renderSellersList(samples, sessionId, sellerDocs) {
+            if(!sellersListContainer) return;
             sellersListContainer.innerHTML = '';
             
             const sellers = {};
@@ -1378,7 +1417,6 @@
                          </label>`;
                 }
                 
-                // --- ADMIN OVERRIDE BUTTON ---
                 let adminControls = '';
                 if (isAdmin) {
                     const btnLabel = seller.systemStatus === 'baixado' ? 'REMOVER BAIXA (ADM)' : 'FORÇAR BAIXA (ADM)';
@@ -1416,7 +1454,6 @@
             attachSellerCardListeners();
         }
         
-        // --- ADMIN FUNCTIONS EXPOSED ---
         window.toggleSellerDischarge = async (sellerName, currentStatus) => {
             if (!confirm(`Deseja alterar o status de ${sellerName}?`)) return;
             const newStatus = currentStatus === 'baixado' ? 'pending' : 'baixado';
@@ -1455,175 +1492,24 @@
             }
         }
 
-        // ... [Modal Logic Functions - Same as before] ...
-        function openSegmentModal(sellerName) { currentSellerForSegment = sellerName; segmentModal.classList.remove('hidden'); segmentModalSellerName.textContent = sellerName; const current = sellerSegmentsCache[normalizeText(sellerName)] || ""; segmentSelect.innerHTML = `<option value="">Selecione...</option>` + SEGMENTS.map(s => `<option value="${s}" ${current === s ? 'selected' : ''}>${s}</option>`).join(''); }
-        confirmSegmentBtn.addEventListener('click', async () => { if(!currentSellerForSegment) return; const val = segmentSelect.value; const sellerId = sanitizeForFirebaseId(currentSellerForSegment); await setDoc(doc(db, "vendedorConfig", sellerId), { segmento: val }, { merge: true }); sellerSegmentsCache[normalizeText(currentSellerForSegment)] = val; segmentModal.classList.add('hidden'); const sellerDocs = [...new Set(allCurrentSamples.map(s => s.sellerName))].map(name => { const sellerId = sanitizeForFirebaseId(name); const sellerDoc = sellersListContainer.querySelector(`.config-seller-btn[data-seller-name="${name}"]`)?.closest('.p-5'); return { id: sellerId, originalName: name, amostras: allCurrentSamples.filter(s => s.sellerName === name), accessCode: sellerDoc ? sellerDoc.querySelector('.copy-code-btn')?.dataset.code : null }; }); processAndDisplayDashboard(allCurrentSamples, currentSessionId, sellerDocs); });
-        cancelModalBtn.addEventListener('click', () => segmentModal.classList.add('hidden'));
-
-        function listenForNotifications(sessionId) {
-            const q = query(collection(db, "sessoes", sessionId, "notificacoes"), orderBy("timestamp", "desc"));
-            notificationListenerUnsubscribe = onSnapshot(q, (snapshot) => {
-                sysNotifs = snapshot.docs.map(d => ({id: d.id, ...d.data(), type: 'system'}));
-                mergeAndRenderNotifications();
-            });
-        }
+        if(connectSessionBtn) connectSessionBtn.addEventListener('click', async () => { const id = manualSessionInput.value.trim(); if(id) { await setDoc(doc(db, "configuracoes", "sessaoAtiva"), { current: id }); listenForDataUpdates(id); } });
+        if(modalFilterReplied) modalFilterReplied.addEventListener('change', () => { if (currentFeedbackFilter) showFeedbackSamples(currentFeedbackFilter, modalSegmentFilter.value); });
+        if(notificationsPermissionBtn) notificationsPermissionBtn.addEventListener('click', () => { historyModal.classList.remove('hidden'); renderHistoryList(); });
+        if(historyBtn) historyBtn.addEventListener('click', () => { historyModal.classList.remove('hidden'); renderHistoryList(); });
+        if(closeHistoryBtn) closeHistoryBtn.addEventListener('click', () => historyModal.classList.add('hidden'));
         
-        function listenForSellerRepliesToManager(sessionId) {
-            const q = query(collection(db, "sessoes", sessionId, "respostasVendedor"));
-            sellerRepliesToManagerListenerUnsubscribe = onSnapshot(q, (snapshot) => {
-                 allSellerRepliesToManager = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                 replyNotifs = snapshot.docs.map(doc => { const data = doc.data(); return { id: doc.id, timestamp: data.timestamp, message: `<strong>${data.sellerName}</strong> respondeu: "${data.replyMessage}" (${data.produto})`, color: 'blue', type: 'reply' }; });
-                 if(!dashboard.classList.contains('hidden')) renderObservationsFeed(allCurrentSamples);
-                 mergeAndRenderNotifications();
-            });
-        }
-
-        function listenForInternalNotes(sessionId) {
-            const q = query(collection(db, "sessoes", sessionId, "notasInternas"), orderBy("timestamp", "desc"));
-            internalNotesListenerUnsubscribe = onSnapshot(q, (snapshot) => {
-                internalNotes = snapshot.docs.map(d => ({ id: d.id, ...d.data(), type: 'internal_note', color: 'gray' }));
-                mergeAndRenderNotifications();
-            });
-        }
-        
-        function mergeAndRenderNotifications() {
-            allNotifications = [...sysNotifs, ...replyNotifs, ...internalNotes].sort((a, b) => { const tA = a.timestamp?.toDate ? a.timestamp.toDate() : new Date(0); const tB = b.timestamp?.toDate ? b.timestamp.toDate() : new Date(0); return tB - tA; });
-            updateNotificationDisplay();
-            updateBellIcon();
-            if (!historyModal.classList.contains('hidden')) renderHistoryList();
-        }
-        
-        function updateBellIcon() { if (allNotifications.length > 0) bellBadge.classList.remove('hidden'); else bellBadge.classList.add('hidden'); }
-
-        function updateNotificationDisplay() {
-            notificationsList.innerHTML = '';
-            if (allNotifications.length === 0) { notificationsList.innerHTML = '<p class="text-slate-400 text-sm text-center py-4">Nenhuma notificação.</p>'; return; }
-            const display = areAllNotificationsVisible ? allNotifications : allNotifications.slice(0, 5); 
-            display.forEach(n => {
-                const div = document.createElement('div');
-                let borderClass = 'border-blue-500'; if(n.color === 'green') borderClass = 'border-green-500'; if(n.color === 'purple') borderClass = 'border-purple-500'; if(n.color === 'gray') borderClass = 'border-slate-500 bg-slate-100';
-                div.className = `p-3 rounded-lg border-l-4 text-sm bg-slate-50 mb-2 ${borderClass}`;
-                let timeString = ''; if (n.timestamp) { const date = n.timestamp.toDate ? n.timestamp.toDate() : new Date(n.timestamp); timeString = date.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }); }
-                let icon = ''; if(n.type === 'internal_note') icon = '<svg class="w-3 h-3 text-slate-500 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>';
-                const canDelete = isAdmin || n.type === 'internal_note'; 
-                const deleteButton = canDelete ? `<button class="text-slate-400 hover:text-red-500 transition-colors p-1" onclick="deleteNotification('${n.id}', '${n.type}')" title="Excluir"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>` : '';
-                div.innerHTML = `<div class="flex justify-between items-start gap-2"><div class="flex-1 text-slate-700">${icon}${n.message}</div><div class="flex flex-col items-end gap-1"><span class="text-[10px] text-slate-400 whitespace-nowrap mt-0.5">${timeString}</span>${deleteButton}</div></div>`;
-                notificationsList.appendChild(div);
-            });
-        }
-        
-        // --- CLEAR ALL NOTIFICATIONS BUTTON ---
-        clearAllNotifsBtn.addEventListener('click', async () => {
-            if(!isAdmin || !confirm("Tem certeza que deseja apagar TODAS as notificações? Isso não pode ser desfeito.")) return;
-            const batch = writeBatch(db);
-            // Deletar notificações do sistema
-            allNotifications.forEach(n => {
-               if(n.type !== 'reply') { // Don't delete seller replies to manager here, logic differs
-                   let collectionName = n.type === 'internal_note' ? "notasInternas" : "notificacoes";
-                   batch.delete(doc(db, "sessoes", currentSessionId, collectionName, n.id));
-               }
-            });
-            await batch.commit();
-            alert("Notificações limpas.");
-        });
-        
-        function renderHistoryList() {
-            historyList.innerHTML = '';
-            if (allNotifications.length === 0) { historyList.innerHTML = '<p class="text-slate-400 text-center py-10">Histórico vazio.</p>'; return; }
-            allNotifications.forEach(n => {
-                 let timeString = ''; if (n.timestamp) { const date = n.timestamp.toDate ? n.timestamp.toDate() : new Date(n.timestamp); timeString = date.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }); }
-                 const div = document.createElement('div');
-                 div.className = `p-4 rounded-xl border border-slate-100 shadow-sm text-sm bg-white mb-3 flex justify-between items-start`;
-                 const canDelete = isAdmin || n.type === 'system' || n.type === 'internal_note';
-                 const deleteBtn = canDelete ? `<button class="text-red-400 text-xs hover:text-red-600 ml-2" onclick="deleteNotification('${n.id}', '${n.type}')">Excluir</button>` : '';
-                 div.innerHTML = `<div class="flex-1"><div class="text-slate-800">${n.message}</div><div class="text-xs text-slate-400 mt-1">${timeString} ${n.type === 'internal_note' ? '(Nota Interna)' : ''}</div></div>${deleteBtn}`;
-                 historyList.appendChild(div);
-            });
-        }
-
-        saveInternalNoteBtn.addEventListener('click', async () => { if(!currentSessionId || !internalNoteManager.value.trim() || !internalNoteMessage.value.trim()) { alert("Preencha campos."); return; } await addDoc(collection(db, "sessoes", currentSessionId, "notasInternas"), { managerName: internalNoteManager.value, message: `<strong>${internalNoteManager.value}</strong> (Nota): ${internalNoteMessage.value}`, timestamp: serverTimestamp() }); internalNoteMessage.value = ''; });
-
-        window.deleteNotification = async (id, type) => {
-            if (!currentSessionId || !confirm("Excluir?")) return;
-            try {
-                let collectionName = "notificacoes"; if (type === 'internal_note') collectionName = "notasInternas";
-                await deleteDoc(doc(db, "sessoes", currentSessionId, collectionName, id));
-            } catch (e) { console.error(e); }
-        };
-        
-        // --- FUNÇÃO PARA APAGAR RESPOSTA DO GESTOR (ADMIN) ---
-        window.deleteReply = async (replyId) => {
-            if(!isAdmin || !confirm("Apagar esta resposta permanentemente?")) return;
-            try {
-                await deleteDoc(doc(db, "sessoes", currentSessionId, "notificacoesVendedor", replyId));
-            } catch(e) { console.error(e); alert("Erro ao excluir."); }
-        };
-        
-        // --- FUNÇÃO RESTAURADA: renderFeedbackDetails ---
-        function renderFeedbackDetails(samples) {
-            const lists = { approved: document.getElementById('approved-feedback-list'), rejected: document.getElementById('rejected-feedback-list'), events: document.getElementById('events-feedback-list'), pending: document.getElementById('pending-feedback-list') };
-            Object.values(lists).forEach(list => { if(list) list.innerHTML = ''; });
-            const counts = { approved: {}, rejected: {}, events: {}, pending: {} };
-            const CANONICAL_APPROVED = ['COM PEDIDO', 'APROVADO SEM PEDIDO'];
-            const CANONICAL_REJECTED = ['APRESENTAÇÃO PRÓ ATIVA', 'CALIBRE', 'EXTRAVIADA', 'FORA DA ESPECIFICAÇÃO DO CLIENTE', 'FORA DO PERFIL DO CLIENTE', 'FRACA / ESTOURANDO / COM CHUVEIRO', 'PRODUTO DESCONTINUADO', 'QUANTIDADE INSUFICIENTE', 'REPRESENTAÇÃO / DISTRIBUIDOR', 'SEM RETORNO DO CLIENTE', 'EXPORTACAO'];
-            const CANONICAL_EVENTS = ['EVENTO'];
-            const CANONICAL_PENDING = ['AMOSTRA NÃO TESTADA', 'EM ANÁLISE', 'AMOSTRA SEM FEEDBACK'];
-            samples.forEach(sample => { const feedback = sample.feedback ? sample.feedback.trim() : ''; if (feedback === '') { if(sample.isPending) counts.pending['PENDENTE (SISTEMA)'] = (counts.pending['PENDENTE (SISTEMA)'] || 0) + 1; return; } const canonicalFeedback = getCanonicalFeedback(feedback); let category = null; if (feedback.startsWith('A -') || CANONICAL_APPROVED.includes(canonicalFeedback)) category = 'approved'; else if (feedback.startsWith('R -') || CANONICAL_REJECTED.includes(canonicalFeedback)) category = 'rejected'; else if (feedback.startsWith('E -') || CANONICAL_EVENTS.includes(canonicalFeedback)) category = 'events'; else if (feedback.startsWith('P -') || CANONICAL_PENDING.includes(canonicalFeedback)) category = 'pending'; if (category) counts[category][canonicalFeedback] = (counts[category][canonicalFeedback] || 0) + 1; });
-            const renderList = (listElement, data) => { if (!listElement) return; const sortedData = Object.entries(data).sort(([, a], [, b]) => b - a); if (sortedData.length === 0) { listElement.innerHTML = '<li>Nenhum feedback.</li>'; return; } listElement.innerHTML = sortedData.map(([text, count]) => `<li><button class="w-full text-left hover:bg-slate-50 px-2 py-1 rounded flex justify-between items-center group feedback-filter-btn" data-feedback="${text}"><span class="text-xs font-medium text-slate-600 group-hover:text-blue-600 transition-colors">- ${text}</span><span class="bg-slate-100 text-slate-600 text-xs px-2 py-0.5 rounded-full font-bold group-hover:bg-blue-100 group-hover:text-blue-700">${count}</span></button></li>`).join(''); listElement.querySelectorAll('.feedback-filter-btn').forEach(btn => btn.addEventListener('click', () => showFeedbackSamples(btn.dataset.feedback))); };
-            renderList(lists.approved, counts.approved); renderList(lists.rejected, counts.rejected); renderList(lists.events, counts.events); renderList(lists.pending, counts.pending);
-        }
-
-        // --- FUNÇÃO ATUALIZADA: showFeedbackSamples ---
-        function showFeedbackSamples(feedbackText, segmentFilter = '') {
-            currentFeedbackFilter = feedbackText;
-            const dataSource = [...allCurrentSamples, ...historicalAromaData];
-            if (!dataSource || dataSource.length === 0) return;
-            const showOnlyReplied = modalFilterReplied.checked;
-            let filteredSamples = dataSource.filter(sample => { if (feedbackText === 'PENDENTE (SISTEMA)') return sample.isPending && (!sample.feedback || sample.feedback.trim() === ''); return getCanonicalFeedback(sample.feedback) === feedbackText; });
-            if (segmentFilter) { if (segmentFilter === AROMA_FILTER_VALUE) filteredSamples = filteredSamples.filter(sample => isAroma(sample.produto, sample.descricao)); else filteredSamples = filteredSamples.filter(sample => sellerSegmentsCache[normalizeText(sample.sellerName)] === segmentFilter); }
-            if (showOnlyReplied) filteredSamples = filteredSamples.filter(sample => allSellerReplies.some(r => r.sellerName === sample.sellerName && r.pedido === sample.pedido && r.produto === sample.produto));
-            feedbackSamplesTitle.textContent = `Amostras: "${feedbackText}" (${filteredSamples.length})`;
-            feedbackSamplesList.innerHTML = '';
-            if (filteredSamples.length === 0) { feedbackSamplesList.innerHTML = `<p class="text-slate-400 text-center py-4">Nenhuma amostra encontrada.</p>`; } else {
-                filteredSamples.forEach(sample => {
-                    const itemDiv = document.createElement('div');
-                    itemDiv.className = `feedback-sample-item p-4 border-b border-slate-100`;
-                    const isHighlighted = !sample.isHistorical && highlightedSamplesCache.includes(sample.id);
-                    if (isHighlighted) itemDiv.classList.add('bg-amber-50');
-                    const managerReply = !sample.isHistorical ? allSellerReplies.filter(r => r.sellerName === sample.sellerName && r.pedido === sample.pedido && r.produto === sample.produto).sort((a, b) => (b.timestamp?.toDate() ?? 0) - (a.timestamp?.toDate() ?? 0))[0] : null;
-                    let replyBadge = managerReply ? `<span class="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded font-bold ml-2">✓ Respondido por você</span>` : '';
-                    const replyButtonHtml = (sample.observation && !sample.isHistorical) ? `<button class="text-blue-600 hover:text-blue-800 text-xs font-bold uppercase tracking-wide ml-2 reply-btn" data-sample-id="${sample.id}">Responder</button>` : '';
-                    const starColorClass = isHighlighted ? "text-amber-500 fill-current" : "text-gray-300 hover:text-amber-500";
-                    const highlightButtonHtml = (sample.id && !sample.isHistorical) ? `<button class="highlight-sample-btn p-1 rounded-full hover:bg-gray-100 ml-1 ${starColorClass}" data-sample-id="${sample.id}" title="Destacar"><svg class="w-5 h-5 fill-inherit stroke-current" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.524 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.524 4.674c.3.921-.755 1.688-1.54 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.784.57-1.838-.197-1.539-1.118l1.524-4.674a1 1 0 00-.363-1.118L2.98 10.1c-.783-.57-.38-1.81.588 1.81h4.914a1 1 0 00.951-.69l1.524-4.674z"></path></svg></button>` : '';
-                     let responseTimeHtml = ''; if (sample.lastUpdate) { const date = sample.lastUpdate.toDate ? sample.lastUpdate.toDate() : new Date(sample.lastUpdate); const formatted = date.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }); responseTimeHtml = `<span class="text-xs text-slate-400 block mt-1">Resp. em: ${formatted}</span>`; }
-                     itemDiv.innerHTML = `<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2"><div><p class="text-xs font-semibold text-blue-600 mb-0.5">${sample.razaoSocial || 'Cliente não informado'}</p><h4 class="font-bold text-slate-800 text-sm">${sample.produto}</h4><p class="text-xs text-slate-500">${sample.descricao || ''}</p><div class="text-xs text-slate-500 mt-1 grid grid-cols-2 gap-2"><span>Qtde: <strong>${sample.qtde}</strong></span><span>NF: <strong>${sample.notaFiscal}</strong> (${sample.emissaoNF})</span></div></div><div class="text-right"><p class="text-xs font-bold text-slate-700">Vendedor: ${sample.sellerName}</p>${responseTimeHtml}<div class="flex justify-end items-center mt-2">${replyBadge}${replyButtonHtml}${highlightButtonHtml}</div></div></div><div class="bg-slate-50 p-2 rounded text-sm text-slate-700 border-l-4 border-slate-300"><span class="font-bold">Feedback:</span> ${sample.feedback}${sample.observation ? `<br><span class="font-bold">Obs:</span> "${sample.observation}"` : ''}</div>`;
-                    feedbackSamplesList.appendChild(itemDiv);
-                });
-                feedbackSamplesList.querySelectorAll('.reply-btn').forEach(btn => btn.onclick = (e) => openReplyModalWithSample(allCurrentSamples.find(x => x.id === e.currentTarget.dataset.sampleId)));
-                feedbackSamplesList.querySelectorAll('.highlight-sample-btn').forEach(btn => btn.onclick = (e) => toggleDestaqueAmostra(e, e.currentTarget.dataset.sampleId));
-            }
-             if (feedbackSamplesModal.classList.contains('hidden')) { populateModalSegmentFilter(); modalSegmentFilter.value = segmentFilter; feedbackSamplesModal.classList.remove('hidden'); }
-        }
-        
-        function openReplyModalWithSample(sample) {
-            currentSampleForReply = sample; replyModalProduct.textContent = sample.produto; replyModalSeller.textContent = sample.sellerName; replyModalObservation.textContent = `"${sample.observation}"`; const savedName = localStorage.getItem('managerName'); if (savedName) managerNameInput.value = savedName; replyModal.classList.remove('hidden');
-        }
-
-        connectSessionBtn.addEventListener('click', async () => { const id = manualSessionInput.value.trim(); if(id) { await setDoc(doc(db, "configuracoes", "sessaoAtiva"), { current: id }); listenForDataUpdates(id); } });
-        modalFilterReplied.addEventListener('change', () => { if (currentFeedbackFilter) showFeedbackSamples(currentFeedbackFilter, modalSegmentFilter.value); });
-        notificationsPermissionBtn.addEventListener('click', () => { historyModal.classList.remove('hidden'); renderHistoryList(); });
-        historyBtn.addEventListener('click', () => { historyModal.classList.remove('hidden'); renderHistoryList(); });
-        closeHistoryBtn.addEventListener('click', () => historyModal.classList.add('hidden'));
         if(openSenhasGerentesBtn) openSenhasGerentesBtn.onclick = (e) => { e.preventDefault(); senhasGerentesModal.classList.remove('hidden'); }
-        closeSenhasGerentesBtns.forEach(b => b.onclick = () => senhasGerentesModal.classList.add('hidden'));
+        if(closeSenhasGerentesBtns) closeSenhasGerentesBtns.forEach(b => b.onclick = () => senhasGerentesModal.classList.add('hidden'));
         if(openSenhasPdBtn) openSenhasPdBtn.onclick = (e) => { e.preventDefault(); senhasPdModal.classList.remove('hidden'); }
-        closeSenhasPdBtns.forEach(b => b.onclick = () => senhasPdModal.classList.add('hidden'));
-        closeFeedbackSamplesBtn.onclick = () => feedbackSamplesModal.classList.add('hidden');
-        closeFeedbackSamplesBtnBottom.onclick = () => feedbackSamplesModal.classList.add('hidden');
-        modalSegmentFilter.onchange = () => showFeedbackSamples(currentFeedbackFilter, modalSegmentFilter.value);
-        cancelReplyBtn.onclick = () => replyModal.classList.add('hidden');
+        if(closeSenhasPdBtns) closeSenhasPdBtns.forEach(b => b.onclick = () => senhasPdModal.classList.add('hidden'));
         
-        sendReplyBtn.onclick = async () => {
+        if(closeFeedbackSamplesBtn) closeFeedbackSamplesBtn.onclick = () => feedbackSamplesModal.classList.add('hidden');
+        if(closeFeedbackSamplesBtnBottom) closeFeedbackSamplesBtnBottom.onclick = () => feedbackSamplesModal.classList.add('hidden');
+        if(modalSegmentFilter) modalSegmentFilter.onchange = () => showFeedbackSamples(currentFeedbackFilter, modalSegmentFilter.value);
+        if(cancelReplyBtn) cancelReplyBtn.onclick = () => replyModal.classList.add('hidden');
+        if(closeChartModalBtn) closeChartModalBtn.onclick = () => chartModal.classList.add('hidden'); // ADDED
+        
+        if(sendReplyBtn) sendReplyBtn.onclick = async () => {
              if (!currentSampleForReply || !currentSessionId || !managerNameInput.value.trim() || !replyMessageInput.value.trim()) { alert("Dados incompletos."); return; }
              localStorage.setItem('managerName', managerNameInput.value); const originalBtnText = sendReplyBtn.textContent; sendReplyBtn.textContent = "Enviando..."; sendReplyBtn.disabled = true;
              try {
@@ -1635,25 +1521,37 @@
         // --- FUNÇÃO ATUALIZADA: renderObservationsFeed ---
         function renderObservationsFeed(samples) {
             const container = document.getElementById('observations-feed-list');
-            const segmentFilter = observationSegmentFilter.value;
-            const searchTerm = normalizeText(observationSearchInput.value);
-            const showOnlyReplied = filterRepliedObs.checked; 
+            if(!container) return;
+            const segmentFilter = observationSegmentFilter ? observationSegmentFilter.value : '';
+            const searchTerm = observationSearchInput ? normalizeText(observationSearchInput.value) : '';
+            const showOnlyReplied = filterRepliedObs ? filterRepliedObs.checked : false; 
             container.innerHTML = '';
             
+            // Filter: Only with observation
             let filtered = samples.filter(s => s.observation && s.observation.trim() !== '');
+            
             if (segmentFilter) { if (segmentFilter === AROMA_FILTER_VALUE) filtered = filtered.filter(sample => isAroma(sample.produto, sample.descricao)); else filtered = filtered.filter(sample => sellerSegmentsCache[normalizeText(sample.sellerName)] === segmentFilter); }
             if (searchTerm) filtered = filtered.filter(s => normalizeText(s.sellerName).includes(searchTerm));
             if (showOnlyReplied) filtered = filtered.filter(sample => allSellerReplies.some(r => r.sellerName === sample.sellerName && r.pedido === sample.pedido && r.produto === sample.produto));
+
+            // CRITICAL: Sort by most recent update or reply
+            filtered.sort((a, b) => {
+                const timeA = a.lastUpdate?.toDate ? a.lastUpdate.toDate().getTime() : 0;
+                const timeB = b.lastUpdate?.toDate ? b.lastUpdate.toDate().getTime() : 0;
+                return timeB - timeA;
+            });
 
             if(filtered.length === 0) { container.innerHTML = '<p class="text-slate-400 text-center mt-10">Nenhuma observação encontrada.</p>'; return; }
             
             filtered.forEach(s => {
                 const d = document.createElement('div');
-                d.className = 'bg-white p-4 rounded-xl border border-slate-100 shadow-sm mb-3 text-sm';
+                d.className = 'bg-white p-4 rounded-xl border border-slate-100 shadow-sm mb-3 text-sm transition-all hover:shadow-md';
                 const managerReply = allSellerReplies.filter(r => r.sellerName === s.sellerName && r.pedido === s.pedido && r.produto === s.produto).sort((a, b) => (b.timestamp?.toDate() ?? 0) - (a.timestamp?.toDate() ?? 0))[0];
                 let replyBadge = managerReply ? `<span class="bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded font-bold">✓ Respondido</span>` : '';
                 
-                // NEW: ADMIN DELETE BUTTON ON REPLY
+                // Get Saved Note for this item
+                const savedNote = gestorItemNotes[s.id];
+                
                 let replySection = '';
                 if (managerReply) {
                     const deleteBtn = isAdmin ? `<button class="delete-reply-btn" onclick="window.deleteReply('${managerReply.id}')" title="Apagar Resposta (Admin)">X</button>` : '';
@@ -1661,15 +1559,65 @@
                 }
                 
                 let responseTimeHtml = ''; if (s.lastUpdate) { const date = s.lastUpdate.toDate ? s.lastUpdate.toDate() : new Date(s.lastUpdate); responseTimeHtml = `<span class="text-xs text-slate-400 block">Resp. em: ${date.toLocaleString('pt-BR')}</span>`; }
-                d.innerHTML = `<div class="flex justify-between items-start mb-2"><div><p class="text-xs font-semibold text-blue-600 mb-0.5">${s.razaoSocial || 'Cliente não informado'}</p><p class="font-bold text-slate-800">${s.produto}</p><p class="text-xs text-slate-500">${s.descricao || ''}</p><div class="text-xs text-slate-500 mt-1 grid grid-cols-2 gap-x-4"><span>Qtde: <strong>${s.qtde}</strong></span><span>NF: <strong>${s.notaFiscal}</strong> (${s.emissaoNF})</span></div><div class="mt-2 text-xs font-semibold text-slate-600 bg-slate-100 p-1.5 rounded inline-block">Status: <span class="text-slate-800">${s.feedback || 'Sem feedback'}</span></div></div><div class="text-right"><p class="font-bold text-slate-700 text-xs">${s.sellerName}</p>${responseTimeHtml}</div></div><p class="text-slate-600 mt-2 border-l-4 border-blue-200 pl-3 italic">"${s.observation}"</p>${replySection}<div class="mt-3 flex justify-between items-center pt-2 border-t border-slate-50"><div>${replyBadge}</div><button class="text-blue-600 hover:text-blue-800 font-bold text-xs uppercase tracking-wide reply-btn" data-id="${s.id}">Responder</button></div>`;
+                
+                // Note HTML
+                const noteDisplay = savedNote ? `
+                    <div class="saved-note">
+                        <span class="font-bold text-[10px] uppercase block mb-1 flex justify-between">
+                            ${savedNote.author}:
+                            <span class="font-normal text-xs text-orange-400">${savedNote.timestamp ? new Date(savedNote.timestamp.toDate()).toLocaleDateString() : ''}</span>
+                        </span>
+                        ${savedNote.text}
+                    </div>` : '';
+
+                d.innerHTML = `
+                    <div class="flex justify-between items-start mb-2"><div><p class="text-xs font-semibold text-blue-600 mb-0.5">${s.razaoSocial || 'Cliente não informado'}</p><p class="font-bold text-slate-800">${s.produto}</p><p class="text-xs text-slate-500">${s.descricao || ''}</p><div class="text-xs text-slate-500 mt-1 grid grid-cols-2 gap-x-4"><span>Qtde: <strong>${s.qtde}</strong></span><span>NF: <strong>${s.notaFiscal}</strong> (${s.emissaoNF})</span></div><div class="mt-2 text-xs font-semibold text-slate-600 bg-slate-100 p-1.5 rounded inline-block">Status: <span class="text-slate-800">${s.feedback || 'Sem feedback'}</span></div></div><div class="text-right"><p class="font-bold text-slate-700 text-xs">${s.sellerName}</p>${responseTimeHtml}</div></div>
+                    <p class="text-slate-600 mt-2 border-l-4 border-blue-200 pl-3 italic">"${s.observation}"</p>
+                    ${replySection}
+                    ${noteDisplay}
+                    
+                    <div id="note-input-area-${s.id}" class="item-note-area">
+                        <input type="text" placeholder="Seu Nome (Gestor)" class="w-full mb-2 text-xs border border-yellow-300 rounded p-1" id="note-author-${s.id}">
+                        <textarea placeholder="Escreva o lembrete..." class="w-full text-xs border border-yellow-300 rounded p-1 mb-2" rows="2" id="note-text-${s.id}"></textarea>
+                        <button class="bg-yellow-500 text-white text-xs px-2 py-1 rounded hover:bg-yellow-600 w-full font-bold" onclick="window.saveItemNote('${s.id}')">Salvar Nota</button>
+                    </div>
+
+                    <div class="mt-3 flex justify-end items-center pt-2 border-t border-slate-50 gap-2">
+                        <button class="text-yellow-600 hover:text-yellow-800 font-bold text-xs uppercase tracking-wide flex items-center gap-1" onclick="document.getElementById('note-input-area-${s.id}').classList.toggle('active')">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                            Nota/Lembrete
+                        </button>
+                        <button class="text-blue-600 hover:text-blue-800 font-bold text-xs uppercase tracking-wide reply-btn" data-id="${s.id}">Responder</button>
+                    </div>`;
                 container.appendChild(d);
             });
             container.querySelectorAll('.reply-btn').forEach(b => b.onclick = (e) => openReplyModalWithSample(allCurrentSamples.find(x => x.id === e.currentTarget.dataset.id)));
         }
         
-        observationSegmentFilter.addEventListener('change', () => renderObservationsFeed(allCurrentSamples));
-        observationSearchInput.addEventListener('input', () => renderObservationsFeed(allCurrentSamples));
-        filterRepliedObs.addEventListener('change', () => renderObservationsFeed(allCurrentSamples));
+        window.saveItemNote = async (sampleId) => {
+            const author = document.getElementById(`note-author-${sampleId}`).value.trim();
+            const text = document.getElementById(`note-text-${sampleId}`).value.trim();
+            
+            if(!author || !text) { alert("Preencha seu nome e a nota."); return; }
+            
+            try {
+                // Save to 'gestor_item_notes' collection, using sampleId as doc ID
+                await setDoc(doc(db, "sessoes", currentSessionId, "gestor_item_notes", sampleId), {
+                    author: author,
+                    text: text,
+                    timestamp: serverTimestamp()
+                });
+                const noteArea = document.getElementById(`note-input-area-${sampleId}`);
+                if(noteArea) noteArea.classList.remove('active');
+            } catch(e) {
+                console.error(e);
+                alert("Erro ao salvar nota.");
+            }
+        };
+
+        if(observationSegmentFilter) observationSegmentFilter.addEventListener('change', () => renderObservationsFeed(allCurrentSamples));
+        if(observationSearchInput) observationSearchInput.addEventListener('input', () => renderObservationsFeed(allCurrentSamples));
+        if(filterRepliedObs) filterRepliedObs.addEventListener('change', () => renderObservationsFeed(allCurrentSamples));
 
         function renderPdPostits() {
              const feedContainer = document.getElementById('pd-postits-list'); if (!feedContainer) return;
@@ -1698,14 +1646,26 @@
         function listenForDestaquesAmostras(sessionId) { destaquesAmostrasListenerUnsubscribe = onSnapshot(doc(db, "sessoes", sessionId, "configuracoes", "destaquesAmostras"), (docSnap) => { highlightedSamplesCache = docSnap.exists() ? (docSnap.data().lista || []) : []; if (!dashboard.classList.contains('hidden')) renderAttentionArea(); }); }
         function listenForHistoricalAromaData(sessionId) { historicalAromaDataUnsubscribe = onSnapshot(doc(db, "sessoes", sessionId, "configuracoes", "dadosHistoricosAroma"), (docSnap) => { historicalAromaData = docSnap.exists() ? (docSnap.data().data || []) : []; if (!dashboard.classList.contains('hidden')) processAndDisplayDashboard(allCurrentSamples, currentSessionId, []); }); }
         function listenForPdPostits(sessionId) { const q = query(collection(db, "sessoes", sessionId, "pdPostits"), orderBy("timestamp", "desc")); pdPostitsListenerUnsubscribe = onSnapshot(q, (snapshot) => { allPdPostits = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); if (!dashboard.classList.contains('hidden')) renderPdPostits(); }); }
+        
+        function listenForGestorItemNotes(sessionId) {
+            const q = collection(db, "sessoes", sessionId, "gestor_item_notes");
+            onSnapshot(q, (snapshot) => {
+                gestorItemNotes = {};
+                snapshot.forEach(doc => {
+                    gestorItemNotes[doc.id] = doc.data(); 
+                });
+                if(!dashboard.classList.contains('hidden')) renderObservationsFeed(allCurrentSamples);
+            });
+        }
 
         // [Init]
         resetToInitialState();
         async function resetToInitialState(showConnection = false) { dashboard.classList.add('hidden'); if(showConnection) { inputSection.classList.add('hidden'); connectionSection.classList.remove('hidden'); } else { inputSection.classList.remove('hidden'); connectionSection.classList.add('hidden'); } }
-        (async () => { try { await signInAnonymously(auth); onSnapshot(doc(db, "configuracoes", "sessaoAtiva"), (s) => { const active = s.data()?.current; if(active) { listenForDataUpdates(active); listenForNotifications(active); listenForSellerReplies(active); listenForSellerRepliesToManager(active); listenForDestaquesAmostras(active); listenForHistoricalAromaData(active); listenForPdPostits(active); listenForInternalNotes(active); } else { resetToInitialState(true); } }); } catch (e) { console.error(e); } })();
+        (async () => { try { await signInAnonymously(auth); onSnapshot(doc(db, "configuracoes", "sessaoAtiva"), (s) => { const active = s.data()?.current; if(active) { listenForDataUpdates(active); listenForNotifications(active); listenForSellerReplies(active); listenForSellerRepliesToManager(active); listenForDestaquesAmostras(active); listenForHistoricalAromaData(active); listenForPdPostits(active); listenForInternalNotes(active); listenForGestorItemNotes(active); } else { resetToInitialState(true); } }); } catch (e) { console.error(e); } })();
     </script>
 </body>
 </html>
+
 
 
 
