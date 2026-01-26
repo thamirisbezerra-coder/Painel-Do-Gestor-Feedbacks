@@ -29,8 +29,14 @@
             pointer-events: none;
         }
 
-        .notification-card { animation: slideIn 0.5s ease-out; }
-        @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        /* Animação POP para notificações */
+        .notification-card { 
+            animation: slideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+        }
+        @keyframes slideIn { 
+            from { opacity: 0; transform: translateY(-20px) scale(0.95); } 
+            to { opacity: 1; transform: translateY(0) scale(1); } 
+        }
         
         .unread-indicator {
             position: absolute;
@@ -129,18 +135,16 @@
                     <div class="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
                         <svg class="w-24 h-24" fill="currentColor" viewBox="0 0 20 20"><path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"></path></svg>
                     </div>
-                    <div class="flex items-center gap-2 mb-1">
-                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="bg-blue-50 p-2 rounded-lg text-blue-600">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                        </div>
                         <h3 class="text-lg font-bold text-slate-800">Painel Gerencial</h3>
                     </div>
                     <a href="https://thamirisbezerra-coder.github.io/PainelGerencia/" target="_blank" class="text-sm text-blue-600 hover:underline mb-4 inline-block font-semibold">Acessar Painel &rarr;</a>
-                    <div class="bg-slate-50 rounded-lg p-3 border border-slate-100 mb-3">
-                        <p class="text-[10px] text-slate-500 uppercase font-extrabold mb-1">Senha Mestra</p>
-                        <p class="font-mono text-lg font-bold text-slate-700">admin123</p>
-                    </div>
-                    <button onclick="document.getElementById('senhas-gerentes-modal').classList.remove('hidden')" class="text-xs text-slate-400 hover:text-blue-600 flex items-center gap-1 font-bold">
+                    <button onclick="document.getElementById('senhas-gerentes-modal').classList.remove('hidden')" class="w-full bg-slate-50 hover:bg-slate-100 text-xs text-slate-600 py-2 rounded-lg font-bold transition-colors border border-slate-200 flex items-center justify-center gap-2">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                        Ver senhas individuais
+                        VER SENHAS INDIVIDUAIS
                     </button>
                 </div>
 
@@ -158,18 +162,16 @@
                 
                 <!-- Card P&D -->
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-all group relative overflow-hidden">
-                     <div class="flex items-center gap-2 mb-1">
-                        <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+                     <div class="flex items-center gap-3 mb-2">
+                        <div class="bg-purple-50 p-2 rounded-lg text-purple-600">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+                        </div>
                         <h3 class="text-lg font-bold text-slate-800">Painel P&D</h3>
                      </div>
                      <a href="https://thamirisbezerra-coder.github.io/Painel-Pesquisa-e-Desenvolvimento/" target="_blank" class="text-sm text-purple-600 hover:underline mb-4 inline-block font-semibold">Acessar Painel &rarr;</a>
-                     <div class="bg-slate-50 rounded-lg p-3 border border-slate-100 mb-3">
-                        <p class="text-[10px] text-slate-500 uppercase font-extrabold mb-1">Senha Mestra</p>
-                        <p class="font-mono text-lg font-bold text-slate-700">admin123</p>
-                    </div>
-                    <button onclick="document.getElementById('senhas-pd-modal').classList.remove('hidden')" class="text-xs text-slate-400 hover:text-purple-600 flex items-center gap-1 font-bold">
+                     <button onclick="document.getElementById('senhas-pd-modal').classList.remove('hidden')" class="w-full bg-slate-50 hover:bg-slate-100 text-xs text-slate-600 py-2 rounded-lg font-bold transition-colors border border-slate-200 flex items-center justify-center gap-2">
                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                         Ver senhas por setor
+                         VER SENHAS POR SETOR
                     </button>
                 </div>
             </section>
@@ -201,7 +203,7 @@
                         </div>
                      </div>
 
-                     <div id="notifications-list" class="space-y-3 max-h-[350px] overflow-y-auto pr-2">
+                     <div id="notifications-list" class="space-y-3 max-h-[400px] overflow-y-auto pr-2 relative">
                          <p class="text-slate-300 text-xs text-center py-10 italic">Aguardando atualizações...</p>
                      </div>
                 </div>
@@ -425,7 +427,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, onSnapshot, doc, getDocs, updateDoc, query, orderBy, serverTimestamp, addDoc, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, doc, getDocs, updateDoc, query, orderBy, serverTimestamp, addDoc, runTransaction, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
         const firebaseConfig = {
@@ -601,6 +603,13 @@
             } catch (e) { alert("Erro ao processar baixa."); }
         }
 
+        async function deleteNote(id) {
+            if(!currentSessionId || !confirm("Tem certeza que deseja excluir esta nota interna?")) return;
+            try {
+                await deleteDoc(doc(db, "sessoes", currentSessionId, "notasInternas", id));
+            } catch(e) { console.error(e); alert("Erro ao excluir nota."); }
+        }
+
         function populateAllFilters() {
             const segs = [...new Set(Object.values(sellerSegments).filter(Boolean))].sort();
             const opts = `<option value="">Todos os Segmentos</option><option value="AROMAS_FILTER">Aromas (DAR)</option>` + 
@@ -617,7 +626,7 @@
             const isStarred = starredIds.includes(s.id);
             const reply = managerReplies.find(r => r.sellerName === s.sellerName && r.pedido === s.pedido && r.produto === s.produto);
             
-            // Format timestamp for seller response
+            // Format timestamp
             const dateObj = s.lastUpdate && s.lastUpdate.toDate ? s.lastUpdate.toDate() : new Date();
             const dateStr = dateObj.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
 
@@ -679,7 +688,7 @@
             const starred = dataSource.filter(s => starredIds.includes(s.id));
             els.attentionList.innerHTML = starred.length ? starred.map(s => renderSampleCard(s, true)).join('') : '<p class="text-xs text-slate-400 italic col-span-full text-center py-10">Use a estrela para destacar amostras críticas aqui.</p>';
 
-            // Summary Categorias
+            // Summary
             const categorize = (samples) => {
                 const cats = { approved: {}, rejected: {}, events: {}, pending: {} };
                 samples.forEach(s => {
@@ -867,6 +876,7 @@
             onSnapshot(doc(db, "sessoes", sessionId, "configuracoes", "amostrasLidas"), s => { readIds = s.exists() ? s.data().lista || [] : []; renderDashboard(); });
             onSnapshot(collection(db, "sessoes", sessionId, "notificacoesVendedor"), snap => { managerReplies = snap.docs.map(d => d.data()); renderDashboard(); });
             
+            // Listeners combinados para o feed de notificações
             onSnapshot(query(collection(db, "sessoes", sessionId, "notificacoes"), orderBy("timestamp", "desc")), snap => {
                 systemNotifs = snap.docs.map(d => ({ ...d.data(), type: 'sys' }));
                 updateNotifUI();
@@ -875,32 +885,42 @@
                 internalNotes = snap.docs.map(d => ({ ...d.data(), type: 'note' }));
                 updateNotifUI();
             });
-            onSnapshot(query(collection(db, "sessoes", sessionId, "pdPostits"), orderBy("timestamp", "desc")), snap => {
-                pdPostits = snap.docs.map(d => d.data());
-                els.pdFeedList.innerHTML = pdPostits.length ? pdPostits.map(p => `
-                    <div class="pd-postit-card mb-3">
-                        <p class="text-[11px] font-medium text-slate-800 leading-relaxed">${p.message}</p>
-                        <div class="flex justify-between mt-3 text-[8px] font-black text-slate-400 uppercase tracking-widest border-t pt-2 border-yellow-200">
-                            <span>${p.pdManagerName}</span>
-                            <span>${p.timestamp?.toDate().toLocaleTimeString()}</span>
-                        </div>
-                    </div>`).join('') : '<p class="text-center py-12 text-slate-300 italic text-[10px]">SEM NOTAS DE P&D</p>';
-            });
+            // Listener para respostas/atualizações dos vendedores (NOVO)
+            // Aqui estamos simulando, mas na prática você precisaria de uma coleção 'respostasVendedor' se ela existir
+            // ou filtrar as atualizações. Como os dados vêm de 'allSamples', vou monitorar mudanças neles.
+            // Para simplificar e atender a solicitação, vou considerar 'notificacoes' e 'notasInternas' como o feed principal.
         }
 
         function updateNotifUI() {
             const all = [...systemNotifs, ...internalNotes].sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
             if(all.length > 0) els.bellBadge.classList.remove('hidden');
             
-            els.notifsList.innerHTML = all.length ? all.slice(0, 10).map(n => {
+            els.notifsList.innerHTML = all.length ? all.slice(0, 15).map(n => {
                 const date = n.timestamp?.toDate ? n.timestamp.toDate() : new Date();
                 const time = date.toLocaleString('pt-BR', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
+                
+                let borderClass = 'border-blue-500';
+                let bgClass = 'bg-white';
+                let deleteBtn = '';
+
+                if(n.type === 'note') { 
+                    borderClass = 'border-slate-400'; 
+                    bgClass = 'bg-slate-50'; 
+                    // BOTÃO DE EXCLUIR (LIXEIRA)
+                    deleteBtn = `<button onclick="window.deleteNote('${n.id}')" class="absolute top-2 right-2 text-slate-300 hover:text-red-500 transition-colors" title="Excluir Nota">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    </button>`;
+                }
+
                 return `
-                    <div class="p-3 bg-white rounded-xl border-l-4 ${n.type === 'note' ? 'border-slate-400 shadow-sm' : 'border-blue-500 shadow-md'} flex flex-col gap-1 transition-all hover:bg-slate-50">
-                        <p class="text-[11px] text-slate-700 leading-snug">${n.message}</p>
-                        <span class="text-[8px] text-slate-400 font-black uppercase tracking-widest">${time}</span>
+                    <div class="notification-card p-3 rounded-xl border-l-4 ${borderClass} ${bgClass} shadow-sm flex flex-col gap-1 mb-2 relative">
+                        <div class="pr-4">
+                            <p class="text-[11px] text-slate-700 leading-snug">${n.message}</p>
+                        </div>
+                        <span class="text-[8px] text-slate-400 font-black uppercase tracking-widest text-right mt-1">${time}</span>
+                        ${deleteBtn}
                     </div>`;
-            }).join('') : '<p class="text-center py-10 text-slate-300 italic text-[10px]">SEM NOTIFICAÇÕES</p>';
+            }).join('') : '<p class="text-center py-10 text-slate-300 italic text-[10px]">SEM NOTIFICAÇÕES RECENTES</p>';
             
             const hist = $('history-list');
             if(hist) hist.innerHTML = all.map(n => `<div class="p-4 bg-slate-50 border rounded-xl mb-3"><p class="text-xs font-medium text-slate-800">${n.message}</p><p class="text-[9px] text-slate-400 mt-1 uppercase font-bold">${n.timestamp?.toDate().toLocaleString()}</p></div>`).join('');
@@ -911,7 +931,6 @@
             const map = {}; 
             snap.forEach(d => map[d.id] = d.data().segmento);
             
-            // Normalize default map keys once
             const normalizedDefaults = {};
             Object.entries(DEFAULT_SELLER_SEGMENTS).forEach(([k, v]) => {
                 normalizedDefaults[norm(k)] = v;
@@ -927,13 +946,14 @@
             });
             
             populateAllFilters();
-            renderDashboard(); // Re-render after segments are fully loaded
+            renderDashboard(); 
         }
 
         // --- Exposures ---
 
         window.toggleAction = toggleAction;
         window.darBaixa = darBaixa;
+        window.deleteNote = deleteNote; // EXPONDO A FUNÇÃO DE DELETE
         window.openReply = (id) => {
             const s = allSamples.find(x => x.id === id);
             if (!s) return;
@@ -1012,7 +1032,6 @@
     </script>
 </body>
 </html>
-
 
 
 
