@@ -31,10 +31,10 @@
 
         /* Animação POP para notificações */
         .notification-card { 
-            animation: slideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            animation: slideIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
         }
         @keyframes slideIn { 
-            from { opacity: 0; transform: translateY(-20px) scale(0.95); } 
+            from { opacity: 0; transform: translateY(-20px) scale(0.9); } 
             to { opacity: 1; transform: translateY(0) scale(1); } 
         }
         
@@ -568,6 +568,7 @@
         let pdPostits = [];
         let systemNotifs = [];
         let internalNotes = [];
+        let sellerReplies = []; 
         let currentFilterFeedback = '';
 
         const norm = t => t ? t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim() : '';
@@ -626,7 +627,6 @@
             const isStarred = starredIds.includes(s.id);
             const reply = managerReplies.find(r => r.sellerName === s.sellerName && r.pedido === s.pedido && r.produto === s.produto);
             
-            // Format timestamp
             const dateObj = s.lastUpdate && s.lastUpdate.toDate ? s.lastUpdate.toDate() : new Date();
             const dateStr = dateObj.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
 
@@ -652,7 +652,6 @@
                             </div>
                         </div>
                         
-                        <!-- Dados Detalhados Exigidos -->
                         <div class="grid grid-cols-2 gap-x-2 gap-y-1 text-[9px] text-slate-500 uppercase font-black mb-3">
                             <div class="truncate bg-slate-50 p-1 rounded">Ped: <span class="text-slate-800 font-bold">${s.pedido || '-'}</span></div>
                             <div class="truncate bg-slate-50 p-1 rounded">Qtde: <span class="text-slate-800 font-bold">${s.qtde || '-'}</span></div>
@@ -684,11 +683,9 @@
 
             const dataSource = [...allSamples];
             
-            // Favoritos
             const starred = dataSource.filter(s => starredIds.includes(s.id));
             els.attentionList.innerHTML = starred.length ? starred.map(s => renderSampleCard(s, true)).join('') : '<p class="text-xs text-slate-400 italic col-span-full text-center py-10">Use a estrela para destacar amostras críticas aqui.</p>';
 
-            // Summary
             const categorize = (samples) => {
                 const cats = { approved: {}, rejected: {}, events: {}, pending: {} };
                 samples.forEach(s => {
@@ -788,7 +785,7 @@
                 if(!dataBySeg[seg]) dataBySeg[seg] = { approved: 0, rejected: 0, events: 0 };
                 const f = s.feedback.toUpperCase();
                 if(f.startsWith('A -') || f.includes('APROVAD')) dataBySeg[seg].approved++;
-                else if(f.startsWith('R -') || f.includes('REPROVAD')) dataBySeg[seg].rejected++;
+                else if(f.startsWith('R -')) dataBySeg[seg].rejected++;
                 else if(f.startsWith('E -') || f.includes('EVENTO')) dataBySeg[seg].events++;
             });
 
@@ -865,6 +862,7 @@
             currentSessionId = sessionId;
             els.liveIndicator.classList.remove('hidden');
 
+            // REMOVIDO orderBy das consultas para garantir recepção dos dados
             onSnapshot(collection(db, "sessoes", sessionId, "vendedores"), snap => {
                 sellerDocs = snap.docs.map(d => d.data());
                 allSamples = snap.docs.flatMap(d => d.data().amostras || []);
@@ -876,46 +874,69 @@
             onSnapshot(doc(db, "sessoes", sessionId, "configuracoes", "amostrasLidas"), s => { readIds = s.exists() ? s.data().lista || [] : []; renderDashboard(); });
             onSnapshot(collection(db, "sessoes", sessionId, "notificacoesVendedor"), snap => { managerReplies = snap.docs.map(d => d.data()); renderDashboard(); });
             
-            // Listeners combinados para o feed de notificações
-            onSnapshot(query(collection(db, "sessoes", sessionId, "notificacoes"), orderBy("timestamp", "desc")), snap => {
+            onSnapshot(collection(db, "sessoes", sessionId, "notificacoes"), snap => {
                 systemNotifs = snap.docs.map(d => ({ ...d.data(), type: 'sys' }));
                 updateNotifUI();
             });
-            onSnapshot(query(collection(db, "sessoes", sessionId, "notasInternas"), orderBy("timestamp", "desc")), snap => {
-                internalNotes = snap.docs.map(d => ({ ...d.data(), type: 'note' }));
+            onSnapshot(collection(db, "sessoes", sessionId, "notasInternas"), snap => {
+                internalNotes = snap.docs.map(d => ({ ...d.data(), id: d.id, type: 'note' }));
                 updateNotifUI();
             });
-            // Listener para respostas/atualizações dos vendedores (NOVO)
-            // Aqui estamos simulando, mas na prática você precisaria de uma coleção 'respostasVendedor' se ela existir
-            // ou filtrar as atualizações. Como os dados vêm de 'allSamples', vou monitorar mudanças neles.
-            // Para simplificar e atender a solicitação, vou considerar 'notificacoes' e 'notasInternas' como o feed principal.
+            onSnapshot(collection(db, "sessoes", sessionId, "respostasVendedor"), snap => {
+                sellerReplies = snap.docs.map(d => ({ ...d.data(), type: 'seller_reply' }));
+                updateNotifUI();
+            });
+
+            onSnapshot(query(collection(db, "sessoes", sessionId, "pdPostits"), orderBy("timestamp", "desc")), snap => {
+                pdPostits = snap.docs.map(d => d.data());
+                els.pdFeedList.innerHTML = pdPostits.length ? pdPostits.map(p => `
+                    <div class="pd-postit-card mb-3">
+                        <p class="text-[11px] font-medium text-slate-800 leading-relaxed">${p.message}</p>
+                        <div class="flex justify-between mt-3 text-[8px] font-black text-slate-400 uppercase tracking-widest border-t pt-2 border-yellow-200">
+                            <span>${p.pdManagerName}</span>
+                            <span>${p.timestamp?.toDate().toLocaleTimeString()}</span>
+                        </div>
+                    </div>`).join('') : '<p class="text-center py-12 text-slate-300 italic text-[10px]">SEM NOTAS DE P&D</p>';
+            });
         }
 
         function updateNotifUI() {
-            const all = [...systemNotifs, ...internalNotes].sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+            // Ordenação via JavaScript
+            const all = [...systemNotifs, ...internalNotes, ...sellerReplies].sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+            
             if(all.length > 0) els.bellBadge.classList.remove('hidden');
             
-            els.notifsList.innerHTML = all.length ? all.slice(0, 15).map(n => {
+            els.notifsList.innerHTML = all.length ? all.slice(0, 20).map(n => {
                 const date = n.timestamp?.toDate ? n.timestamp.toDate() : new Date();
                 const time = date.toLocaleString('pt-BR', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
                 
                 let borderClass = 'border-blue-500';
                 let bgClass = 'bg-white';
                 let deleteBtn = '';
+                let contentHTML = '';
 
                 if(n.type === 'note') { 
                     borderClass = 'border-slate-400'; 
                     bgClass = 'bg-slate-50'; 
-                    // BOTÃO DE EXCLUIR (LIXEIRA)
                     deleteBtn = `<button onclick="window.deleteNote('${n.id}')" class="absolute top-2 right-2 text-slate-300 hover:text-red-500 transition-colors" title="Excluir Nota">
                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                     </button>`;
+                    contentHTML = `<p class="text-[11px] text-slate-700 leading-snug">${n.message}</p>`;
+                } 
+                else if (n.type === 'seller_reply') {
+                    borderClass = 'border-green-500';
+                    bgClass = 'bg-green-50';
+                    const displayText = n.message || `<strong>${n.sellerName}</strong> respondeu: ${n.feedback || ''} - ${n.produto || ''}`;
+                    contentHTML = `<p class="text-[11px] text-green-900 font-medium leading-snug">${displayText}</p>`;
+                }
+                else { 
+                    contentHTML = `<p class="text-[11px] text-slate-700 leading-snug">${n.message}</p>`;
                 }
 
                 return `
                     <div class="notification-card p-3 rounded-xl border-l-4 ${borderClass} ${bgClass} shadow-sm flex flex-col gap-1 mb-2 relative">
                         <div class="pr-4">
-                            <p class="text-[11px] text-slate-700 leading-snug">${n.message}</p>
+                            ${contentHTML}
                         </div>
                         <span class="text-[8px] text-slate-400 font-black uppercase tracking-widest text-right mt-1">${time}</span>
                         ${deleteBtn}
@@ -923,7 +944,7 @@
             }).join('') : '<p class="text-center py-10 text-slate-300 italic text-[10px]">SEM NOTIFICAÇÕES RECENTES</p>';
             
             const hist = $('history-list');
-            if(hist) hist.innerHTML = all.map(n => `<div class="p-4 bg-slate-50 border rounded-xl mb-3"><p class="text-xs font-medium text-slate-800">${n.message}</p><p class="text-[9px] text-slate-400 mt-1 uppercase font-bold">${n.timestamp?.toDate().toLocaleString()}</p></div>`).join('');
+            if(hist) hist.innerHTML = all.map(n => `<div class="p-4 bg-slate-50 border rounded-xl mb-3"><p class="text-xs font-medium text-slate-800">${n.message || n.replyMessage || `Resposta de ${n.sellerName}`}</p><p class="text-[9px] text-slate-400 mt-1 uppercase font-bold">${n.timestamp?.toDate().toLocaleString()}</p></div>`).join('');
         }
 
         async function loadSegmentsData(names) {
@@ -953,7 +974,7 @@
 
         window.toggleAction = toggleAction;
         window.darBaixa = darBaixa;
-        window.deleteNote = deleteNote; // EXPONDO A FUNÇÃO DE DELETE
+        window.deleteNote = deleteNote; 
         window.openReply = (id) => {
             const s = allSamples.find(x => x.id === id);
             if (!s) return;
@@ -1032,7 +1053,6 @@
     </script>
 </body>
 </html>
-
 
 
 
