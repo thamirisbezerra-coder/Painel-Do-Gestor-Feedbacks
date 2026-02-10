@@ -645,7 +645,9 @@
             closeSamplesBtn: $('close-feedback-samples-btn'),
             toastContainer: $('toast-container'),
             notificationPermissionBtn: $('notification-permission-btn'),
-            muralNotasList: $('mural-notas-list')
+            muralNotasList: $('mural-notas-list'),
+            sellerDetailsModal: $('seller-details-modal'),
+            sellerSamplesList: $('seller-samples-list')
         };
 
         // --- Estado Global ---
@@ -665,6 +667,7 @@
         let internalNotes = [];
         let sellerReplies = []; 
         let currentFilterFeedback = '';
+        let currentReplyTarget = null;
         
         // --- Notificações ---
         let lastNotifCheck = Date.now(); 
@@ -1038,6 +1041,38 @@
                 } 
             });
         }
+        
+        // --- Modal & Render Logic Implemented ---
+        
+        function renderModalSamples() {
+            if (!currentFilterFeedback) return;
+            
+            const segFilter = els.modalSegFilter ? els.modalSegFilter.value : '';
+            const showReplied = els.modalReplied ? els.modalReplied.checked : false;
+
+            let filtered = allSamples.filter(s => {
+                const f = s.feedback || 'SEM FEEDBACK (PENDENTE)';
+                return f === currentFilterFeedback;
+            });
+
+            if (segFilter) {
+                if (segFilter === 'AROMAS_FILTER') {
+                    filtered = filtered.filter(s => isAroma(s.produto, s.descricao));
+                } else {
+                    filtered = filtered.filter(s => sellerSegments[norm(s.sellerName)] === segFilter);
+                }
+            }
+
+            if (showReplied) {
+                filtered = filtered.filter(s => managerReplies.some(r => r.sellerName === s.sellerName && r.pedido === s.pedido && r.produto === s.produto));
+            }
+
+            if (els.samplesList) {
+                els.samplesList.innerHTML = filtered.length 
+                    ? filtered.map(s => renderSampleCard(s)).join('') 
+                    : '<p class="text-center text-slate-400 py-10 italic">Nenhuma amostra encontrada.</p>';
+            }
+        }
 
         // --- Firebase Listeners ---
 
@@ -1185,15 +1220,43 @@
         window.toggleAction = toggleAction;
         window.darBaixa = darBaixa;
         window.deleteNote = deleteNote; 
-        window.openSellerDetails = (name) => { /* ... existing ... */ els.sellerDetailsModal?.classList.remove('hidden'); };
-        window.openReply = (id) => { /* ... existing ... */ els.replyModal?.classList.remove('hidden'); };
-        window.showSamples = (f) => { /* ... existing ... */ els.samplesModal?.classList.remove('hidden'); };
+        
+        // --- Restored Logic for Modal Opening ---
+        window.openSellerDetails = (name) => {
+             const sellerSamples = allSamples.filter(s => s.sellerName === name);
+             if(!sellerSamples.length) return;
+             
+             $('seller-details-name').textContent = name;
+             $('seller-details-segment').textContent = sellerSegments[norm(name)] || 'N/D';
+             
+             if(els.sellerSamplesList) {
+                els.sellerSamplesList.innerHTML = sellerSamples.map(s => renderSampleCard(s)).join('');
+             }
+             els.sellerDetailsModal?.classList.remove('hidden');
+        };
+        
+        window.openReply = (id) => {
+            const s = allSamples.find(x => x.id === id);
+            if(!s) return;
+            currentReplyTarget = s;
+            $('reply-modal-product').textContent = s.produto;
+            $('reply-modal-seller').textContent = s.sellerName;
+            const obsEl = els.replyModal.querySelector('p.italic');
+            if(obsEl) obsEl.textContent = `"${s.observation || ''}"`;
+            els.replyModal.classList.remove('hidden');
+        };
+        
+        window.showSamples = (f) => {
+            currentFilterFeedback = f;
+            if(els.samplesTitle) els.samplesTitle.textContent = f;
+            if(els.samplesModal) els.samplesModal.classList.remove('hidden');
+            renderModalSamples();
+        };
 
         if (els.saveInternalNoteBtn) els.saveInternalNoteBtn.onclick = async () => { 
             const name = els.internalNoteManager.value.trim();
             const msg = els.internalNoteMessage.value.trim();
             if(!name || !msg) return;
-            // Salva apenas o nome e a mensagem, a formatação de "<strong>" é feita na renderização
             await addDoc(collection(db, "sessoes", currentSessionId, "notasInternas"), { 
                 managerName: name, 
                 message: msg, 
@@ -1202,13 +1265,34 @@
             els.internalNoteMessage.value = '';
         };
         
-        if (els.sendReplyBtn) els.sendReplyBtn.onclick = async () => { /* ... */ };
+        if (els.sendReplyBtn) els.sendReplyBtn.onclick = async () => {
+            if(!currentReplyTarget) return;
+            const msg = $('reply-message-input').value;
+            const manager = $('manager-name-input').value || 'Gestor';
+            if(!msg.trim()) return alert('Digite uma resposta.');
+
+            try {
+                await addDoc(collection(db, "sessoes", currentSessionId, "notificacoesVendedor"), {
+                    sellerName: currentReplyTarget.sellerName,
+                    pedido: currentReplyTarget.pedido,
+                    produto: currentReplyTarget.produto,
+                    replyMessage: msg,
+                    managerName: manager,
+                    timestamp: serverTimestamp(),
+                    originalObservation: currentReplyTarget.observation || ''
+                });
+                $('reply-message-input').value = '';
+                els.replyModal.classList.add('hidden');
+                alert('Resposta enviada!');
+            } catch(e) { console.error(e); alert('Erro ao enviar.'); }
+        };
+        
         if (els.cancelReplyBtn) els.cancelReplyBtn.onclick = () => els.replyModal.classList.add('hidden');
         if (els.obsFilter) els.obsFilter.onchange = renderObsFeed;
         if (els.obsSearch) els.obsSearch.oninput = renderObsFeed;
         if (els.obsReplied) els.obsReplied.onchange = renderObsFeed;
-        if (els.modalSegFilter) els.modalSegFilter.onchange = () => window.showSamples(currentFilterFeedback);
-        if (els.modalReplied) els.modalReplied.onchange = () => window.showSamples(currentFilterFeedback);
+        if (els.modalSegFilter) els.modalSegFilter.onchange = () => renderModalSamples();
+        if (els.modalReplied) els.modalReplied.onchange = () => renderModalSamples();
         if (els.historyBtn) els.historyBtn.onclick = () => els.historyModal.classList.remove('hidden');
         if (els.closeHistoryBtn) els.closeHistoryBtn.onclick = () => els.historyModal.classList.add('hidden');
         if (els.closeSamplesBtn) els.closeSamplesBtn.onclick = () => els.samplesModal.classList.add('hidden');
