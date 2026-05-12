@@ -258,7 +258,7 @@
         </div>
     </main>
 
-    <!-- MODAIS DE ACESSO / SENHAS FORAM OMITIDOS NESTA VISÃO SIMPLIFICADA PARA FOCO NO CÓDIGO (mantendo as divs) -->
+    <!-- MODAIS DE ACESSO -->
     <div id="modal-nova-sessao" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm hidden fade-in">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl flex flex-col overflow-hidden relative">
             <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-white z-10">
@@ -266,7 +266,7 @@
                 <button onclick="document.getElementById('modal-nova-sessao').classList.add('hidden')" class="text-slate-400 hover:text-slate-600 bg-slate-100 hover:bg-slate-200 w-8 h-8 rounded-full flex items-center justify-center transition-colors">&times;</button>
             </div>
             <div class="p-6 overflow-y-auto z-10 flex-1">
-                <textarea id="data-input" rows="8" class="w-full p-4 border-2 border-dashed border-slate-300 rounded-xl bg-slate-50 font-mono text-xs focus:ring-2 focus:ring-blue-500 outline-none text-slate-700" placeholder="Copie do Excel e cole aqui (VENDEDOR, PEDIDO)..."></textarea>
+                <textarea id="data-input" rows="8" class="w-full p-4 border-2 border-dashed border-slate-300 rounded-xl bg-slate-50 font-mono text-xs focus:ring-2 focus:ring-blue-500 outline-none text-slate-700" placeholder="Copie do Excel e cole aqui (VENDEDOR, DIVISÃO COMERCIAL, PEDIDO)..."></textarea>
                 <div id="processing-indicator" class="hidden mt-4 bg-slate-50 p-4 rounded-xl flex items-center justify-center gap-3 font-bold border border-slate-200 text-slate-600 text-sm">
                     <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>Processando...
                 </div>
@@ -320,7 +320,7 @@
         const db = getFirestore(app);
         const auth = getAuth(app);
 
-        // --- DICIONÁRIO DE SEGMENTOS ---
+        // --- DICIONÁRIO DE SEGMENTOS (Backup) ---
         const SELLER_SEGMENTS = {
             "ALEXANDRE NASCIMENTO": "SNACKS, MOLHOS E BEBIDAS",
             "ALEXSANDER DE ANDRADE OLIVEIRA": "SORVETES",
@@ -455,7 +455,7 @@
         function populateFilters() {
             const segs = new Set();
             sellerDocs.forEach(d => {
-                const s = getSegment(d.originalName);
+                const s = d.segmento || getSegment(d.originalName);
                 if(s && s !== 'N/D') segs.add(s);
             });
             const sorted = Array.from(segs).sort();
@@ -475,34 +475,59 @@
             els.processBtn.disabled = true; els.processingInd.classList.remove('hidden');
 
             Papa.parse(rawData, {
-                header: true, skipEmptyLines: true,
+                header: true, 
+                skipEmptyLines: true,
                 complete: async function(results) {
                     const data = results.data;
                     if(data.length === 0) { alert("Nenhum dado."); els.processBtn.disabled = false; return; }
                     
                     const sellersMap = {};
+                    
                     data.forEach(row => {
                         let sellerName = '';
-                        for(let k in row) { if(k.toUpperCase().includes('VENDEDOR')) { sellerName = row[k]; break; } }
-                        if(!sellerName) return;
-                        sellerName = sellerName.trim().toUpperCase();
+                        let segment = '';
+
+                        // Normalização SUPER AGRESSIVA: remove acentos, espaços, parênteses e pontos
+                        const cleanRow = {};
+                        for (let k in row) {
+                            if (!k) continue;
+                            const cleanKey = k.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Z0-9]/g, "");
+                            cleanRow[cleanKey] = row[k] ? String(row[k]).trim() : '';
+                        }
+
+                        // 1. Extrair Nome do Vendedor (VENDEDOR(A) vira VENDEDORA)
+                        sellerName = cleanRow['VENDEDORA'] || cleanRow['VENDEDOR'] || cleanRow['NOMEVENDEDOR'] || '';
+                        
+                        // 2. Extrair Divisão Comercial (DIVISÃO COMERCIAL vira DIVISAOCOMERCIAL)
+                        segment = cleanRow['DIVISAOCOMERCIAL'] || cleanRow['DIVISAO'] || cleanRow['SEGMENTO'] || '';
+                        
+                        if(!sellerName) return; 
+                        sellerName = sellerName.toUpperCase();
+
+                        // BLOQUEIO: Se o nome for puramente numérico (caiu código no lugar errado), ignora a linha
+                        if (/^[\d\-\.\s]+$/.test(sellerName)) return; 
                         
                         if(!sellersMap[sellerName]) {
                             const code = Math.floor(100000 + Math.random() * 900000).toString();
-                            sellersMap[sellerName] = { originalName: sellerName, accessCode: code, codigo: code, amostras: [] };
+                            sellersMap[sellerName] = { 
+                                originalName: sellerName, 
+                                accessCode: code, 
+                                codigo: code, 
+                                segmento: segment ? segment.toUpperCase() : 'N/D',
+                                amostras: [] 
+                            };
                         }
 
+                        // 3. Extrair Dados da Amostra/Pedido
                         const item = { id: Math.random().toString(36).substring(2, 10), isPending: true };
-                        for(let k in row) {
-                            const kUpper = k.toUpperCase(); const val = row[k];
-                            if(kUpper.includes('PEDIDO')) item.pedido = val;
-                            else if(kUpper.includes('PRODUTO')) item.produto = val;
-                            else if(kUpper.includes('CLIENTE') || kUpper.includes('RAZAO SOCIAL')) item.cliente = val;
-                            else if(kUpper.includes('QTDE') || kUpper.includes('QUANTIDADE')) item.qtde = val;
-                            else if(kUpper.includes('NOTA FISCAL') || kUpper.includes('NF')) item.notaFiscal = val;
-                            else if(kUpper.includes('EMISSAO') || kUpper.includes('DATA')) item.emissao = val;
-                            else if(kUpper.includes('DESC')) item.descricao = val;
-                        }
+                        item.pedido = cleanRow['PEDIDO'] || '';
+                        item.produto = cleanRow['PRODUTO'] || cleanRow['MATERIAL'] || '';
+                        item.cliente = cleanRow['RAZAOSOCIAL'] || cleanRow['CODCLIENTE'] || cleanRow['CLIENTE'] || '';
+                        item.qtde = cleanRow['QTDE'] || cleanRow['QUANTIDADE'] || '';
+                        item.notaFiscal = cleanRow['NOTAFISCAL'] || cleanRow['NF'] || '';
+                        item.emissao = cleanRow['EMISSAO'] || cleanRow['DATA'] || '';
+                        item.descricao = cleanRow['DESCRICAO'] || '';
+                        
                         sellersMap[sellerName].amostras.push(item);
                     });
 
@@ -529,10 +554,18 @@
         window.exportToExcel = () => {
             if(allSamples.length === 0) return alert("Sem dados.");
             const exportData = allSamples.map(s => ({
-                "VENDEDOR": s.sellerName, "SEGMENTO": getSegment(s.sellerName), "CLIENTE": s.cliente || s.razaoSocial || '-',
-                "PEDIDO": s.pedido || '-', "NF": s.notaFiscal || '-', "EMISSAO": s.emissao || s.dataEmissao || '-',
-                "PRODUTO": s.produto || '-', "QTDE": s.qtde || '-', "DESCRIÇÃO": s.descricao || '-',
-                "STATUS ATUAL": s.isPending ? 'PENDENTE' : 'RESPONDIDO', "FEEDBACK": s.feedback || 'AGUARDANDO', "OBSERVAÇÃO VENDEDOR": s.observation || ''
+                "VENDEDOR": s.sellerName, 
+                "SEGMENTO": s.segment || getSegment(s.sellerName), 
+                "CLIENTE": s.cliente || s.razaoSocial || '-',
+                "PEDIDO": s.pedido || '-', 
+                "NF": s.notaFiscal || '-', 
+                "EMISSAO": s.emissao || s.dataEmissao || '-',
+                "PRODUTO": s.produto || '-', 
+                "QTDE": s.qtde || '-', 
+                "DESCRIÇÃO": s.descricao || '-',
+                "STATUS ATUAL": s.isPending ? 'PENDENTE' : 'RESPONDIDO', 
+                "FEEDBACK": s.feedback || 'AGUARDANDO', 
+                "OBSERVAÇÃO VENDEDOR": s.observation || ''
             }));
             const wb = XLSX.utils.book_new(); const ws = XLSX.utils.json_to_sheet(exportData);
             XLSX.utils.book_append_sheet(wb, ws, "Dados"); XLSX.writeFile(wb, `Exportacao_${new Date().getTime()}.xlsx`);
@@ -579,8 +612,9 @@
 
             const filtered = sellerDocs.filter(d => {
                 const sName = d.originalName;
+                const sSeg = d.segmento || getSegment(sName);
                 if(search && !sName.toLowerCase().includes(search)) return false;
-                if(segFilter && getSegment(sName) !== segFilter) return false;
+                if(segFilter && sSeg !== segFilter) return false;
                 return true;
             });
             
@@ -589,7 +623,7 @@
                 const pend = doc.amostras ? doc.amostras.filter(s => s.isPending !== false).length : 0;
                 const done = total - pend;
                 const isFinished = pend === 0 && total > 0;
-                const segName = getSegment(doc.originalName);
+                const segName = doc.segmento || getSegment(doc.originalName);
 
                 return `
                     <div class="p-3 border border-slate-100 rounded-xl hover:bg-slate-50 transition-colors">
@@ -619,7 +653,7 @@
 
             const filtered = allSamples.filter(s => {
                 if(!s.feedback) return false;
-                if(segFilter && getSegment(s.sellerName) !== segFilter) return false;
+                if(segFilter && s.segment !== segFilter) return false;
                 if(search && !s.sellerName.toLowerCase().includes(search)) return false;
                 if(onlyAromas && !(s.produto && s.produto.toUpperCase().startsWith('DAR'))) return false;
                 return true;
@@ -650,7 +684,7 @@
                             <div class="flex items-center justify-between mb-1">
                                 <div>
                                     <span class="font-bold text-slate-800 text-xs">${s.sellerName.split(' ')[0]}</span>
-                                    <span class="text-[9px] text-slate-400 ml-1">(${getSegment(s.sellerName)})</span>
+                                    <span class="text-[9px] text-slate-400 ml-1">(${s.segment})</span>
                                 </div>
                                 <span class="text-[10px] font-medium text-slate-400">${timeStr}</span>
                             </div>
@@ -706,7 +740,16 @@
             onSnapshot(collection(db, "sessoes", sessionId, "vendedores"), snap => {
                 sellerDocs = snap.docs.map(d => ({ ...d.data(), id: d.id }));
                 allSamples = [];
-                sellerDocs.forEach(d => { if(d.amostras) d.amostras.forEach(s => allSamples.push({...s, sellerName: d.originalName})); });
+                sellerDocs.forEach(d => { 
+                    const resolvedSegment = d.segmento || getSegment(d.originalName);
+                    if(d.amostras) {
+                        d.amostras.forEach(s => allSamples.push({
+                            ...s, 
+                            sellerName: d.originalName,
+                            segment: resolvedSegment
+                        }));
+                    }
+                });
                 updateDashboardUI();
             });
 
