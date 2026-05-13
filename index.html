@@ -1069,23 +1069,68 @@
                         return;
                     }
 
+                    // FUNÇÃO PARA DETETAR COLUNAS DE FORMA INTELIGENTE
+                    const getCol = (row, keys) => {
+                        const rowKeys = Object.keys(row);
+                        for (const key of keys) {
+                            const found = rowKeys.find(k => k.trim().toLowerCase() === key.toLowerCase());
+                            if (found && row[found] !== undefined && row[found] !== null) return String(row[found]).trim();
+                        }
+                        return '';
+                    };
+
                     const allSamplesData = results.data.map((row, index) => {
-                        const sellerName = row['Vendedor(a)'];
-                        if (!sellerName || !row['Pedido']) return null; 
-                        const normalizedStatus = normalizeText(row['Status']);
+                        // Busca o nome baseando-se em várias possibilidades de cabeçalho
+                        let sellerName = getCol(row, ['Vendedor(a)', 'Vendedor', 'Vendedores', 'Representante', 'Consultor', 'Executivo']);
+                        
+                        let pedido = getCol(row, ['Pedido', 'Nº Pedido', 'Documento']);
+                        let notaFiscal = getCol(row, ['Nota Fiscal', 'NF', 'Nº NF']);
+                        let produto = getCol(row, ['Produto', 'Cód. Produto', 'Material']);
+                        let descricao = getCol(row, ['Descrição', 'Descricao', 'Texto Breve']);
+                        let qtde = getCol(row, ['Qtde.', 'Qtde', 'Quantidade']);
+                        let razaoSocial = getCol(row, ['Razão Social', 'Cliente', 'Nome Cliente']);
+                        let emissaoNF = getCol(row, ['Emissão NF', 'Emissao', 'Data NF']);
+                        let status = getCol(row, ['Status']);
+                        let feedback = getCol(row, ['Feedback', 'Retorno']);
+
+                        // Detenção do "BUG das colunas deslocadas" que ocorreu no CSV
+                        // Se "Vendedor(a)" está vazio, mas "Divisão Comercial" tem o nome da pessoa
+                        if (!sellerName && row['Divisão Comercial']) {
+                            sellerName = row['Divisão Comercial'];
+                            notaFiscal = row['Entrega'] || notaFiscal;
+                            produto = row['Razão Social'] || produto;
+                            descricao = row['Produto'] || descricao;
+                            qtde = row['Descrição'] || qtde;
+                        }
+
+                        // Proteção: Se o vendedor for SÓ NÚMEROS (ex: a nota fiscal caiu na coluna errada)
+                        if (sellerName && /^\d+$/.test(sellerName.replace(/[\.\-]/g, ''))) {
+                            // Tenta encontrar um nome real noutras colunas para corrigir
+                            const possibleNames = [row['Divisão Comercial'], row['Razão Social'], getCol(row, ['Nome'])];
+                            for (let p of possibleNames) {
+                                if (p && /[a-zA-Z]{3,}/.test(p)) {
+                                    sellerName = p;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (!sellerName || !pedido) return null; 
+
+                        const normalizedStatus = normalizeText(status);
                         return {
                             id: `sample_${Date.now()}_${index}`, 
-                            sellerName: String(sellerName),
+                            sellerName: sellerName,
                             isPending: PENDING_STATUSES.includes(normalizedStatus), 
-                            pedido: String(row['Pedido'] || ''),
-                            razaoSocial: String(row['Razão Social'] || ''),
-                            produto: String(row['Produto'] || ''),
-                            descricao: String(row['Descrição'] || ''),
-                            qtde: String(row['Qtde.'] || ''),
-                            notaFiscal: String(row['Nota Fiscal'] || ''),
-                            emissaoNF: String(row['Emissão NF'] || ''),
-                            originalStatus: String(row['Status'] || ''),
-                            feedback: '',
+                            pedido: pedido,
+                            razaoSocial: razaoSocial,
+                            produto: produto,
+                            descricao: descricao,
+                            qtde: qtde,
+                            notaFiscal: notaFiscal,
+                            emissaoNF: emissaoNF,
+                            originalStatus: status,
+                            feedback: feedback,
                             observation: '',
                             finalizedByVendor: false, 
                             systemStatus: 'pending', 
@@ -2590,7 +2635,6 @@
     </script>
 </body>
 </html>
-
 
 
 
