@@ -103,7 +103,7 @@
         }
     </style>
 </head>
-<body class="text-slate-800">
+<body class="text-slate-800 relative">
 
     <header class="glass-header sticky top-0 z-40 transition-all duration-300">
         <div class="container mx-auto px-4 md:px-8 py-4 flex justify-between items-center">
@@ -111,17 +111,25 @@
                 <div class="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-sm text-white">
                     <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
                 </div>
-                <h1 class="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-slate-600 hidden sm:block">Gestão de Feedbacks</h1>
+                <h1 class="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-slate-600 hidden md:block">Gestão de Feedbacks</h1>
             </div>
-            <div class="flex items-center space-x-3 sm:space-x-4">
-                 <div class="hidden md:flex px-3 py-1 bg-slate-100 rounded-full border border-slate-200">
+            <div class="flex items-center space-x-2 sm:space-x-4">
+                 <div class="hidden lg:flex px-3 py-1 bg-slate-100 rounded-full border border-slate-200">
                      <p id="session-id-text" class="text-xs font-medium text-slate-500">Nenhuma sessão</p>
                  </div>
                  
+                 <!-- NOVO BOTÃO: Exportar para Excel -->
+                 <button id="header-export-btn" class="hidden flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-lg hover:bg-emerald-100 hover:text-emerald-800 transition-all text-xs font-bold shadow-sm">
+                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                     <span class="hidden sm:inline">Exportar Excel</span>
+                     <span class="sm:hidden">Excel</span>
+                 </button>
+
                  <!-- BOTÃO: Iniciar Nova Sessão no Topo -->
                  <button id="header-new-session-btn" class="hidden flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 hover:text-blue-600 transition-all text-xs font-bold shadow-sm">
                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                     Nova Sessão
+                     <span class="hidden sm:inline">Nova Sessão</span>
+                     <span class="sm:hidden">Nova</span>
                  </button>
 
                  <button id="notifications-permission-btn" title="Gerir permissões de notificação" class="p-2 rounded-full hover:bg-slate-100 transition-colors">
@@ -638,6 +646,9 @@
         </div>
     </div>
 
+    <!-- Container dos Toast (Pop-ups) -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-[100] flex flex-col gap-3 pointer-events-none"></div>
+
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script type="module">
@@ -680,6 +691,7 @@
         const newSessionBtn = document.getElementById('new-session-btn');
         
         const headerNewSessionBtn = document.getElementById('header-new-session-btn');
+        const headerExportBtn = document.getElementById('header-export-btn'); // Novo Botão Exportar
 
         const manualSessionInput = document.getElementById('manual-session-id');
         const connectSessionBtn = document.getElementById('connect-session-btn');
@@ -837,6 +849,101 @@
             }
         }
 
+        // --- SISTEMA DE TOAST (Pop-ups em Tempo Real) ---
+        function showToast(title, message, colorType) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            let bgClass = colorType === 'orange' ? 'bg-amber-50 border-amber-200 text-amber-800' :
+                          colorType === 'purple' ? 'bg-purple-50 border-purple-200 text-purple-800' :
+                          colorType === 'green' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' :
+                          'bg-blue-50 border-blue-200 text-blue-800';
+                          
+            toast.className = `p-4 rounded-xl shadow-lg border ${bgClass} w-80 sm:w-96 transform transition-all duration-500 translate-y-10 opacity-0 flex flex-col pointer-events-auto`;
+            
+            toast.innerHTML = `
+                <div class="flex justify-between items-start mb-2 gap-2">
+                    <strong class="text-sm font-bold leading-tight">${title}</strong>
+                    <button class="opacity-50 hover:opacity-100 transition-opacity focus:outline-none flex-shrink-0" onclick="this.parentElement.parentElement.remove()">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+                <p class="text-xs font-medium opacity-90 leading-relaxed">${message}</p>
+            `;
+            
+            container.appendChild(toast);
+            
+            // Animacao de entrada
+            setTimeout(() => {
+                toast.classList.remove('translate-y-10', 'opacity-0');
+            }, 10);
+            
+            // Auto remover depois de 8 segundos
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-x-10');
+                setTimeout(() => toast.remove(), 500);
+            }, 8000);
+        }
+
+        // --- LÓGICA DE EXPORTAÇÃO PARA EXCEL ---
+        if(headerExportBtn) {
+            headerExportBtn.addEventListener('click', () => {
+                if(!allCurrentSamples || allCurrentSamples.length === 0) {
+                    showAlert("Não há dados na sessão atual para exportar.");
+                    return;
+                }
+                
+                headerExportBtn.innerHTML = '<svg class="animate-spin h-4 w-4 text-emerald-700 inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> <span class="hidden sm:inline">Aguarde...</span>';
+                
+                try {
+                    // Formatar dados para as colunas do CSV
+                    const dataToExport = allCurrentSamples.map(s => {
+                        let isPendente = s.isPending;
+                        if (typeof isPendente === 'undefined') isPendente = PENDING_STATUSES.includes(normalizeText(s.originalStatus));
+                        
+                        return {
+                            'Vendedor': s.sellerName,
+                            'Segmento': sellerSegmentsCache[normalizeText(s.sellerName)] || 'Sem Segmento',
+                            'Nº Pedido': s.pedido,
+                            'Cliente (Razão Social)': s.razaoSocial,
+                            'Produto': s.produto,
+                            'Descrição': s.descricao,
+                            'Quantidade': s.qtde,
+                            'Nota Fiscal': s.notaFiscal,
+                            'Emissão NF': s.emissaoNF,
+                            'Status Original': s.originalStatus,
+                            'Status Sistema': s.systemStatus === 'baixado' ? 'Baixado' : 'Pendente',
+                            'Situação Atual': isPendente ? 'Pendente de Ação' : 'Finalizado',
+                            'Feedback Registado': s.feedback || '',
+                            'Observação do Vendedor': s.observation || '',
+                            'Última Atualização': s.lastUpdate?.toDate ? s.lastUpdate.toDate().toLocaleString('pt-BR') : ''
+                        };
+                    });
+
+                    // Gerar CSV com o PapaParse configurado para formato europeu/brasileiro (;)
+                    const csv = Papa.unparse(dataToExport, { delimiter: ";" });
+                    
+                    // Adicionar BOM (\uFEFF) para garantir que o Excel abra com UTF-8 e mantenha acentos (é, á, ç)
+                    const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
+                    const link = document.createElement("a");
+                    const url = URL.createObjectURL(blob);
+                    
+                    link.setAttribute("href", url);
+                    link.setAttribute("download", `Exportacao_Gestao_Feedbacks_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.csv`);
+                    link.style.visibility = 'hidden';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    
+                } catch(e) {
+                    console.error("Erro na exportação", e);
+                    showAlert("Ocorreu um erro ao tentar exportar o arquivo.");
+                } finally {
+                    headerExportBtn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg> <span class="hidden sm:inline">Exportar Excel</span><span class="sm:hidden">Excel</span>';
+                }
+            });
+        }
+
 
         // --- Main Dashboard Rendering Function ---
         function processAndDisplayDashboard(samples, sessionId, sellerDocs = []) {
@@ -844,9 +951,15 @@
             inputSection.classList.add('hidden');
             connectionSection.classList.add('hidden');
             
-            // Mostrar o botão "Nova Sessão" no cabeçalho quando entrar no dashboard
-            if (headerNewSessionBtn) headerNewSessionBtn.classList.remove('hidden');
-            if (headerNewSessionBtn) headerNewSessionBtn.classList.add('flex');
+            // Mostrar os botões no cabeçalho quando entrar no dashboard
+            if (headerNewSessionBtn) {
+                headerNewSessionBtn.classList.remove('hidden');
+                headerNewSessionBtn.classList.add('flex');
+            }
+            if (headerExportBtn) {
+                headerExportBtn.classList.remove('hidden');
+                headerExportBtn.classList.add('flex');
+            }
 
             sessionIdText.innerHTML = `<span class="opacity-70">Sessão:</span> <span class="font-bold text-slate-700">${sessionId}</span>`;
 
@@ -868,13 +981,12 @@
             const dataText = dataInput.value.trim();
 
             if (file) {
-                parseAndCreateNewSession(file); // Passa o arquivo diretamente pro PapaParse
+                parseAndCreateNewSession(file); 
             } else if (dataText) {
-                parseAndCreateNewSession(dataText); // Passa a string pro PapaParse
+                parseAndCreateNewSession(dataText); 
             }
         });
 
-        // Event listener para o NOVO botão do cabeçalho
         if (headerNewSessionBtn) {
             headerNewSessionBtn.addEventListener('click', async () => {
                 if (confirm("Tem certeza que deseja encerrar a sessão atual para TODOS os usuários e iniciar uma nova?")) {
@@ -1069,7 +1181,6 @@
                         return;
                     }
 
-                    // FUNÇÃO PARA DETETAR COLUNAS DE FORMA INTELIGENTE
                     const getCol = (row, keys) => {
                         const rowKeys = Object.keys(row);
                         for (const key of keys) {
@@ -1080,9 +1191,7 @@
                     };
 
                     const allSamplesData = results.data.map((row, index) => {
-                        // Busca o nome baseando-se em várias possibilidades de cabeçalho
                         let sellerName = getCol(row, ['Vendedor(a)', 'Vendedor', 'Vendedores', 'Representante', 'Consultor', 'Executivo']);
-                        
                         let pedido = getCol(row, ['Pedido', 'Nº Pedido', 'Documento']);
                         let notaFiscal = getCol(row, ['Nota Fiscal', 'NF', 'Nº NF']);
                         let produto = getCol(row, ['Produto', 'Cód. Produto', 'Material']);
@@ -1093,8 +1202,6 @@
                         let status = getCol(row, ['Status']);
                         let feedback = getCol(row, ['Feedback', 'Retorno']);
 
-                        // Detenção do "BUG das colunas deslocadas" que ocorreu no CSV
-                        // Se "Vendedor(a)" está vazio, mas "Divisão Comercial" tem o nome da pessoa
                         if (!sellerName && row['Divisão Comercial']) {
                             sellerName = row['Divisão Comercial'];
                             notaFiscal = row['Entrega'] || notaFiscal;
@@ -1103,9 +1210,7 @@
                             qtde = row['Descrição'] || qtde;
                         }
 
-                        // Proteção: Se o vendedor for SÓ NÚMEROS (ex: a nota fiscal caiu na coluna errada)
                         if (sellerName && /^\d+$/.test(sellerName.replace(/[\.\-]/g, ''))) {
-                            // Tenta encontrar um nome real noutras colunas para corrigir
                             const possibleNames = [row['Divisão Comercial'], row['Razão Social'], getCol(row, ['Nome'])];
                             for (let p of possibleNames) {
                                 if (p && /[a-zA-Z]{3,}/.test(p)) {
@@ -1218,9 +1323,10 @@
                     connectionSection.classList.add('hidden');
                     dashboard.classList.remove('hidden');
                     
-                    // Mostrar o botão no cabeçalho
                     if (headerNewSessionBtn) headerNewSessionBtn.classList.remove('hidden');
                     if (headerNewSessionBtn) headerNewSessionBtn.classList.add('flex');
+                    if (headerExportBtn) headerExportBtn.classList.remove('hidden');
+                    if (headerExportBtn) headerExportBtn.classList.add('flex');
 
                     if (!isInitialDataLoad) {
                         const batch = writeBatch(db);
@@ -1341,10 +1447,14 @@
             dashboard.classList.add('hidden');
             sessionIdText.textContent = 'Nenhuma sessão';
             
-            // Ocultar o botão "Nova Sessão" do cabeçalho
+            // Ocultar os botões do cabeçalho
             if (headerNewSessionBtn) {
                 headerNewSessionBtn.classList.add('hidden');
                 headerNewSessionBtn.classList.remove('flex');
+            }
+            if (headerExportBtn) {
+                headerExportBtn.classList.add('hidden');
+                headerExportBtn.classList.remove('flex');
             }
 
             if (keepConnectionOptions) {
@@ -1408,9 +1518,20 @@
                     snapshot.docChanges().forEach((change) => {
                         if (change.type === "added" && !change.doc.metadata.fromCache) { 
                             const notificationData = change.doc.data();
+                            
+                            // Determinar o título do TOAST
+                            let title = 'Nova Notificação';
+                            if(notificationData.message.includes('deu feedback')) title = 'Novo Feedback Registado!';
+                            if(notificationData.message.includes('editou o feedback')) title = 'Feedback Editado';
+                            if(notificationData.message.includes('respondeu')) title = 'Nova Resposta da Equipa';
+                            
+                            // *** MOSTRAR TOAST DENTRO DA APLICAÇÃO (POP-UP) ***
+                            showToast(title, notificationData.message, notificationData.color);
+
+                            // Mostrar notificação do Browser se autorizado
                             if (notificationData.triggerPopup === true) { 
                                 const cleanMessage = notificationData.message.replace(/<[^>]*>?/gm, ''); 
-                                showBrowserNotification(notificationData.color === 'green' ? 'Tarefa Finalizada' : 'Nova Resposta', cleanMessage);
+                                showBrowserNotification(title, cleanMessage);
                             }
                         }
                     });
@@ -2635,7 +2756,6 @@
     </script>
 </body>
 </html>
-
 
 
 
