@@ -118,7 +118,7 @@
                      <p id="session-id-text" class="text-xs font-medium text-slate-500">Nenhuma sessão</p>
                  </div>
                  
-                 <!-- NOVO BOTÃO: Iniciar Nova Sessão no Topo -->
+                 <!-- BOTÃO: Iniciar Nova Sessão no Topo -->
                  <button id="header-new-session-btn" class="hidden flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 hover:text-blue-600 transition-all text-xs font-bold shadow-sm">
                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                      Nova Sessão
@@ -144,9 +144,27 @@
                     <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                 </div>
                 <h2 class="text-3xl font-bold text-slate-800 mb-2">Iniciar Nova Sessão</h2>
-                <p class="text-slate-500 mb-8 max-w-lg mx-auto">Copie as colunas (incluindo o cabeçalho) da sua planilha Excel ou Google Sheets e cole na caixa abaixo para gerar um novo painel dinâmico.</p>
+                <p class="text-slate-500 mb-6 max-w-lg mx-auto">Faça o upload do seu ficheiro .CSV ou cole os dados abaixo para gerar um novo painel dinâmico.</p>
                 
-                <textarea id="data-input" rows="7" class="w-full border border-slate-200 bg-slate-50 rounded-xl p-4 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors shadow-inner resize-none text-sm placeholder-slate-400" placeholder="Cole os dados aqui..."></textarea>
+                <!-- Nova Área de Upload de Arquivos -->
+                <div class="mb-4">
+                    <label for="csv-file-upload" class="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-300 border-dashed rounded-xl cursor-pointer bg-slate-50 hover:bg-slate-100 hover:border-blue-400 transition-colors relative overflow-hidden group">
+                        <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                            <svg class="w-8 h-8 mb-3 text-slate-400 group-hover:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                            <p class="mb-1 text-sm text-slate-500"><span class="font-semibold text-blue-600">Clique para anexar</span> o seu arquivo .CSV</p>
+                            <p class="text-xs text-slate-400 mt-1" id="file-name-display">Nenhum arquivo selecionado</p>
+                        </div>
+                        <input id="csv-file-upload" type="file" class="hidden" accept=".csv" />
+                    </label>
+                </div>
+
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="h-px bg-slate-200 flex-grow"></div>
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">OU</span>
+                    <div class="h-px bg-slate-200 flex-grow"></div>
+                </div>
+
+                <textarea id="data-input" rows="3" class="w-full border border-slate-200 bg-slate-50 rounded-xl p-4 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors shadow-inner resize-none text-sm placeholder-slate-400" placeholder="Cole os dados aqui se preferir..."></textarea>
                 
                 <button id="process-btn" class="mt-6 w-full sm:w-auto px-10 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold py-3.5 rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transform hover:-translate-y-0.5" disabled>Gerar Painel</button>
                 
@@ -196,7 +214,7 @@
                         </div>
                         <p class="text-xs text-slate-500 mt-2">
                             <button type="button" id="open-senhas-gerentes-btn" class="text-blue-600 font-medium hover:text-blue-800 focus:outline-none flex items-center gap-1">
-                                Ver acessos da equipe <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                                Ver acessos da equipa <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
                             </button>
                         </p>
                         <div class="absolute bottom-6 right-6 opacity-0 group-hover:opacity-100 transition-opacity text-blue-600">
@@ -216,7 +234,7 @@
                             </div>
                             <h3 class="text-lg font-bold text-slate-800">Tela do Vendedor</h3>
                         </div>
-                        <p class="text-sm text-slate-600 mb-2 leading-relaxed">Compartilhe este link com a equipe de vendas para que insiram os feedbacks.</p>
+                        <p class="text-sm text-slate-600 mb-2 leading-relaxed">Partilhe este link com a equipa de vendas para que insiram os feedbacks.</p>
                         <div class="bg-emerald-50/50 p-3 rounded-lg border border-emerald-100 inline-block mt-1">
                             <p class="text-xs text-emerald-700 font-medium flex items-center gap-1">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path></svg>
@@ -271,7 +289,7 @@
                                 </div>
                                 <h3 class="text-2xl font-bold tracking-wide">Resultados <span class="font-light opacity-80 text-lg">2023–2025</span></h3>
                             </div>
-                            <p class="text-sm text-slate-300 max-w-lg mb-3">Acesse dashboards completos com o histórico e o <strong class="text-white">Ranking de Aromas (DAR)</strong>.</p>
+                            <p class="text-sm text-slate-300 max-w-lg mb-3">Aceda a dashboards completos com o histórico e o <strong class="text-white">Ranking de Aromas (DAR)</strong>.</p>
                             <div class="flex gap-4 mt-4">
                                 <span class="flex items-center text-xs font-medium bg-white/10 px-3 py-1.5 rounded-full border border-white/10 backdrop-blur-md">
                                     <svg class="w-3 h-3 mr-1.5 text-blue-300" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588 1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
@@ -649,6 +667,11 @@
         // --- DOM Elements ---
         const processBtn = document.getElementById('process-btn');
         const dataInput = document.getElementById('data-input');
+        
+        // Elementos de Arquivo
+        const fileUploadInput = document.getElementById('csv-file-upload');
+        const fileNameDisplay = document.getElementById('file-name-display');
+
         const infoMessage = document.getElementById('info-message');
         const sessionIdText = document.getElementById('session-id-text');
         const dashboard = document.getElementById('dashboard');
@@ -656,7 +679,6 @@
         const connectionSection = document.getElementById('connection-section');
         const newSessionBtn = document.getElementById('new-session-btn');
         
-        // NOVO BOTÃO DE CABEÇALHO
         const headerNewSessionBtn = document.getElementById('header-new-session-btn');
 
         const manualSessionInput = document.getElementById('manual-session-id');
@@ -712,11 +734,38 @@
         const pdPostitSegmentFilter = document.getElementById('pd-postit-segment-filter');
 
         // Dynamic visual update for Generate button based on Input
+        if (fileUploadInput) {
+            fileUploadInput.addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                if (file) {
+                    fileNameDisplay.textContent = `Arquivo selecionado: ${file.name}`;
+                    fileNameDisplay.classList.add('text-blue-600', 'font-bold');
+                    fileNameDisplay.classList.remove('text-slate-400');
+                    processBtn.disabled = false;
+                    dataInput.value = ''; // Limpa a caixa de texto
+                } else {
+                    fileNameDisplay.textContent = 'Nenhum arquivo selecionado';
+                    fileNameDisplay.classList.remove('text-blue-600', 'font-bold');
+                    fileNameDisplay.classList.add('text-slate-400');
+                    if(dataInput.value.trim().length === 0) processBtn.disabled = true;
+                }
+            });
+        }
+
         dataInput.addEventListener('input', () => {
             if(dataInput.value.trim().length > 0) {
                 processBtn.disabled = false;
+                // Se colar algo, remove o arquivo do input
+                if (fileUploadInput && fileUploadInput.value) {
+                    fileUploadInput.value = '';
+                    fileNameDisplay.textContent = 'Nenhum arquivo selecionado';
+                    fileNameDisplay.classList.remove('text-blue-600', 'font-bold');
+                    fileNameDisplay.classList.add('text-slate-400');
+                }
             } else {
-                processBtn.disabled = true;
+                if(!fileUploadInput || !fileUploadInput.files || fileUploadInput.files.length === 0) {
+                    processBtn.disabled = true;
+                }
             }
         });
 
@@ -815,8 +864,14 @@
 
         // --- Event Listeners ---
         processBtn.addEventListener('click', () => {
-            const data = dataInput.value.trim();
-            if (data) parseAndCreateNewSession(data);
+            const file = fileUploadInput && fileUploadInput.files ? fileUploadInput.files[0] : null;
+            const dataText = dataInput.value.trim();
+
+            if (file) {
+                parseAndCreateNewSession(file); // Passa o arquivo diretamente pro PapaParse
+            } else if (dataText) {
+                parseAndCreateNewSession(dataText); // Passa a string pro PapaParse
+            }
         });
 
         // Event listener para o NOVO botão do cabeçalho
@@ -998,11 +1053,11 @@
 
         // --- Core Functions ---
 
-        function parseAndCreateNewSession(data) {
+        function parseAndCreateNewSession(inputData) {
             processBtn.innerHTML = `<svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Processando...`;
             processBtn.disabled = true;
 
-            Papa.parse(data, {
+            Papa.parse(inputData, {
                 header: true,
                 skipEmptyLines: true,
                 transformHeader: h => h.trim(), 
@@ -1039,7 +1094,7 @@
                     }).filter(Boolean); 
 
                     if (allSamplesData.length === 0) {
-                        showAlert("Nenhum dado válido encontrado para processar. Verifique se copiou a tabela corretamente.");
+                        showAlert("Nenhum dado válido encontrado para processar. Verifique se o arquivo ou texto possui o cabeçalho correto.");
                         processBtn.disabled = false;
                         processBtn.innerHTML = 'Gerar Painel';
                         return;
@@ -1193,7 +1248,13 @@
                     if(processBtn) {
                         processBtn.innerHTML = 'Gerar Painel';
                         processBtn.disabled = true;
-                        dataInput.value = '';
+                        if(dataInput) dataInput.value = '';
+                        if(fileUploadInput) fileUploadInput.value = '';
+                        if(fileNameDisplay) fileNameDisplay.textContent = 'Nenhum arquivo selecionado';
+                        if(fileNameDisplay) {
+                            fileNameDisplay.classList.remove('text-blue-600', 'font-bold');
+                            fileNameDisplay.classList.add('text-slate-400');
+                        }
                     }
 
                 } 
