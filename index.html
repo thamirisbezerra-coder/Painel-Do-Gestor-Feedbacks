@@ -570,7 +570,7 @@
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl p-6 overflow-hidden flex flex-col max-h-[85vh]">
             <div class="flex justify-between items-center mb-6">
                 <h3 class="text-xl font-bold text-slate-800 flex items-center gap-2">
-                    <div class="p-1.5 bg-blue-100 text-blue-600 rounded-lg"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg></div>
+                    <div class="p-1.5 bg-blue-100 text-blue-600 rounded-lg"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2-2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg></div>
                     Acessos Gerenciais
                 </h3>
                 <button class="close-senhas-gerentes-btn p-1.5 bg-slate-100 text-slate-500 rounded-lg hover:bg-slate-200 transition-colors">
@@ -790,7 +790,6 @@
             }
         });
 
-
         // --- State Variables ---
         let dataListenerUnsubscribe = null;
         let notificationListenerUnsubscribe = null;
@@ -856,6 +855,55 @@
                 toast.classList.add('opacity-0', 'translate-x-10');
                 setTimeout(() => toast.remove(), 500);
             }, 8000);
+        }
+
+        // --- SISTEMA DE NOTIFICAÇÃO DO OS (Windows/Mac) ---
+        function showBrowserNotification(title, body) {
+            if (!("Notification" in window)) return;
+            if (Notification.permission === 'granted') {
+                try {
+                    // Som de notificação obriga à atenção mesmo se a janela estiver minimizada
+                    const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+                    audio.play().catch(e => console.log('Áudio silenciado pelo navegador', e));
+
+                    const notification = new Notification(title, {
+                        body: body,
+                        icon: 'https://img.icons8.com/color/96/000000/appointment-reminders--v1.png',
+                        requireInteraction: true // IMPEDE QUE A NOTIFICAÇÃO SUMA SOZINHA DO ECRÃ
+                    });
+                    
+                    notification.onclick = function() {
+                        window.focus();
+                        this.close();
+                    };
+                } catch (err) {
+                    console.error("Erro no popup do sistema operativo", err);
+                }
+            }
+        }
+
+        function setupNotificationButton() {
+            if (!("Notification" in window)) {
+                notificationsPermissionBtn.style.display = 'none';
+                return;
+            }
+
+            switch(Notification.permission) {
+                case 'granted':
+                    bellIcon.classList.remove('text-slate-400', 'text-rose-500');
+                    bellIcon.classList.add('text-emerald-500');
+                    notificationsPermissionBtn.title = 'Notificações estão ativadas.';
+                    break;
+                case 'denied':
+                    bellIcon.classList.remove('text-slate-400', 'text-emerald-500');
+                    bellIcon.classList.add('text-rose-500');
+                    notificationsPermissionBtn.title = 'Notificações bloqueadas. Clique para ver como desbloquear.';
+                    break;
+                default:
+                    bellIcon.classList.remove('text-emerald-500', 'text-rose-500');
+                    bellIcon.classList.add('text-slate-400');
+                    notificationsPermissionBtn.title = 'Clique para ativar as notificações no navegador.';
+            }
         }
 
         // --- EXPORTAR PARA EXCEL ---
@@ -1313,12 +1361,11 @@
                     if (headerExportBtn) headerExportBtn.classList.remove('hidden');
                     if (headerExportBtn) headerExportBtn.classList.add('flex');
 
-                    // --- SISTEMA DE TOASTS E NOTIFICAÇÕES GERAIS ---
+                    // --- SISTEMA DE NOTIFICAÇÕES (CRIAÇÃO DOS REGISTOS DB) ---
                     if (!isInitialDataLoad) {
                         const batch = writeBatch(db);
                         let notificationAdded = false;
 
-                        // Verifica os itens que mudaram o feedback ou observacao
                         const modifiedSamples = allSamples.filter(currentSample => {
                             const prevSample = previousSamples.find(p => p.id === currentSample.id);
                             if (!prevSample) return false;
@@ -1330,27 +1377,31 @@
 
                         if (modifiedSamples.length > 0) {
                             modifiedSamples.forEach(sample => {
-                                // SE O FEEDBACK FOR VAZIO OU PENDENTE DE ACORDO COM O CÓDIGO
                                 let statusText = sample.feedback;
+                                
+                                // Formatar o texto final para Sem retorno, se aplicável.
                                 if (!statusText || PENDING_STATUSES.includes(normalizeText(statusText))) {
                                     statusText = "Sem retorno";
+                                } else {
+                                    // Remove as marcações A -, R -, E -, P - e pega apenas a frase limpa
+                                    statusText = statusText.replace(/^[AREP] - /, '').trim();
                                 }
 
                                 const title = "❗️ Novo Feedback";
                                 const bodyMsg = `${sample.sellerName} respondeu: ${statusText}`;
                                 
-                                // TOAST na aplicação
-                                showToast(title, bodyMsg, 'blue');
-                                // POPUP do Windows/Mac (Notificação Oficial)
-                                showBrowserNotification(title, bodyMsg);
-                                
-                                const notifId = sanitizeForFirebaseId(`notif-${sample.id}-${Date.now()}`);
+                                // Id Único Baseado no Tempo exato da Alteração (impede popups duplicados se tiver múltiplas abas abertas)
+                                const updateTime = sample.lastUpdate?.toMillis ? sample.lastUpdate.toMillis() : Date.now();
+                                const notifId = sanitizeForFirebaseId(`notif-${sample.id}-${updateTime}`);
                                 const notifRef = doc(db, "sessoes", currentSessionId, "notificacoes", notifId);
+                                
                                 batch.set(notifRef, {
-                                    message: `<strong>${sample.sellerName}</strong> atualizou <strong>${sample.produto}</strong>: ${statusText}`,
+                                    title: title,
+                                    message: bodyMsg,
+                                    produto: sample.produto,
                                     color: 'blue', 
                                     timestamp: serverTimestamp(),
-                                    triggerPopup: false 
+                                    triggerPopup: true 
                                 });
                                 notificationAdded = true;
                             });
@@ -1487,6 +1538,28 @@
                     timestamp: doc.data().timestamp 
                 }));
                 updateNotificationDisplay(); 
+
+                // GATILHO DAS NOTIFICAÇÕES (Executa ao ver o registo DB)
+                if (!initialLoad) {
+                    snapshot.docChanges().forEach((change) => {
+                        if (change.type === "added" && !change.doc.metadata.fromCache) { 
+                            const data = change.doc.data();
+                            
+                            let title = data.title || '❗️ Novo Feedback';
+                            let msg = data.message;
+                            
+                            // Toast na tela do App
+                            showToast(title, msg, data.color);
+
+                            // Notificação Oficial do Sistema Operativo
+                            if (data.triggerPopup) { 
+                                let osMsg = msg.replace(/<[^>]*>?/gm, ''); 
+                                if (data.produto) osMsg += `\nProd: ${data.produto}`;
+                                showBrowserNotification(title, osMsg);
+                            }
+                        }
+                    });
+                }
                 initialLoad = false;
             });
         }
@@ -1540,18 +1613,17 @@
                                 
                                 const title = "❗️ Novo Feedback";
                                 const bodyMsg = `${senderName} respondeu: "${replyData.replyMessage}"`;
-
-                                showToast(title, bodyMsg, isPDReply ? 'purple' : 'orange');
-                                showBrowserNotification(title, bodyMsg);
                                 
                                 const notifId = sanitizeForFirebaseId(`seller-reply-${replyDocRef.id}`);
                                 const notifRef = doc(db, "sessoes", currentSessionId, "notificacoes", notifId);
 
                                 transaction.set(notifRef, {
-                                    message: `<strong>${senderName}</strong> respondeu à sua observação sobre <strong>${replyData.produto}</strong>: "${replyData.replyMessage}"`,
+                                    title: title,
+                                    message: bodyMsg,
+                                    produto: replyData.produto,
                                     color: isPDReply ? 'purple' : 'orange', 
                                     timestamp: serverTimestamp(),
-                                    triggerPopup: false 
+                                    triggerPopup: true 
                                 });
 
                                 transaction.update(replyDocRef, { readByManager: true });
@@ -2644,87 +2716,6 @@
                 palette.push(colors[i % colors.length]);
             }
             return palette;
-        }
-
-        function setupNotificationButton() {
-            if (!("Notification" in window)) {
-                notificationsPermissionBtn.style.display = 'none';
-                return;
-            }
-
-            switch(Notification.permission) {
-                case 'granted':
-                    bellIcon.classList.remove('text-slate-400', 'text-rose-500');
-                    bellIcon.classList.add('text-emerald-500');
-                    notificationsPermissionBtn.title = 'Notificações estão ativadas.';
-                    break;
-                case 'denied':
-                    bellIcon.classList.remove('text-slate-400', 'text-emerald-500');
-                    bellIcon.classList.add('text-rose-500');
-                    notificationsPermissionBtn.title = 'Notificações bloqueadas. Clique para ver como desbloquear.';
-                    break;
-                default:
-                    bellIcon.classList.remove('text-emerald-500', 'text-rose-500');
-                    bellIcon.classList.add('text-slate-400');
-                    notificationsPermissionBtn.title = 'Clique para ativar as notificações no navegador.';
-            }
-        }
-
-        function showBrowserNotification(title, body) {
-            if (!("Notification" in window)) return;
-            if (Notification.permission === 'granted') {
-                new Notification(title, {
-                    body: body,
-                    icon: 'https://img.icons8.com/color/96/000000/appointment-reminders--v1.png'
-                });
-            }
-        }
-
-        function populateSegmentFilters() {
-             const currentSegments = [...new Set(Object.values(sellerSegmentsCache).filter(Boolean))].sort();
-
-             const obsSelect = document.getElementById('observation-segment-filter');
-             const pdSelect = document.getElementById('pd-postit-segment-filter');
-
-             const populateSelect = (selectEl) => {
-                 if (!selectEl) return;
-                 const currentValue = selectEl.value; 
-                 selectEl.innerHTML = '<option value="">Todos os Segmentos</option>';
-
-                 const aromaOption = document.createElement('option');
-                 aromaOption.value = AROMA_FILTER_VALUE;
-                 aromaOption.textContent = 'Aromas (DAR / AROMAS)';
-                 selectEl.appendChild(aromaOption);
-
-                 if (currentSegments.length > 0) {
-                     const separator = document.createElement('option');
-                     separator.disabled = true;
-                     separator.textContent = '--- Segmentos ---';
-                     selectEl.appendChild(separator);
-                 }
-
-                 currentSegments.forEach(segment => {
-                     const option = document.createElement('option');
-                     option.value = segment;
-                     option.textContent = segment;
-                     selectEl.appendChild(option);
-                 });
-
-                 if (selectEl.querySelector(`option[value="${currentValue}"]`)) {
-                     selectEl.value = currentValue;
-                 } else {
-                     if (currentValue !== AROMA_FILTER_VALUE) {
-                         selectEl.value = "";
-                     } else {
-                         selectEl.value = AROMA_FILTER_VALUE;
-                     }
-                 }
-             };
-
-             populateSelect(obsSelect); 
-             populateSelect(pdSelect); 
-
-             populateModalSegmentFilter();
         }
 
         // --- Initial Setup ---
