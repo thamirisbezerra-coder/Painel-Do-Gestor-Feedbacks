@@ -11,12 +11,11 @@
     <style>
         body { 
             font-family: 'Inter', sans-serif; 
-            background-color: #f8fafc; /* slate-50 */
-            color: #1e293b; /* slate-800 */
+            background-color: #f8fafc;
+            color: #1e293b;
             -webkit-font-smoothing: antialiased;
         }
 
-        /* Custom Scrollbar for modern look */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
@@ -27,14 +26,14 @@
         canvas { cursor: pointer; }
         
         .feedback-sample-item {
-            border-bottom: 1px solid #f1f5f9; /* slate-100 */
+            border-bottom: 1px solid #f1f5f9;
             padding-bottom: 0.875rem;
             margin-bottom: 0.875rem;
             transition: all 0.2s;
         }
         .feedback-sample-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
         .feedback-sample-item.highlight {
-            background-color: #fef3c7; /* bg-amber-100 */
+            background-color: #fef3c7;
             border-radius: 0.75rem;
             padding: 0.75rem;
             border-bottom: none;
@@ -43,23 +42,23 @@
         .manager-reply, .seller-reply {
             margin-top: 0.75rem;
             padding-top: 0.75rem;
-            border-top: 1px dashed #cbd5e1; /* slate-300 */
+            border-top: 1px dashed #cbd5e1;
             font-size: 0.85rem;
-            color: #475569; /* slate-600 */
+            color: #475569;
             border-radius: 0.5rem;
         }
         .seller-reply {
             padding-left: 0.75rem;
-            border-left: 3px solid #fbd38d; /* orange-300 */
-            background-color: #fffbeb; /* amber-50 */
+            border-left: 3px solid #fbd38d;
+            background-color: #fffbeb;
             padding: 0.75rem;
             border-top: none;
             margin-top: 0.5rem;
         }
         
         .pd-postit-card {
-            background-color: #fefce8; /* bg-yellow-50 */
-            border: 1px solid #fde047; /* border-yellow-300 */
+            background-color: #fefce8;
+            border: 1px solid #fde047;
             padding: 1rem; 
             border-radius: 0.75rem; 
             box-shadow: 2px 2px 8px rgba(0,0,0,0.04);
@@ -70,7 +69,6 @@
             transform: translateY(-2px);
             box-shadow: 2px 4px 12px rgba(0,0,0,0.06);
         }
-        /* Top fold effect for post-it */
         .pd-postit-card::before {
             content: "";
             position: absolute;
@@ -82,19 +80,16 @@
             opacity: 0.5;
         }
 
-        /* Glassmorphism Header */
         .glass-header {
             background: rgba(255, 255, 255, 0.85);
             backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
             border-bottom: 1px solid rgba(226, 232, 240, 0.8);
         }
 
-        /* Card styles */
         .modern-card {
             background: white;
             border-radius: 1rem;
-            border: 1px solid #e2e8f0; /* slate-200 */
+            border: 1px solid #e2e8f0;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
             transition: all 0.3s ease;
         }
@@ -102,36 +97,35 @@
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
         }
 
-        /* Modal Overlay fix */
         .modal-overlay {
             backdrop-filter: blur(4px);
-            -webkit-backdrop-filter: blur(4px);
-            background-color: rgba(15, 23, 42, 0.6); /* slate-900 / 60% */
+            background-color: rgba(15, 23, 42, 0.6);
         }
     </style>
 </head>
 <body class="text-slate-800 relative">
 
+    <!-- HEADER -->
     <header class="glass-header sticky top-0 z-40 transition-all duration-300">
         <div class="container mx-auto px-4 md:px-8 py-4 flex justify-between items-center">
             <div class="flex items-center space-x-3">
                 <div class="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-sm text-white">
                     <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
                 </div>
-                <h1 class="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-slate-600 hidden sm:block">Gestão de Feedbacks</h1>
+                <h1 class="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-slate-600 hidden sm:block">Painel do Gestor</h1>
             </div>
             <div class="flex items-center space-x-2 sm:space-x-3">
                  <div class="hidden md:flex px-3 py-1 bg-slate-100 rounded-full border border-slate-200">
                      <p id="session-id-text" class="text-xs font-medium text-slate-500">Nenhuma sessão</p>
                  </div>
                  
-                 <!-- NOVO BOTÃO: Testar Pop-up -->
-                 <button id="test-notification-btn" class="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 border border-blue-200 text-blue-700 rounded-lg hover:bg-blue-100 hover:text-blue-800 transition-all text-xs font-bold shadow-sm" title="Testar se o Windows está a bloquear as notificações">
+                 <!-- BOTÃO: Testar Pop-up -->
+                 <button id="test-notification-btn" class="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 border border-blue-200 text-blue-700 rounded-lg hover:bg-blue-100 transition-all text-xs font-bold shadow-sm" title="Testar se o Windows está a bloquear as notificações">
                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
                      <span class="hidden sm:inline">Testar Pop-up</span>
                  </button>
-                 
-                 <button id="header-export-btn" class="hidden flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-lg hover:bg-emerald-100 hover:text-emerald-800 transition-all text-xs font-bold shadow-sm">
+
+                 <button id="header-export-btn" class="hidden flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-lg hover:bg-emerald-100 transition-all text-xs font-bold shadow-sm">
                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                      <span class="hidden sm:inline">Exportar Excel</span>
                      <span class="sm:hidden">Excel</span>
@@ -152,7 +146,7 @@
 
     <div class="container mx-auto p-4 md:p-8">
         
-        <!-- Input Section (Welcome Landing) -->
+        <!-- WELCOME LANDING / UPLOAD -->
         <div id="input-section" class="max-w-3xl mx-auto mt-10 mb-16 modern-card p-8 sm:p-10 text-center relative overflow-hidden hidden">
             <div class="absolute top-0 right-0 -mr-16 -mt-16 w-32 h-32 rounded-full bg-blue-50 opacity-50"></div>
             <div class="absolute bottom-0 left-0 -ml-16 -mb-16 w-40 h-40 rounded-full bg-indigo-50 opacity-50"></div>
@@ -169,7 +163,7 @@
                         <div class="flex flex-col items-center justify-center pt-5 pb-6">
                             <svg class="w-8 h-8 mb-3 text-slate-400 group-hover:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
                             <p class="mb-1 text-sm text-slate-500"><span class="font-semibold text-blue-600">Clique para anexar</span> o seu arquivo .CSV</p>
-                            <p class="text-xs text-slate-400 mt-1" id="file-name-display">Nenhum arquivo selecionado</p>
+                            <p class="text-xs text-slate-400 mt-1" id="file-name-display">Nenhum ficheiro selecionado</p>
                         </div>
                         <input id="csv-file-upload" type="file" class="hidden" accept=".csv" />
                     </label>
@@ -189,17 +183,15 @@
             </div>
         </div>
 
-        <!-- Connection Section -->
+        <!-- CONNECTION (MANUAL) -->
          <div id="connection-section" class="max-w-2xl mx-auto text-center mb-16 flex flex-col items-center gap-6 hidden mt-10">
              <div class="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm w-full">
-                 <h3 class="text-xl font-semibold mb-4 text-slate-700">Conectar a uma sessão existente</h3>
+                 <h3 class="text-xl font-semibold mb-4 text-slate-700">Ligar a uma sessão existente</h3>
                  <div class="flex flex-col sm:flex-row items-center gap-3 w-full max-w-md mx-auto">
                      <input type="text" id="manual-session-id" placeholder="Ex: sessao_123456789" class="w-full border-slate-200 rounded-xl shadow-sm text-sm p-3 focus:ring-2 focus:ring-blue-500 bg-slate-50 focus:bg-white transition-colors">
-                     <button id="connect-session-btn" class="w-full sm:w-auto bg-slate-800 text-white font-semibold py-3 px-6 rounded-xl hover:bg-slate-900 transition-colors shadow-sm whitespace-nowrap">Conectar</button>
+                     <button id="connect-session-btn" class="w-full sm:w-auto bg-slate-800 text-white font-semibold py-3 px-6 rounded-xl hover:bg-slate-900 transition-colors shadow-sm whitespace-nowrap">Ligar</button>
                  </div>
-                 
                  <div class="mt-8 pt-6 border-t border-slate-100">
-                     <p class="text-sm text-slate-500 mb-3">Ou comece do zero com novos dados</p>
                      <button id="new-session-btn" class="bg-white text-blue-600 font-semibold py-2.5 px-6 rounded-xl border border-blue-200 hover:bg-blue-50 hover:border-blue-300 transition-colors shadow-sm inline-flex items-center gap-2">
                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                          Iniciar Nova Sessão Global
@@ -209,119 +201,71 @@
          </div>
 
 
-        <!-- Dashboard Section -->
+        <!-- DASHBOARD (GESTOR) -->
         <div id="dashboard" class="hidden animate-[slideIn_0.4s_ease-out]">
             
             <!-- ACESSO RÁPIDO -->
             <section id="acesso-rapido-section" class="mb-10 grid grid-cols-1 md:grid-cols-3 gap-6">
                 <!-- 1. Painel Gerentes -->
-                <a href="https://thamirisbezerra-coder.github.io/PainelGerencia/" target="_blank"
-                   class="modern-card p-6 block group relative overflow-hidden">
+                <a href="https://thamirisbezerra-coder.github.io/PainelGerencia/" target="_blank" class="modern-card p-6 block group relative overflow-hidden">
                     <div class="absolute top-0 right-0 w-24 h-24 bg-blue-50 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
                     <div class="relative z-10">
                         <div class="flex items-center mb-4">
-                            <div class="p-2.5 bg-blue-100 text-blue-600 rounded-lg mr-3 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002 2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
-                            </div>
+                            <div class="p-2.5 bg-blue-100 text-blue-600 rounded-lg mr-3 group-hover:bg-blue-600 group-hover:text-white transition-colors"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002 2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg></div>
                             <h3 class="text-lg font-bold text-slate-800">Painel Gerentes</h3>
                         </div>
                         <div class="bg-slate-50 p-3 rounded-lg border border-slate-100 mb-3">
                             <p class="text-xs text-slate-500 mb-1 uppercase tracking-wider font-semibold">Senha Gestor</p>
                             <p class="text-lg font-mono font-bold text-slate-800">admin123</p>
                         </div>
-                        <p class="text-xs text-slate-500 mt-2">
-                            <button type="button" id="open-senhas-gerentes-btn" class="text-blue-600 font-medium hover:text-blue-800 focus:outline-none flex items-center gap-1">
-                                Ver acessos da equipa <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
-                            </button>
-                        </p>
-                        <div class="absolute bottom-6 right-6 opacity-0 group-hover:opacity-100 transition-opacity text-blue-600">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
-                        </div>
+                        <button type="button" id="open-senhas-gerentes-btn" class="text-blue-600 font-medium hover:text-blue-800 flex items-center gap-1 text-sm">Ver acessos da equipa <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg></button>
                     </div>
                 </a>
 
                 <!-- 2. Tela do Vendedor -->
-                <a href="https://thamirisbezerra-coder.github.io/Tela-do-Vendedor/" target="_blank"
-                   class="modern-card p-6 block group relative overflow-hidden">
+                <a href="https://thamirisbezerra-coder.github.io/Tela-do-Vendedor/" target="_blank" class="modern-card p-6 block group relative overflow-hidden">
                     <div class="absolute top-0 right-0 w-24 h-24 bg-emerald-50 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
                     <div class="relative z-10">
                         <div class="flex items-center mb-4">
-                            <div class="p-2.5 bg-emerald-100 text-emerald-600 rounded-lg mr-3 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                            </div>
+                            <div class="p-2.5 bg-emerald-100 text-emerald-600 rounded-lg mr-3 group-hover:bg-emerald-600 group-hover:text-white transition-colors"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg></div>
                             <h3 class="text-lg font-bold text-slate-800">Tela do Vendedor</h3>
                         </div>
-                        <p class="text-sm text-slate-600 mb-2 leading-relaxed">Partilhe este link com a equipa de vendas para que insiram os feedbacks.</p>
+                        <p class="text-sm text-slate-600 mb-2">Partilhe este link com a equipa de vendas para que insiram os feedbacks.</p>
                         <div class="bg-emerald-50/50 p-3 rounded-lg border border-emerald-100 inline-block mt-1">
-                            <p class="text-xs text-emerald-700 font-medium flex items-center gap-1">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path></svg>
-                                Usa código PIN de 6 dígitos
-                            </p>
-                        </div>
-                        <div class="absolute bottom-6 right-6 opacity-0 group-hover:opacity-100 transition-opacity text-emerald-600">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                            <p class="text-xs text-emerald-700 font-medium flex items-center gap-1"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path></svg> Usa código PIN de 6 dígitos</p>
                         </div>
                     </div>
                 </a>
                 
                 <!-- 3. Painel P&D -->
-                <a href="https://thamirisbezerra-coder.github.io/Painel-Pesquisa-e-Desenvolvimento/" target="_blank"
-                   class="modern-card p-6 block group relative overflow-hidden">
+                <a href="https://thamirisbezerra-coder.github.io/Painel-Pesquisa-e-Desenvolvimento/" target="_blank" class="modern-card p-6 block group relative overflow-hidden">
                     <div class="absolute top-0 right-0 w-24 h-24 bg-purple-50 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
                     <div class="relative z-10">
                         <div class="flex items-center mb-4">
-                            <div class="p-2.5 bg-purple-100 text-purple-600 rounded-lg mr-3 group-hover:bg-purple-600 group-hover:text-white transition-colors">
-                                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" /></svg>
-                            </div>
+                            <div class="p-2.5 bg-purple-100 text-purple-600 rounded-lg mr-3 group-hover:bg-purple-600 group-hover:text-white transition-colors"><svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" /></svg></div>
                             <h3 class="text-lg font-bold text-slate-800">Painel P&D</h3>
                         </div>
                         <div class="bg-slate-50 p-3 rounded-lg border border-slate-100 mb-3">
                             <p class="text-xs text-slate-500 mb-1 uppercase tracking-wider font-semibold">Senha Gestor</p>
                             <p class="text-lg font-mono font-bold text-slate-800">admin123</p>
                         </div>
-                        <p class="text-xs text-slate-500 mt-2">
-                            <button type="button" id="open-senhas-pd-btn" class="text-purple-600 font-medium hover:text-purple-800 focus:outline-none flex items-center gap-1">
-                                Ver acessos P&D <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
-                            </button>
-                        </p>
-                        <div class="absolute bottom-6 right-6 opacity-0 group-hover:opacity-100 transition-opacity text-purple-600">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
-                        </div>
+                        <button type="button" id="open-senhas-pd-btn" class="text-purple-600 font-medium hover:text-purple-800 flex items-center gap-1 text-sm">Ver acessos P&D <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg></button>
                     </div>
                 </a>
             </section>
             
             <!-- PAINEL DE RESULTADOS -->
             <section id="painel-resultados-section" class="mb-10">
-                <a href="https://thamirisbezerra-coder.github.io/Painel-de-Resultados/" target="_blank" 
-                   class="block bg-gradient-to-br from-slate-800 to-slate-900 text-white p-6 md:p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1 relative overflow-hidden">
+                <a href="https://thamirisbezerra-coder.github.io/Painel-de-Resultados/" target="_blank" class="block bg-gradient-to-br from-slate-800 to-slate-900 text-white p-6 md:p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all relative overflow-hidden">
                     <div class="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full -mr-20 -mt-20"></div>
                     <div class="absolute bottom-0 right-20 w-32 h-32 bg-blue-500 opacity-10 rounded-full blur-xl"></div>
-                    
                     <div class="relative z-10 flex flex-col md:flex-row justify-between items-center md:items-start gap-4">
                         <div>
                             <div class="flex items-center mb-3">
-                                <div class="bg-white/10 p-2.5 rounded-xl mr-4 backdrop-blur-sm">
-                                    <svg class="w-7 h-7 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-                                </div>
+                                <div class="bg-white/10 p-2.5 rounded-xl mr-4 backdrop-blur-sm"><svg class="w-7 h-7 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg></div>
                                 <h3 class="text-2xl font-bold tracking-wide">Resultados <span class="font-light opacity-80 text-lg">2023–2025</span></h3>
                             </div>
                             <p class="text-sm text-slate-300 max-w-lg mb-3">Aceda a dashboards completos com o histórico e o <strong class="text-white">Ranking de Aromas (DAR)</strong>.</p>
-                            <div class="flex gap-4 mt-4">
-                                <span class="flex items-center text-xs font-medium bg-white/10 px-3 py-1.5 rounded-full border border-white/10 backdrop-blur-md">
-                                    <svg class="w-3 h-3 mr-1.5 text-blue-300" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588 1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
-                                    Melhor Índice
-                                </span>
-                                <span class="flex items-center text-xs font-medium bg-white/10 px-3 py-1.5 rounded-full border border-white/10 backdrop-blur-md">
-                                    <svg class="w-3 h-3 mr-1.5 text-blue-300" fill="currentColor" viewBox="0 0 20 20"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"></path></svg>
-                                    Ranking Vendedores
-                                </span>
-                            </div>
-                        </div>
-                        <div class="mt-4 md:mt-0 flex-shrink-0">
-                            <span class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors border border-white/20">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
-                            </span>
                         </div>
                     </div>
                 </a>
@@ -331,33 +275,22 @@
             <section id="notifications-section" class="mb-10 modern-card p-6 border-l-4 border-l-indigo-500">
                  <div class="flex justify-between items-center mb-5">
                      <div class="flex items-center gap-2">
-                         <div class="p-1.5 bg-indigo-50 rounded-lg text-indigo-600">
-                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
-                         </div>
+                         <div class="p-1.5 bg-indigo-50 rounded-lg text-indigo-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg></div>
                          <h2 class="text-xl font-bold text-slate-800">Alertas e Notificações</h2>
                      </div>
-                     <button id="history-btn" class="bg-slate-100 text-slate-600 text-xs font-semibold py-1.5 px-3 rounded-lg hover:bg-slate-200 transition-colors shadow-sm flex items-center gap-1">
-                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                         Histórico
-                     </button>
+                     <button id="history-btn" class="bg-slate-100 text-slate-600 text-xs font-semibold py-1.5 px-3 rounded-lg hover:bg-slate-200 transition-colors shadow-sm flex items-center gap-1">Histórico</button>
                  </div>
-                 <div id="notifications-list" class="space-y-3"><p class="text-slate-400 text-sm py-2 placeholder-notification text-center">Nenhuma notificação no momento.</p></div>
+                 <div id="notifications-list" class="space-y-3"><p class="text-slate-400 text-sm py-2 text-center">Nenhuma notificação no momento.</p></div>
             </section>
 
             <!-- Charts -->
             <section class="mb-10 grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div class="modern-card p-6">
-                    <h3 class="font-bold text-lg mb-6 text-slate-700 flex items-center gap-2">
-                        <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"></path></svg>
-                        Status da Sessão
-                    </h3>
+                    <h3 class="font-bold text-lg mb-6 text-slate-700 flex items-center gap-2"><svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"></path><path d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"></path></svg> Status da Sessão</h3>
                     <div style="height: 250px;" class="relative w-full"><canvas id="session-status-chart"></canvas></div>
                 </div>
                 <div class="modern-card p-6">
-                    <h3 id="rejection-chart-title" class="font-bold text-lg mb-6 text-slate-700 flex items-center gap-2">
-                        <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-                        Distribuição de Feedbacks
-                    </h3>
+                    <h3 id="rejection-chart-title" class="font-bold text-lg mb-6 text-slate-700 flex items-center gap-2"><svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg> Distribuição de Feedbacks</h3>
                     <div style="height: 250px;" class="relative w-full"><canvas id="rejection-rate-chart"></canvas></div>
                 </div>
             </section>
@@ -370,19 +303,19 @@
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
                     <div class="modern-card p-5 border-t-4 border-t-emerald-500">
-                        <h3 class="font-bold text-sm uppercase tracking-wider mb-4 text-emerald-600 flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-emerald-500"></div> Aprovados</h3>
+                        <h3 class="font-bold text-sm uppercase mb-4 text-emerald-600 flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-emerald-500"></div> Aprovados</h3>
                         <ul id="approved-feedback-list" class="space-y-1.5 text-sm text-slate-600"></ul>
                     </div>
                     <div class="modern-card p-5 border-t-4 border-t-rose-500">
-                        <h3 class="font-bold text-sm uppercase tracking-wider mb-4 text-rose-600 flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-rose-500"></div> Reprovados</h3>
+                        <h3 class="font-bold text-sm uppercase mb-4 text-rose-600 flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-rose-500"></div> Reprovados</h3>
                         <ul id="rejected-feedback-list" class="space-y-1.5 text-sm text-slate-600"></ul>
                     </div>
                     <div class="modern-card p-5 border-t-4 border-t-purple-500">
-                        <h3 class="font-bold text-sm uppercase tracking-wider mb-4 text-purple-600 flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-purple-500"></div> Eventos</h3>
+                        <h3 class="font-bold text-sm uppercase mb-4 text-purple-600 flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-purple-500"></div> Eventos</h3>
                         <ul id="events-feedback-list" class="space-y-1.5 text-sm text-slate-600"></ul>
                     </div>
                      <div class="modern-card p-5 border-t-4 border-t-amber-500">
-                        <h3 class="font-bold text-sm uppercase tracking-wider mb-4 text-amber-600 flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-amber-500"></div> Pendência</h3>
+                        <h3 class="font-bold text-sm uppercase mb-4 text-amber-600 flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-amber-500"></div> Pendência</h3>
                         <ul id="pending-feedback-list" class="space-y-1.5 text-sm text-slate-600"></ul>
                     </div>
                 </div>
@@ -393,34 +326,26 @@
                 <!-- Coluna Feed Vendedores -->
                 <section id="observations-feed-section" class="flex flex-col h-[600px]">
                      <div class="flex items-center gap-2 mb-4">
-                         <div class="p-1.5 bg-blue-50 rounded-lg text-blue-500"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"></path></svg></div>
+                         <div class="p-1.5 bg-blue-50 rounded-lg text-blue-500"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"></path></svg></div>
                          <h2 class="text-xl font-bold text-slate-800 tracking-tight">Observações (Vendas)</h2>
                      </div>
                      <div class="mb-4 grid grid-cols-2 gap-3">
-                         <select id="observation-segment-filter" class="bg-white border border-slate-200 rounded-xl shadow-sm text-sm w-full p-2.5 focus:ring-2 focus:ring-blue-500 outline-none">
-                             <option value="">Todos os Segmentos</option>
-                         </select>
+                         <select id="observation-segment-filter" class="bg-white border border-slate-200 rounded-xl shadow-sm text-sm w-full p-2.5 focus:ring-2 focus:ring-blue-500 outline-none"><option value="">Todos os Segmentos</option></select>
                          <input id="observation-search-input" type="text" placeholder="Pesquisar vendedor..." class="bg-white border border-slate-200 rounded-xl shadow-sm text-sm w-full p-2.5 focus:ring-2 focus:ring-blue-500 outline-none">
                      </div>
-                     <div id="observations-feed-list" class="flex-grow space-y-4 overflow-y-auto modern-card p-5 pr-3 bg-slate-50/50">
-                         <p class="text-slate-400 text-sm text-center py-4 placeholder-observation">Nenhuma observação encontrada.</p>
-                     </div>
+                     <div id="observations-feed-list" class="flex-grow space-y-4 overflow-y-auto modern-card p-5 pr-3 bg-slate-50/50"></div>
                 </section>
 
                 <!-- Coluna Post-its P&D -->
                 <section id="pd-postits-section" class="flex flex-col h-[600px]">
                      <div class="flex items-center gap-2 mb-4">
-                         <div class="p-1.5 bg-amber-50 rounded-lg text-amber-500"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg></div>
+                         <div class="p-1.5 bg-amber-50 rounded-lg text-amber-500"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg></div>
                          <h2 class="text-xl font-bold text-slate-800 tracking-tight">Post-its P&D (Notas)</h2>
                      </div>
                      <div class="mb-4 grid grid-cols-2 gap-3">
-                         <select id="pd-postit-segment-filter" class="bg-white border border-slate-200 rounded-xl shadow-sm text-sm w-full p-2.5 focus:ring-2 focus:ring-blue-500 outline-none col-span-2 sm:col-span-1">
-                             <option value="">Todos os Segmentos</option>
-                         </select>
+                         <select id="pd-postit-segment-filter" class="bg-white border border-slate-200 rounded-xl shadow-sm text-sm w-full p-2.5 focus:ring-2 focus:ring-blue-500 outline-none col-span-2 sm:col-span-1"><option value="">Todos os Segmentos</option></select>
                      </div>
-                     <div id="pd-postits-list" class="flex-grow space-y-4 overflow-y-auto modern-card p-5 pr-3 bg-slate-100/50">
-                         <p class="text-slate-400 text-sm text-center py-4 placeholder-pd-postit">Nenhum post-it do P&D encontrado.</p>
-                     </div>
+                     <div id="pd-postits-list" class="flex-grow space-y-4 overflow-y-auto modern-card p-5 pr-3 bg-slate-100/50"></div>
                 </section>
             </section>
 
@@ -430,55 +355,38 @@
                     <h2 class="text-2xl font-bold text-slate-800 tracking-tight">Análise por Segmento</h2>
                     <div class="h-px bg-slate-200 flex-grow ml-4"></div>
                 </div>
-                <div id="segment-charts-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Charts JS -->
-                </div>
+                <div id="segment-charts-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
             </section>
 
             <!-- Team Tracking Section -->
              <section id="team-tracking-section" class="mb-10 modern-card p-6 md:p-8">
                  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
                      <div class="flex items-center gap-2">
-                         <div class="p-1.5 bg-indigo-50 rounded-lg text-indigo-500"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg></div>
-                         <h2 class="text-2xl font-bold text-slate-800 tracking-tight">Acompanhamento de Equipe</h2>
+                         <div class="p-1.5 bg-indigo-50 rounded-lg text-indigo-500"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg></div>
+                         <h2 class="text-2xl font-bold text-slate-800 tracking-tight">Acompanhamento de Equipa</h2>
                      </div>
                      <div class="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
                          <button id="email-all-btn" class="w-full sm:w-auto flex items-center justify-center gap-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 px-4 py-2 rounded-xl text-sm font-semibold transition-colors border border-indigo-100 shadow-sm whitespace-nowrap">
-                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-                             Email p/ Todos
+                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg> Email p/ Todos
                          </button>
                          <div class="relative w-full sm:w-64">
-                             <svg class="w-4 h-4 absolute left-3 top-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                             <svg class="w-4 h-4 absolute left-3 top-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                              <input id="seller-search-input" type="text" placeholder="Procurar vendedor..." class="w-full pl-9 pr-4 py-2 border border-slate-200 bg-slate-50 rounded-xl shadow-sm text-sm focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-colors">
                          </div>
                      </div>
                  </div>
-                 <div id="sellers-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                     <!-- Seller cards JS -->
-                 </div>
+                 <div id="sellers-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"></div>
              </section>
 
         </div>
     </div>
 
-    <!-- Modals Backdrop Fix -->
-    <style>
-        .modal-overlay {
-            backdrop-filter: blur(4px);
-            -webkit-backdrop-filter: blur(4px);
-            background-color: rgba(15, 23, 42, 0.6); /* slate-900 / 60% */
-        }
-    </style>
-
-    <!-- Segment Association Modal -->
+    <!-- Modals (Associar, Notificações, Gráficos, Amostras, Responder) -->
     <div id="segment-modal" class="fixed inset-0 modal-overlay flex items-center justify-center p-4 hidden z-50">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 transform scale-100 transition-transform">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
             <h3 class="text-xl font-bold mb-2 text-slate-800">Associar Segmento</h3>
             <p id="segment-modal-seller-name" class="text-sm font-medium text-blue-600 mb-6 bg-blue-50 px-3 py-1.5 rounded-lg inline-block"></p>
-            <div>
-                 <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Selecione o segmento</label>
-                 <select id="segment-select" class="w-full border-slate-200 bg-slate-50 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none text-slate-700"></select>
-            </div>
+            <select id="segment-select" class="w-full border-slate-200 bg-slate-50 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none text-slate-700"></select>
             <div class="mt-8 flex justify-end space-x-3">
                 <button id="cancel-modal-btn" class="bg-slate-100 text-slate-600 hover:bg-slate-200 font-medium py-2.5 px-5 rounded-xl transition-colors">Cancelar</button>
                 <button id="confirm-segment-btn" class="bg-blue-600 text-white hover:bg-blue-700 font-medium py-2.5 px-6 rounded-xl shadow-sm transition-colors">Salvar Alterações</button>
@@ -486,87 +394,56 @@
         </div>
     </div>
 
-    <!-- Notification History Modal -->
     <div id="history-modal" class="fixed inset-0 modal-overlay flex items-center justify-center p-4 hidden z-50">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl p-6 flex flex-col max-h-[80vh]">
-            <h3 class="text-xl font-bold mb-4 text-slate-800 flex items-center gap-2">
-                <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                Histórico de Notificações
-            </h3>
-            <div id="history-list" class="space-y-1 overflow-y-auto pr-2 flex-grow border-y border-slate-100 py-4">
-                 <p class="text-slate-500 text-sm">Nenhum histórico para mostrar.</p>
-            </div>
-            <div class="mt-6 flex justify-end pt-2">
-                <button id="close-history-btn" class="bg-slate-800 text-white font-medium py-2.5 px-6 rounded-xl hover:bg-slate-900 transition-colors">Fechar</button>
-            </div>
+            <h3 class="text-xl font-bold mb-4 text-slate-800 flex items-center gap-2">Histórico de Notificações</h3>
+            <div id="history-list" class="space-y-1 overflow-y-auto pr-2 flex-grow border-y border-slate-100 py-4"></div>
+            <div class="mt-6 flex justify-end pt-2"><button id="close-history-btn" class="bg-slate-800 text-white font-medium py-2.5 px-6 rounded-xl hover:bg-slate-900 transition-colors">Fechar</button></div>
         </div>
     </div>
 
-    <!-- Chart Modal -->
      <div id="chart-modal" class="fixed inset-0 modal-overlay flex items-center justify-center p-4 hidden z-[60]">
          <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl h-[70vh] p-6 relative flex flex-col">
-             <button id="close-chart-modal-btn" class="absolute top-4 right-4 p-2 bg-slate-100 text-slate-500 rounded-full hover:bg-slate-200 hover:text-slate-800 transition-colors">
-                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-             </button>
-             <div class="flex-grow w-full relative mt-6">
-                <canvas id="modal-chart-canvas"></canvas>
-             </div>
+             <button id="close-chart-modal-btn" class="absolute top-4 right-4 p-2 bg-slate-100 text-slate-500 rounded-full hover:bg-slate-200 hover:text-slate-800 transition-colors">X</button>
+             <div class="flex-grow w-full relative mt-6"><canvas id="modal-chart-canvas"></canvas></div>
          </div>
      </div>
 
-     <!-- Feedback Samples Modal -->
      <div id="feedback-samples-modal" class="fixed inset-0 modal-overlay flex items-center justify-center p-4 hidden z-50">
          <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl p-6 flex flex-col max-h-[85vh]">
              <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-5 gap-4">
-                 <h3 id="feedback-samples-title" class="text-lg font-bold text-slate-800">Amostras com Feedback</h3>
+                 <h3 id="feedback-samples-title" class="text-lg font-bold text-slate-800">Amostras</h3>
                  <div class="flex items-center gap-3 w-full sm:w-auto">
-                     <select id="modal-segment-filter" class="w-full sm:w-auto bg-slate-50 border border-slate-200 rounded-lg text-sm p-2 focus:ring-2 focus:ring-blue-500 outline-none">
-                         <option value="">Todos os Segmentos</option>
-                     </select>
-                     <button id="close-feedback-samples-btn" class="p-1.5 bg-slate-100 text-slate-500 rounded-lg hover:bg-slate-200 transition-colors hidden sm:block">
-                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                     </button>
+                     <select id="modal-segment-filter" class="w-full sm:w-auto bg-slate-50 border border-slate-200 rounded-lg text-sm p-2 outline-none"></select>
+                     <button id="close-feedback-samples-btn" class="p-1.5 bg-slate-100 text-slate-500 rounded-lg hover:bg-slate-200 hidden sm:block">X</button>
                  </div>
              </div>
-             <div id="feedback-samples-list" class="space-y-2 overflow-y-auto pr-2 flex-grow bg-slate-50/50 rounded-xl p-2 border border-slate-100">
-                 <div class="flex justify-center py-10"><div class="animate-pulse flex space-x-2"><div class="w-2 h-2 bg-blue-400 rounded-full"></div><div class="w-2 h-2 bg-blue-400 rounded-full"></div><div class="w-2 h-2 bg-blue-400 rounded-full"></div></div></div>
-             </div>
-             <div class="mt-6 flex justify-end">
-                 <button id="close-feedback-samples-btn-bottom" class="bg-slate-800 text-white font-medium py-2.5 px-6 rounded-xl hover:bg-slate-900 transition-colors">Fechar Lista</button>
-             </div>
+             <div id="feedback-samples-list" class="space-y-2 overflow-y-auto pr-2 flex-grow bg-slate-50/50 rounded-xl p-2 border border-slate-100"></div>
+             <div class="mt-6 flex justify-end"><button id="close-feedback-samples-btn-bottom" class="bg-slate-800 text-white font-medium py-2.5 px-6 rounded-xl hover:bg-slate-900 transition-colors">Fechar Lista</button></div>
          </div>
      </div>
 
-     <!-- Observation Reply Modal -->
      <div id="reply-modal" class="fixed inset-0 modal-overlay flex items-center justify-center p-4 hidden z-[60]">
          <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6">
-             <div class="flex items-center gap-3 mb-5">
-                 <div class="p-2 bg-blue-50 text-blue-600 rounded-lg"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path></svg></div>
-                 <h3 class="text-xl font-bold text-slate-800">Responder à Observação</h3>
-             </div>
+             <div class="flex items-center gap-3 mb-5"><h3 class="text-xl font-bold text-slate-800">Responder à Observação</h3></div>
              <div class="mb-5 p-4 bg-slate-50 rounded-xl border border-slate-200">
                  <p class="font-bold text-sm text-slate-800 mb-1" id="reply-modal-product"></p>
-                 <p class="text-xs font-medium text-slate-500 mb-2 flex items-center gap-1"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg> <span id="reply-modal-seller"></span></p>
-                 <div class="pl-3 border-l-2 border-slate-300">
-                    <p class="italic text-sm text-slate-600">"${' '}"</p>
-                 </div>
+                 <p class="text-xs font-medium text-slate-500 mb-2 flex items-center gap-1"><span id="reply-modal-seller"></span></p>
+                 <div class="pl-3 border-l-2 border-slate-300"><p class="italic text-sm text-slate-600" id="reply-modal-observation"></p></div>
              </div>
              <div class="space-y-4">
                  <div>
-                     <label for="manager-name-input" class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Seu Nome (Gestor)</label>
-                     <input type="text" id="manager-name-input" class="w-full border-slate-200 bg-slate-50 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Ex: João Silva">
+                     <label class="block text-xs font-semibold text-slate-500 uppercase mb-1.5">Seu Nome (Gestor)</label>
+                     <input type="text" id="manager-name-input" class="w-full border-slate-200 bg-slate-50 rounded-lg p-2.5 text-sm outline-none" placeholder="Ex: João Silva">
                  </div>
                  <div>
-                   <label for="reply-message-input" class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Mensagem de Resposta</label>
-                   <textarea id="reply-message-input" rows="3" class="w-full border-slate-200 bg-slate-50 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none resize-none" placeholder="Digite sua resposta aqui para o vendedor..."></textarea>
+                   <label class="block text-xs font-semibold text-slate-500 uppercase mb-1.5">Mensagem</label>
+                   <textarea id="reply-message-input" rows="3" class="w-full border-slate-200 bg-slate-50 rounded-lg p-3 text-sm outline-none resize-none" placeholder="Digite sua resposta..."></textarea>
                  </div>
              </div>
              <div class="mt-8 flex justify-end space-x-3">
-                 <button id="cancel-reply-btn" class="bg-slate-100 text-slate-600 font-medium py-2 px-4 rounded-xl hover:bg-slate-200 transition-colors">Cancelar</button>
-                 <button id="send-reply-btn" class="bg-blue-600 text-white font-medium py-2 px-6 rounded-xl shadow-sm hover:bg-blue-700 transition-colors flex items-center gap-2">
-                     Enviar
-                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
-                 </button>
+                 <button id="cancel-reply-btn" class="bg-slate-100 text-slate-600 font-medium py-2 px-4 rounded-xl hover:bg-slate-200">Cancelar</button>
+                 <button id="send-reply-btn" class="bg-blue-600 text-white font-medium py-2 px-6 rounded-xl shadow-sm hover:bg-blue-700">Enviar</button>
              </div>
          </div>
      </div>
@@ -575,22 +452,13 @@
     <div id="senhas-gerentes-modal" class="fixed inset-0 modal-overlay flex items-center justify-center p-4 hidden z-[60]">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl p-6 overflow-hidden flex flex-col max-h-[85vh]">
             <div class="flex justify-between items-center mb-6">
-                <h3 class="text-xl font-bold text-slate-800 flex items-center gap-2">
-                    <div class="p-1.5 bg-blue-100 text-blue-600 rounded-lg"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg></div>
-                    Acessos Gerenciais
-                </h3>
-                <button class="close-senhas-gerentes-btn p-1.5 bg-slate-100 text-slate-500 rounded-lg hover:bg-slate-200 transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
+                <h3 class="text-xl font-bold text-slate-800">Acessos Gerenciais</h3>
+                <button class="close-senhas-gerentes-btn p-1.5 bg-slate-100 text-slate-500 rounded-lg hover:bg-slate-200 transition-colors">X</button>
             </div>
             <div class="overflow-y-auto border border-slate-200 rounded-xl">
                 <table class="w-full text-left border-collapse">
                     <thead class="bg-slate-50 border-b border-slate-200 sticky top-0 z-10">
-                        <tr>
-                            <th class="px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Segmento</th>
-                            <th class="px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Gerente</th>
-                            <th class="px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">Senha</th>
-                        </tr>
+                        <tr><th class="px-5 py-3 text-xs font-semibold text-slate-500 uppercase">Segmento</th><th class="px-5 py-3 text-xs font-semibold text-slate-500 uppercase">Gerente</th><th class="px-5 py-3 text-xs font-semibold text-slate-500 uppercase text-right">Senha</th></tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 bg-white">
                         <tr class="hover:bg-slate-50/50"><td class="px-5 py-3.5 text-sm font-medium text-slate-800">CÁRNEOS</td><td class="px-5 py-3.5 text-sm text-slate-600">LUIS ADRIANO</td><td class="px-5 py-3.5 text-sm font-mono text-slate-500 text-right bg-slate-50/50 rounded-md">carneospass123</td></tr>
@@ -602,31 +470,21 @@
                     </tbody>
                 </table>
             </div>
-            <div class="mt-6 flex justify-end">
-                <button class="close-senhas-gerentes-btn bg-slate-800 text-white font-medium py-2.5 px-6 rounded-xl hover:bg-slate-900 transition-colors">Concluído</button>
-            </div>
+            <div class="mt-6 flex justify-end"><button class="close-senhas-gerentes-btn bg-slate-800 text-white font-medium py-2.5 px-6 rounded-xl hover:bg-slate-900 transition-colors">Concluído</button></div>
         </div>
     </div>
 
-    <!-- Senhas P&D Modal -->
+    <!-- Senhas P&D Modal (Atualizado com FARMA e NUTRIÇÃO ESPORTIVA) -->
     <div id="senhas-pd-modal" class="fixed inset-0 modal-overlay flex items-center justify-center p-4 hidden z-[60]">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl p-6 flex flex-col max-h-[85vh]">
             <div class="flex justify-between items-center mb-6">
-                <h3 class="text-xl font-bold text-slate-800 flex items-center gap-2">
-                    <div class="p-1.5 bg-purple-100 text-purple-600 rounded-lg"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg></div>
-                    Acessos P&D
-                </h3>
-                <button class="close-senhas-pd-btn p-1.5 bg-slate-100 text-slate-500 rounded-lg hover:bg-slate-200 transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
+                <h3 class="text-xl font-bold text-slate-800">Acessos P&D</h3>
+                <button class="close-senhas-pd-btn p-1.5 bg-slate-100 text-slate-500 rounded-lg hover:bg-slate-200 transition-colors">X</button>
             </div>
             <div class="overflow-y-auto border border-slate-200 rounded-xl">
                 <table class="w-full text-left border-collapse">
                     <thead class="bg-slate-50 border-b border-slate-200 sticky top-0 z-10">
-                        <tr>
-                            <th class="px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Área / Segmento</th>
-                            <th class="px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">Senha</th>
-                        </tr>
+                        <tr><th class="px-5 py-3 text-xs font-semibold text-slate-500 uppercase">Área / Segmento</th><th class="px-5 py-3 text-xs font-semibold text-slate-500 uppercase text-right">Senha</th></tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 bg-white">
                         <tr class="hover:bg-slate-50/50"><td class="px-5 py-3.5 text-sm font-medium text-slate-800">Panificação</td><td class="px-5 py-3.5 text-sm font-mono text-slate-500 text-right">pd_adriana5</td></tr>
@@ -640,75 +498,58 @@
                     </tbody>
                 </table>
             </div>
-            <div class="mt-6 flex justify-end">
-                <button class="close-senhas-pd-btn bg-slate-800 text-white font-medium py-2.5 px-6 rounded-xl hover:bg-slate-900 transition-colors">Concluído</button>
-            </div>
+            <div class="mt-6 flex justify-end"><button class="close-senhas-pd-btn bg-slate-800 text-white font-medium py-2.5 px-6 rounded-xl hover:bg-slate-900 transition-colors">Concluído</button></div>
         </div>
     </div>
 
-    <!-- Custom Alert/Modal for errors -->
+    <!-- Alertas Customizados e Toasts -->
     <div id="custom-alert" class="fixed inset-0 modal-overlay flex items-center justify-center p-4 hidden z-[70]">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center">
-            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
-                <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-            </div>
             <h3 class="text-lg font-bold mb-2 text-slate-800">Atenção</h3>
-            <p id="custom-alert-message" class="text-sm text-slate-500 mb-6">Ocorreu um erro. Tente novamente.</p>
-            <div class="flex justify-center">
-                <button id="custom-alert-ok-btn" class="bg-red-600 text-white font-medium py-2 px-8 rounded-xl shadow-sm hover:bg-red-700 transition-colors">OK, Entendi</button>
-            </div>
+            <p id="custom-alert-message" class="text-sm text-slate-500 mb-6">Ocorreu um erro.</p>
+            <button id="custom-alert-ok-btn" class="bg-red-600 text-white font-medium py-2 px-8 rounded-xl">OK, Entendi</button>
         </div>
     </div>
 
-    <!-- Container dos Toast (Pop-ups) -->
     <div id="toast-container" class="fixed bottom-5 right-5 z-[100] flex flex-col gap-3 pointer-events-none"></div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, onSnapshot, doc, writeBatch, setDoc, getDoc, getDocs, updateDoc, query, orderBy, serverTimestamp, addDoc, limit, where, runTransaction, Timestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-        // IMPORTANT: Replace with your actual Firebase config
+        // IMPORTANT: Substitua pelas credenciais do Firebase se necessário
         const firebaseConfig = {
              apiKey: "AIzaSyAF_TE28Tbp2nakBGTva1yEEbBCqWvRdJQ", 
              authDomain: "feedback-vendedores.firebaseapp.com", 
              projectId: "feedback-vendedores", 
              storageBucket: "feedback-vendedores.firebasestorage.app", 
              messagingSenderId: "650880422749", 
-             appId: "1:650880422749:web:54a258964a6ca8db180eb4", 
-             measurementId: "G-TG588KDK0C" 
+             appId: "1:650880422749:web:54a258964a6ca8db180eb4"
         };
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
 
+        // NOVA LISTA OFICIAL DE SEGMENTOS
         const PENDING_STATUSES = ['EM ANÁLISE', 'AMOSTRA SEM FEEDBACK', 'SEM RETORNO DO CLIENTE', 'AMOSTRA NÃO TESTADA', 'PENDENTE'];
-        
-        // NOVO ARRAY DE SEGMENTOS
         const SEGMENTS = ['CÁRNEOS', 'EXPORTACAO', 'FARMA', 'FOOD SERVICE', 'LACTEOS', 'NUTRICAO ANIMAL', 'NUTRICAO ESPORTIVA', 'PANIFICACAO', 'SMB', 'SORVETES', 'SUPPLY/FIS'];
         const AROMA_FILTER_VALUE = 'AROMAS_FILTER';
 
-        // --- DOM Elements ---
+        // Elementos DOM
         const processBtn = document.getElementById('process-btn');
         const dataInput = document.getElementById('data-input');
-        
         const fileUploadInput = document.getElementById('csv-file-upload');
         const fileNameDisplay = document.getElementById('file-name-display');
-
         const infoMessage = document.getElementById('info-message');
         const sessionIdText = document.getElementById('session-id-text');
         const dashboard = document.getElementById('dashboard');
         const inputSection = document.getElementById('input-section');
         const connectionSection = document.getElementById('connection-section');
         const newSessionBtn = document.getElementById('new-session-btn');
-        
         const headerNewSessionBtn = document.getElementById('header-new-session-btn');
         const headerExportBtn = document.getElementById('header-export-btn');
-
         const manualSessionInput = document.getElementById('manual-session-id');
         const connectSessionBtn = document.getElementById('connect-session-btn');
         const segmentModal = document.getElementById('segment-modal');
@@ -745,33 +586,30 @@
         const replyMessageInput = document.getElementById('reply-message-input');
         const cancelReplyBtn = document.getElementById('cancel-reply-btn');
         const sendReplyBtn = document.getElementById('send-reply-btn');
-        
         const senhasGerentesModal = document.getElementById('senhas-gerentes-modal');
         const openSenhasGerentesBtn = document.getElementById('open-senhas-gerentes-btn');
         const closeSenhasGerentesBtns = document.querySelectorAll('.close-senhas-gerentes-btn');
-
         const senhasPdModal = document.getElementById('senhas-pd-modal');
         const openSenhasPdBtn = document.getElementById('open-senhas-pd-btn');
         const closeSenhasPdBtns = document.querySelectorAll('.close-senhas-pd-btn');
-
         const customAlert = document.getElementById('custom-alert');
         const customAlertMessage = document.getElementById('custom-alert-message');
         const customAlertOkBtn = document.getElementById('custom-alert-ok-btn');
-
         const pdPostitsList = document.getElementById('pd-postits-list');
         const pdPostitSegmentFilter = document.getElementById('pd-postit-segment-filter');
 
+        // Tratamento do Input de Arquivo
         if (fileUploadInput) {
             fileUploadInput.addEventListener('change', (event) => {
                 const file = event.target.files[0];
                 if (file) {
-                    fileNameDisplay.textContent = `Arquivo selecionado: ${file.name}`;
+                    fileNameDisplay.textContent = `Ficheiro selecionado: ${file.name}`;
                     fileNameDisplay.classList.add('text-blue-600', 'font-bold');
                     fileNameDisplay.classList.remove('text-slate-400');
                     processBtn.disabled = false;
                     dataInput.value = '';
                 } else {
-                    fileNameDisplay.textContent = 'Nenhum arquivo selecionado';
+                    fileNameDisplay.textContent = 'Nenhum ficheiro selecionado';
                     fileNameDisplay.classList.remove('text-blue-600', 'font-bold');
                     fileNameDisplay.classList.add('text-slate-400');
                     if(dataInput.value.trim().length === 0) processBtn.disabled = true;
@@ -784,7 +622,7 @@
                 processBtn.disabled = false;
                 if (fileUploadInput && fileUploadInput.value) {
                     fileUploadInput.value = '';
-                    fileNameDisplay.textContent = 'Nenhum arquivo selecionado';
+                    fileNameDisplay.textContent = 'Nenhum ficheiro selecionado';
                     fileNameDisplay.classList.remove('text-blue-600', 'font-bold');
                     fileNameDisplay.classList.add('text-slate-400');
                 }
@@ -795,7 +633,7 @@
             }
         });
 
-        // --- State Variables ---
+        // Estado da Aplicação
         let dataListenerUnsubscribe = null;
         let notificationListenerUnsubscribe = null;
         let sellerRepliesListenerUnsubscribe = null;
@@ -808,6 +646,7 @@
         let modalChartInstance = null;
         let currentSellerForSegment = null;
         let allCurrentSamples = []; 
+        let previousSamplesData = []; // Para comparações de notificação
         let sellerSegmentsCache = {}; 
         let currentFeedbackFilter = ''; 
         let allSellerReplies = []; 
@@ -826,35 +665,9 @@
             customAlertMessage.textContent = message;
             customAlert.classList.remove('hidden');
         }
+        customAlertOkBtn.addEventListener('click', () => customAlert.classList.add('hidden'));
 
-        // --- Botão de Teste de Notificação ---
-        const testNotificationBtn = document.getElementById('test-notification-btn');
-        if(testNotificationBtn) {
-            testNotificationBtn.addEventListener('click', () => {
-                if (!("Notification" in window)) {
-                    showAlert("O seu navegador não suporta notificações.");
-                    return;
-                }
-                if (Notification.permission === "granted") {
-                    showToast("❗️ Novo Feedback", "Vendedor de Teste respondeu: Sem retorno", "blue");
-                    showBrowserNotification("❗️ Novo Feedback", "Vendedor de Teste respondeu: Sem retorno");
-                } else if (Notification.permission !== "denied") {
-                    Notification.requestPermission().then(permission => {
-                        if (permission === "granted") {
-                            setupNotificationButton();
-                            showToast("❗️ Novo Feedback", "Vendedor de Teste respondeu: Sem retorno", "blue");
-                            showBrowserNotification("❗️ Novo Feedback", "Vendedor de Teste respondeu: Sem retorno");
-                        } else {
-                            showAlert("Precisa permitir as notificações no navegador primeiro.");
-                        }
-                    });
-                } else {
-                    showAlert("As notificações estão bloqueadas no navegador. Clique no ícone do cadeado junto ao link do site para permitir.");
-                }
-            });
-        }
-
-        // --- SISTEMA DE TOAST (Pop-ups em Tempo Real na aplicação) ---
+        // --- SISTEMA DE TOAST (Pop-ups do Próprio App) ---
         function showToast(title, message, colorType) {
             const container = document.getElementById('toast-container');
             if(!container) return;
@@ -870,7 +683,7 @@
             toast.innerHTML = `
                 <div class="flex justify-between items-start mb-2 gap-2">
                     <strong class="text-sm font-bold leading-tight flex items-center gap-1">
-                        <div class="w-2 h-2 rounded-full ${colorType === 'orange'?'bg-amber-500':colorType==='green'?'bg-emerald-500':colorType==='purple'?'bg-purple-500':'bg-blue-500'}"></div>
+                        <div class="w-2 h-2 rounded-full ${colorType === 'orange'?'bg-amber-500':colorType==='green'?'bg-emerald-500':'bg-blue-500'}"></div>
                         ${title}
                     </strong>
                     <button class="opacity-50 hover:opacity-100 transition-opacity focus:outline-none flex-shrink-0" onclick="this.parentElement.parentElement.remove()">
@@ -881,7 +694,6 @@
             `;
             
             container.appendChild(toast);
-            
             setTimeout(() => toast.classList.remove('translate-y-10', 'opacity-0'), 10);
             setTimeout(() => {
                 toast.classList.add('opacity-0', 'translate-x-10');
@@ -889,31 +701,27 @@
             }, 8000);
         }
 
-        // --- SISTEMA DE NOTIFICAÇÃO DO OS (Windows/Mac) FORÇADO ---
+        // --- SISTEMA DE NOTIFICAÇÃO DO NAVEGADOR E WINDOWS/MAC (FORÇADO) ---
         function showBrowserNotification(title, body) {
-            if (!("Notification" in window)) return;
-            if (Notification.permission === 'granted') {
-                try {
-                    // Toca áudio para alertar o utilizador mesmo se o ecrã não aparecer imediatamente
-                    const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-                    audio.play().catch(e => console.log('Áudio silenciado pelo navegador', e));
+            if (!("Notification" in window) || Notification.permission !== 'granted') return;
+            try {
+                // Força Alerta Sonoro
+                const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+                audio.play().catch(e => console.log('Áudio bloqueado', e));
 
-                    // Cria notificação e FORÇA a interação
-                    const notification = new Notification(title, {
-                        body: body,
-                        icon: 'https://cdn-icons-png.flaticon.com/512/1000/1000055.png', // Ícone de alerta padrão
-                        requireInteraction: true // IMPEDE QUE A NOTIFICAÇÃO DESAPAREÇA SOZINHA
-                    });
-                    
-                    notification.onclick = function() {
-                        window.focus(); // Traz a janela para a frente quando clicado
-                        this.close();
-                    };
-                } catch (err) {
-                    console.error("Erro ao mostrar o pop-up do sistema", err);
-                }
-            } else if (Notification.permission !== "denied") {
-                Notification.requestPermission();
+                // Configurações Agressivas do Pop-up (requireInteraction prende a janela na tela)
+                const notification = new Notification(title, {
+                    body: body,
+                    icon: 'https://cdn-icons-png.flaticon.com/512/1000/1000055.png',
+                    requireInteraction: true 
+                });
+                
+                notification.onclick = function() {
+                    window.focus(); 
+                    this.close();
+                };
+            } catch (err) {
+                console.error("Erro no popup do sistema", err);
             }
         }
 
@@ -922,7 +730,6 @@
                 notificationsPermissionBtn.style.display = 'none';
                 return;
             }
-
             switch(Notification.permission) {
                 case 'granted':
                     bellIcon.classList.remove('text-slate-400', 'text-rose-500');
@@ -941,14 +748,37 @@
             }
         }
 
-        // --- EXPORTAR PARA EXCEL ---
+        // Botão para testar os pop-ups
+        document.getElementById('test-notification-btn').addEventListener('click', () => {
+            if (!("Notification" in window)) {
+                showAlert("O seu navegador não suporta notificações.");
+                return;
+            }
+            if (Notification.permission === "granted") {
+                showToast("❗️ Novo Feedback", "Teste: Joãozinho respondeu: Sem retorno", "blue");
+                showBrowserNotification("❗️ Novo Feedback", "Teste: Joãozinho respondeu: Sem retorno");
+            } else if (Notification.permission !== "denied") {
+                Notification.requestPermission().then(permission => {
+                    if (permission === "granted") {
+                        setupNotificationButton();
+                        showToast("❗️ Novo Feedback", "Teste: Joãozinho respondeu: Sem retorno", "blue");
+                        showBrowserNotification("❗️ Novo Feedback", "Teste: Joãozinho respondeu: Sem retorno");
+                    } else {
+                        showAlert("Precisa permitir as notificações no navegador primeiro.");
+                    }
+                });
+            } else {
+                showAlert("As notificações estão bloqueadas no navegador. Clique no ícone do cadeado junto ao link do site para permitir.");
+            }
+        });
+
+        // --- EXPORTAR EXCEL (CSV Formatado para PT) ---
         if(headerExportBtn) {
             headerExportBtn.addEventListener('click', () => {
                 if(!allCurrentSamples || allCurrentSamples.length === 0) {
                     showAlert("Não há dados na sessão atual para exportar.");
                     return;
                 }
-                
                 headerExportBtn.innerHTML = '<svg class="animate-spin h-4 w-4 text-emerald-700 inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> <span class="hidden sm:inline">Aguarde...</span>';
                 
                 try {
@@ -978,54 +808,37 @@
                     const csv = Papa.unparse(dataToExport, { delimiter: ";" });
                     const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
                     const link = document.createElement("a");
-                    const url = URL.createObjectURL(blob);
-                    
-                    link.setAttribute("href", url);
+                    link.setAttribute("href", URL.createObjectURL(blob));
                     link.setAttribute("download", `Exportacao_Gestao_Feedbacks_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.csv`);
-                    link.style.visibility = 'hidden';
                     document.body.appendChild(link);
                     link.click();
                     document.body.removeChild(link);
                     
                 } catch(e) {
                     console.error("Erro na exportação", e);
-                    showAlert("Ocorreu um erro ao tentar exportar o arquivo.");
+                    showAlert("Ocorreu um erro ao tentar exportar o ficheiro.");
                 } finally {
                     headerExportBtn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg> <span class="hidden sm:inline">Exportar Excel</span><span class="sm:hidden">Excel</span>';
                 }
             });
         }
 
-
         function isAroma(produto, descricao) {
-            const normalizedProduto = normalizeText(produto);
-            const normalizedDescricao = normalizeText(descricao);
-            if (normalizedProduto.startsWith('DAR ') || normalizedProduto.startsWith('AROMAS ')) return true;
-            if (normalizedDescricao.includes('AROMA')) return true;
+            if (normalizeText(produto).startsWith('DAR ') || normalizeText(produto).startsWith('AROMAS ')) return true;
+            if (normalizeText(descricao).includes('AROMA')) return true;
             return false;
         }
 
         function getCanonicalFeedback(feedback) {
              if (!feedback) return '';
              const normalized = normalizeText(feedback.replace(/^(A - |R - |E - |P - )/, '').trim());
-             const mapping = {
-                 'APROVADO COM PEDIDO': 'COM PEDIDO',
-                 'APROVADA SEM PEDIDO': 'APROVADO SEM PEDIDO',
-                 'INNOVATION / EVENTOS': 'EVENTO',
-                 'AMOSTRA NAO TESTADA': 'AMOSTRA NÃO TESTADA',
-                 'EM ANALISE': 'EM ANÁLISE'
-             };
+             const mapping = { 'APROVADO COM PEDIDO': 'COM PEDIDO', 'APROVADA SEM PEDIDO': 'APROVADO SEM PEDIDO', 'INNOVATION / EVENTOS': 'EVENTO', 'AMOSTRA NAO TESTADA': 'AMOSTRA NÃO TESTADA', 'EM ANALISE': 'EM ANÁLISE' };
              return mapping[normalized] || normalized;
          }
          
         function getSellerNameFromPdContext(context = '') {
             if (!context || !context.includes('(')) return null;
-            try {
-                let name = context.split('(').pop(); 
-                return normalizeText(name.replace(')', '')); 
-            } catch (e) {
-                return null;
-            }
+            try { return normalizeText(context.split('(').pop().replace(')', '')); } catch (e) { return null; }
         }
 
         function processAndDisplayDashboard(samples, sessionId, sellerDocs = []) {
@@ -1033,14 +846,8 @@
             inputSection.classList.add('hidden');
             connectionSection.classList.add('hidden');
             
-            if (headerNewSessionBtn) {
-                headerNewSessionBtn.classList.remove('hidden');
-                headerNewSessionBtn.classList.add('flex');
-            }
-            if (headerExportBtn) {
-                headerExportBtn.classList.remove('hidden');
-                headerExportBtn.classList.add('flex');
-            }
+            if (headerNewSessionBtn) { headerNewSessionBtn.classList.remove('hidden'); headerNewSessionBtn.classList.add('flex'); }
+            if (headerExportBtn) { headerExportBtn.classList.remove('hidden'); headerExportBtn.classList.add('flex'); }
 
             sessionIdText.innerHTML = `<span class="opacity-70">Sessão:</span> <span class="font-bold text-slate-700">${sessionId}</span>`;
 
@@ -1056,23 +863,20 @@
             populateSegmentFilters(); 
         }
 
+        // --- INICIALIZAÇÃO DE SESSÕES ---
         processBtn.addEventListener('click', () => {
             const file = fileUploadInput && fileUploadInput.files ? fileUploadInput.files[0] : null;
             const dataText = dataInput.value.trim();
 
-            if (file) {
-                parseAndCreateNewSession(file); 
-            } else if (dataText) {
-                parseAndCreateNewSession(dataText); 
-            }
+            if (file) parseAndCreateNewSession(file); 
+            else if (dataText) parseAndCreateNewSession(dataText); 
         });
 
         if (headerNewSessionBtn) {
             headerNewSessionBtn.addEventListener('click', async () => {
                 if (confirm("Tem certeza que deseja encerrar a sessão atual para TODOS os usuários e iniciar uma nova?")) {
                     try {
-                        const activeSessionRef = doc(db, "configuracoes", "sessaoAtiva");
-                        await setDoc(activeSessionRef, { current: null }); 
+                        await setDoc(doc(db, "configuracoes", "sessaoAtiva"), { current: null }); 
                         resetToInitialState(); 
                         inputSection.classList.remove('hidden');
                         connectionSection.classList.add('hidden');
@@ -1086,8 +890,7 @@
 
         newSessionBtn.addEventListener('click', async () => {
             try {
-                const activeSessionRef = doc(db, "configuracoes", "sessaoAtiva");
-                await setDoc(activeSessionRef, { current: null }); 
+                await setDoc(doc(db, "configuracoes", "sessaoAtiva"), { current: null }); 
             } catch (error) {
                 infoMessage.textContent = "Erro ao tentar iniciar nova sessão global.";
                 return;
@@ -1106,9 +909,7 @@
                  inputSection.classList.add('hidden');
 
                  try {
-                     const sessionCheckRef = collection(db, "sessoes", manualId, "vendedores");
-                     const sessionCheckSnap = await getDocs(query(sessionCheckRef, limit(1)));
-
+                     const sessionCheckSnap = await getDocs(query(collection(db, "sessoes", manualId, "vendedores"), limit(1)));
                      if(sessionCheckSnap.empty) {
                          connectSessionBtn.innerHTML = originalBtnText;
                          showAlert(`Sessão ${manualId} não encontrada.`);
@@ -1116,9 +917,7 @@
                          manualSessionInput.value = manualId; 
                          return; 
                      }
-
-                     const activeSessionRef = doc(db, "configuracoes", "sessaoAtiva");
-                     await setDoc(activeSessionRef, { current: manualId });
+                     await setDoc(doc(db, "configuracoes", "sessaoAtiva"), { current: manualId });
                      
                      listenForDataUpdates(manualId);
                      listenForNotifications(manualId);
@@ -1127,14 +926,12 @@
                      listenForDestaquesAmostras(manualId);
                      listenForHistoricalAromaData(manualId); 
                      listenForPdPostits(manualId); 
-
                  } catch (error) {
                       connectSessionBtn.innerHTML = originalBtnText;
                       showAlert(`Erro ao conectar à sessão ${manualId}. Verifique o ID.`);
                       resetToInitialState(true);
                       manualSessionInput.value = manualId;
                  }
-
             } else {
                  showAlert('ID de sessão inválido. Deve começar com "sessao_".');
             }
@@ -1143,75 +940,36 @@
         cancelModalBtn.addEventListener('click', () => segmentModal.classList.add('hidden'));
         historyBtn.addEventListener('click', () => renderNotificationHistory());
         closeHistoryBtn.addEventListener('click', () => historyModal.classList.add('hidden'));
-        notificationsPermissionBtn.addEventListener('click', () => {
-            Notification.requestPermission().then(setupNotificationButton); 
-        });
+        notificationsPermissionBtn.addEventListener('click', () => Notification.requestPermission().then(setupNotificationButton));
         closeChartModalBtn.addEventListener('click', () => chartModal.classList.add('hidden'));
         closeFeedbackSamplesBtn.addEventListener('click', () => feedbackSamplesModal.classList.add('hidden'));
         closeFeedbackSamplesBtnBottom.addEventListener('click', () => feedbackSamplesModal.classList.add('hidden'));
-        modalSegmentFilter.addEventListener('change', () => {
-             showFeedbackSamples(currentFeedbackFilter, modalSegmentFilter.value);
-        });
+        modalSegmentFilter.addEventListener('change', () => showFeedbackSamples(currentFeedbackFilter, modalSegmentFilter.value));
         cancelReplyBtn.addEventListener('click', () => replyModal.classList.add('hidden'));
         sendReplyBtn.addEventListener('click', sendReplyToSeller);
         
-        if (openSenhasGerentesBtn) {
-            openSenhasGerentesBtn.addEventListener('click', (e) => {
-                e.preventDefault(); 
-                e.stopPropagation(); 
-                senhasGerentesModal.classList.remove('hidden');
-            });
-        }
-
-        closeSenhasGerentesBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                senhasGerentesModal.classList.add('hidden');
-            });
-        });
-
-        if (openSenhasPdBtn) {
-            openSenhasPdBtn.addEventListener('click', (e) => {
-                e.preventDefault(); 
-                e.stopPropagation(); 
-                senhasPdModal.classList.remove('hidden');
-            });
-        }
-
-        closeSenhasPdBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                senhasPdModal.classList.add('hidden');
-            });
-        });
+        openSenhasGerentesBtn.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); senhasGerentesModal.classList.remove('hidden'); });
+        closeSenhasGerentesBtns.forEach(btn => btn.addEventListener('click', () => senhasGerentesModal.classList.add('hidden')));
+        openSenhasPdBtn.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); senhasPdModal.classList.remove('hidden'); });
+        closeSenhasPdBtns.forEach(btn => btn.addEventListener('click', () => senhasPdModal.classList.add('hidden')));
 
         confirmSegmentBtn.addEventListener('click', async () => {
             if (!currentSellerForSegment || !currentSessionId) return;
             const newSegment = segmentSelect.value;
             const sellerId = sanitizeForFirebaseId(currentSellerForSegment);
-            const docRef = doc(db, "vendedorConfig", sellerId); 
-            
             confirmSegmentBtn.innerHTML = 'Salvando...';
 
             try {
-                await setDoc(docRef, { segmento: newSegment }, { merge: true }); 
+                await setDoc(doc(db, "vendedorConfig", sellerId), { segmento: newSegment }, { merge: true }); 
                 sellerSegmentsCache[normalizeText(currentSellerForSegment)] = newSegment; 
-
                 segmentModal.classList.add('hidden');
                 
                 const sellerDocs = [...new Set(allCurrentSamples.map(s => s.sellerName))].map(name => {
-                    const sellerId = sanitizeForFirebaseId(name);
                     const sellerDoc = sellersListContainer.querySelector(`.seller-card[data-seller-name="${name}"]`); 
-                    return {
-                        id: sellerId,
-                        originalName: name,
-                        amostras: allCurrentSamples.filter(s => s.sellerName === name),
-                        accessCode: sellerDoc ? sellerDoc.querySelector('.copy-code-btn')?.dataset.code : null
-                    };
+                    return { id: sanitizeForFirebaseId(name), originalName: name, amostras: allCurrentSamples.filter(s => s.sellerName === name), accessCode: sellerDoc ? sellerDoc.querySelector('.copy-code-btn')?.dataset.code : null };
                 });
-                
                 processAndDisplayDashboard(allCurrentSamples, currentSessionId, sellerDocs);
-
             } catch (error) {
-                console.error("Erro ao atualizar segmento:", error);
                 showAlert("Erro ao guardar segmento.");
             } finally {
                 confirmSegmentBtn.innerHTML = 'Salvar Alterações';
@@ -1220,28 +978,21 @@
 
         sellerSearchInput.addEventListener('input', () => {
             const searchTerm = normalizeText(sellerSearchInput.value);
-            const sellerCards = sellersListContainer.querySelectorAll('.seller-card'); 
-            sellerCards.forEach(card => {
-                const sellerName = normalizeText(card.dataset.sellerName);
-                card.style.display = sellerName.includes(searchTerm) ? '' : 'none';
+            sellersListContainer.querySelectorAll('.seller-card').forEach(card => {
+                card.style.display = normalizeText(card.dataset.sellerName).includes(searchTerm) ? '' : 'none';
             });
         });
 
         observationSegmentFilter.addEventListener('change', () => renderObservationsFeed(allCurrentSamples));
         observationSearchInput.addEventListener('input', () => renderObservationsFeed(allCurrentSamples));
-        
-        if (pdPostitSegmentFilter) {
-            pdPostitSegmentFilter.addEventListener('change', () => renderPdPostits());
-        }
+        if (pdPostitSegmentFilter) pdPostitSegmentFilter.addEventListener('change', () => renderPdPostits());
 
         function parseAndCreateNewSession(inputData) {
             processBtn.innerHTML = `<svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Processando...`;
             processBtn.disabled = true;
 
             Papa.parse(inputData, {
-                header: true,
-                skipEmptyLines: true,
-                transformHeader: h => h.trim(), 
+                header: true, skipEmptyLines: true, transformHeader: h => h.trim(), 
                 complete: (results) => {
                     if (results.errors.length > 0) {
                         showAlert(`Erro de formatação: ${results.errors[0].message}`);
@@ -1281,33 +1032,18 @@
 
                         if (sellerName && /^\d+$/.test(sellerName.replace(/[\.\-]/g, ''))) {
                             const possibleNames = [row['Divisão Comercial'], row['Razão Social'], getCol(row, ['Nome'])];
-                            for (let p of possibleNames) {
-                                if (p && /[a-zA-Z]{3,}/.test(p)) {
-                                    sellerName = p;
-                                    break;
-                                }
-                            }
+                            for (let p of possibleNames) { if (p && /[a-zA-Z]{3,}/.test(p)) { sellerName = p; break; } }
                         }
 
                         if (!sellerName || !pedido) return null; 
 
-                        const normalizedStatus = normalizeText(status);
                         return {
                             id: `sample_${Date.now()}_${index}`, 
                             sellerName: sellerName,
-                            isPending: PENDING_STATUSES.includes(normalizedStatus), 
-                            pedido: pedido,
-                            razaoSocial: razaoSocial,
-                            produto: produto,
-                            descricao: descricao,
-                            qtde: qtde,
-                            notaFiscal: notaFiscal,
-                            emissaoNF: emissaoNF,
-                            originalStatus: status,
-                            feedback: feedback,
-                            observation: '',
-                            finalizedByVendor: false, 
-                            systemStatus: 'pending', 
+                            isPending: PENDING_STATUSES.includes(normalizeText(status)), 
+                            pedido: pedido, razaoSocial: razaoSocial, produto: produto, descricao: descricao,
+                            qtde: qtde, notaFiscal: notaFiscal, emissaoNF: emissaoNF, originalStatus: status,
+                            feedback: feedback, observation: '', finalizedByVendor: false, systemStatus: 'pending', 
                             lastUpdate: Timestamp.now() 
                         };
                     }).filter(Boolean); 
@@ -1321,9 +1057,7 @@
 
                     const sessionId = `sessao_${Date.now()}`; 
                     allCurrentSamples = allSamplesData; 
-
                     infoMessage.textContent = "Conectando ao banco de dados e gerando acessos...";
-
                     saveDataAndUpdateActiveSession(allSamplesData, sessionId); 
                 }
             });
@@ -1331,58 +1065,50 @@
 
         async function saveDataAndUpdateActiveSession(samples, sessionId) {
             const sellersData = samples.reduce((acc, sample) => {
-                if (!acc[sample.sellerName]) {
-                    acc[sample.sellerName] = { amostras: [], originalName: sample.sellerName, accessCode: null };
-                }
+                if (!acc[sample.sellerName]) { acc[sample.sellerName] = { amostras: [], originalName: sample.sellerName, accessCode: null }; }
                 acc[sample.sellerName].amostras.push(sample);
                 return acc;
             }, {});
 
             const sellersArray = Object.entries(sellersData);
-            const batchSize = 5; 
-            for (let i = 0; i < sellersArray.length; i += batchSize) {
-                const chunk = sellersArray.slice(i, i + batchSize);
+            for (let i = 0; i < sellersArray.length; i += 5) {
+                const chunk = sellersArray.slice(i, i + 5);
                 const batch = writeBatch(db);
                 chunk.forEach(([sellerName, data]) => {
-                    const sellerId = sanitizeForFirebaseId(sellerName); 
-                    const docRef = doc(db, "sessoes", sessionId, "vendedores", sellerId);
                     data.accessCode = Math.floor(100000 + Math.random() * 900000).toString();
-                    batch.set(docRef, data);
+                    batch.set(doc(db, "sessoes", sessionId, "vendedores", sanitizeForFirebaseId(sellerName)), data);
                 });
                 await batch.commit();
                 await new Promise(resolve => setTimeout(resolve, 500)); 
             }
 
-            const activeSessionRef = doc(db, "configuracoes", "sessaoAtiva");
-            await setDoc(activeSessionRef, { current: sessionId });
-
-             listenForDataUpdates(sessionId);
-             listenForNotifications(sessionId);
-             listenForSellerReplies(sessionId);
-             listenForSellerRepliesToManager(sessionId);
-             listenForDestaquesAmostras(sessionId);
-             listenForHistoricalAromaData(sessionId); 
-             listenForPdPostits(sessionId); 
+            await setDoc(doc(db, "configuracoes", "sessaoAtiva"), { current: sessionId });
+            
+            listenForDataUpdates(sessionId);
+            listenForNotifications(sessionId);
+            listenForSellerReplies(sessionId);
+            listenForSellerRepliesToManager(sessionId);
+            listenForDestaquesAmostras(sessionId);
+            listenForHistoricalAromaData(sessionId); 
+            listenForPdPostits(sessionId); 
         }
 
+        // --- SISTEMA DE ATUALIZAÇÃO E NOTIFICAÇÃO (Com lógica forçada para Sem Retorno) ---
         function listenForDataUpdates(sessionId) {
             currentSessionId = sessionId;
-            const q = collection(db, "sessoes", sessionId, "vendedores");
             if (dataListenerUnsubscribe) dataListenerUnsubscribe(); 
 
             let isInitialDataLoad = true;
 
-            dataListenerUnsubscribe = onSnapshot(q, async (snapshot) => {
+            dataListenerUnsubscribe = onSnapshot(collection(db, "sessoes", sessionId, "vendedores"), async (snapshot) => {
                  if (snapshot.empty && isInitialDataLoad) {
                      showAlert(`Sessão não encontrada ou vazia. Inicie uma nova sessão global.`);
                      resetToInitialState(true); 
                      manualSessionInput.value = sessionId;
-                     if(dataListenerUnsubscribe) dataListenerUnsubscribe(); 
                      currentSessionId = null;
                      return;
                  }
 
-                const previousSamples = isInitialDataLoad ? [] : [...allCurrentSamples];
                 const allSamples = snapshot.docs.flatMap(doc => doc.data().amostras || []);
                 allCurrentSamples = allSamples; 
 
@@ -1391,61 +1117,52 @@
                     connectionSection.classList.add('hidden');
                     dashboard.classList.remove('hidden');
                     
-                    if (headerNewSessionBtn) headerNewSessionBtn.classList.remove('hidden');
-                    if (headerNewSessionBtn) headerNewSessionBtn.classList.add('flex');
-                    if (headerExportBtn) headerExportBtn.classList.remove('hidden');
-                    if (headerExportBtn) headerExportBtn.classList.add('flex');
+                    if (headerNewSessionBtn) { headerNewSessionBtn.classList.remove('hidden'); headerNewSessionBtn.classList.add('flex'); }
+                    if (headerExportBtn) { headerExportBtn.classList.remove('hidden'); headerExportBtn.classList.add('flex'); }
 
-                    // --- SISTEMA DE NOTIFICAÇÕES (CRIAÇÃO DOS REGISTOS DB) ---
+                    // VERIFICA SE HOUVE MODIFICAÇÕES REAIS E DISPARA POPUPS
                     if (!isInitialDataLoad) {
                         const batch = writeBatch(db);
                         let notificationAdded = false;
 
                         const modifiedSamples = allSamples.filter(currentSample => {
-                            const prevSample = previousSamples.find(p => p.id === currentSample.id);
+                            const prevSample = previousSamplesData.find(p => p.id === currentSample.id);
                             if (!prevSample) return false;
-                            
-                            const feedbackChanged = prevSample.feedback !== currentSample.feedback;
-                            const obsChanged = prevSample.observation !== currentSample.observation;
-                            return feedbackChanged || obsChanged;
+                            return (prevSample.feedback !== currentSample.feedback) || (prevSample.observation !== currentSample.observation);
                         });
 
                         if (modifiedSamples.length > 0) {
                             modifiedSamples.forEach(sample => {
                                 let statusText = sample.feedback;
                                 
-                                // Formatar o texto final para Sem retorno, se aplicável.
-                                if (!statusText || PENDING_STATUSES.includes(normalizeText(statusText))) {
+                                // REQUISITO: Se não houver feedback válido, mostrar "Sem retorno"
+                                if (!statusText || statusText.trim() === '' || PENDING_STATUSES.includes(normalizeText(statusText))) {
                                     statusText = "Sem retorno";
                                 } else {
-                                    // Remove as marcações A -, R -, E -, P - e pega apenas a frase limpa
                                     statusText = statusText.replace(/^[AREP] - /, '').trim();
                                 }
 
                                 const title = "❗️ Novo Feedback";
                                 const bodyMsg = `${sample.sellerName} respondeu: ${statusText}`;
                                 
-                                // Id Único Baseado no Tempo exato da Alteração
+                                // TOAST interno
+                                showToast(title, bodyMsg, 'blue');
+                                // POPUP nativo Windows/Mac
+                                showBrowserNotification(title, bodyMsg);
+                                
                                 const updateTime = sample.lastUpdate?.toMillis ? sample.lastUpdate.toMillis() : Date.now();
                                 const notifId = sanitizeForFirebaseId(`notif-${sample.id}-${updateTime}`);
-                                const notifRef = doc(db, "sessoes", currentSessionId, "notificacoes", notifId);
-                                
-                                batch.set(notifRef, {
-                                    title: title,
-                                    message: bodyMsg,
-                                    produto: sample.produto,
-                                    color: 'blue', 
-                                    timestamp: serverTimestamp(),
-                                    triggerPopup: true 
+                                batch.set(doc(db, "sessoes", currentSessionId, "notificacoes", notifId), {
+                                    title: title, message: bodyMsg, produto: sample.produto, color: 'blue', 
+                                    timestamp: serverTimestamp(), triggerPopup: true 
                                 });
                                 notificationAdded = true;
                             });
                         }
-
-                        if (notificationAdded) {
-                            try { await batch.commit(); } catch (error) { console.error("Erro batch:", error); }
-                        }
+                        if (notificationAdded) { try { await batch.commit(); } catch (error) {} }
                     } 
+
+                    previousSamplesData = [...allCurrentSamples];
 
                     const sellerDocs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     if (sellerDocs.length > 0) {
@@ -1465,21 +1182,17 @@
                         processBtn.disabled = true;
                         if(dataInput) dataInput.value = '';
                         if(fileUploadInput) fileUploadInput.value = '';
-                        if(fileNameDisplay) fileNameDisplay.textContent = 'Nenhum arquivo selecionado';
                         if(fileNameDisplay) {
+                            fileNameDisplay.textContent = 'Nenhum ficheiro selecionado';
                             fileNameDisplay.classList.remove('text-blue-600', 'font-bold');
                             fileNameDisplay.classList.add('text-slate-400');
                         }
                     }
-
                 } 
-
                 isInitialDataLoad = false; 
             }, (error) => {
-                 showAlert(`Erro ao carregar dados da sessão. Verifique a conexão.`);
+                 showAlert(`Erro ao carregar dados da sessão. Verifique a ligação.`);
                  resetToInitialState(true);
-                 manualSessionInput.value = sessionId;
-                 if(dataListenerUnsubscribe) dataListenerUnsubscribe();
                  currentSessionId = null;
             });
         }
@@ -1505,18 +1218,13 @@
             currentSampleForReply = null;
             currentFeedbackFilter = '';
             historicalAromaData = [];
+            previousSamplesData = [];
 
             dashboard.classList.add('hidden');
             sessionIdText.textContent = 'Nenhuma sessão';
             
-            if (headerNewSessionBtn) {
-                headerNewSessionBtn.classList.add('hidden');
-                headerNewSessionBtn.classList.remove('flex');
-            }
-            if (headerExportBtn) {
-                headerExportBtn.classList.add('hidden');
-                headerExportBtn.classList.remove('flex');
-            }
+            if (headerNewSessionBtn) { headerNewSessionBtn.classList.add('hidden'); headerNewSessionBtn.classList.remove('flex'); }
+            if (headerExportBtn) { headerExportBtn.classList.add('hidden'); headerExportBtn.classList.remove('flex'); }
 
             if (keepConnectionOptions) {
                 inputSection.classList.add('hidden');
@@ -1531,6 +1239,7 @@
             renderPdPostits(); 
         }
 
+        // --- SISTEMA DE INÍCIO - CORREÇÃO DO ECRÃ BRANCO ---
         function listenForActiveSession() {
             const activeSessionRef = doc(db, "configuracoes", "sessaoAtiva");
 
@@ -1550,11 +1259,8 @@
                         listenForPdPostits(activeSessionId); 
                     } 
                 } else {
-                    if (currentSessionId) {
-                        resetToInitialState(false); 
-                    } else if (inputSection.classList.contains('hidden')) {
-                        resetToInitialState(false);
-                    } 
+                    // SE NÃO HÁ SESSÃO, MOSTRA LOGO O ECRÃ INICIAL
+                    resetToInitialState(true); 
                 }
             }, (error) => {
                  resetToInitialState(true); 
@@ -1563,37 +1269,10 @@
 
         function listenForNotifications(sessionId) {
             if (notificationListenerUnsubscribe) notificationListenerUnsubscribe();
-            const q = query(collection(db, "sessoes", sessionId, "notificacoes"), orderBy("timestamp", "desc")); 
-
             let initialLoad = true;
-            notificationListenerUnsubscribe = onSnapshot(q, (snapshot) => {
-                allNotifications = snapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data(),
-                    timestamp: doc.data().timestamp 
-                }));
+            notificationListenerUnsubscribe = onSnapshot(query(collection(db, "sessoes", sessionId, "notificacoes"), orderBy("timestamp", "desc")), (snapshot) => {
+                allNotifications = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), timestamp: doc.data().timestamp }));
                 updateNotificationDisplay(); 
-
-                // GATILHO DAS NOTIFICAÇÕES (Executa ao ver o registo DB)
-                if (!initialLoad) {
-                    snapshot.docChanges().forEach((change) => {
-                        if (change.type === "added") { 
-                            const data = change.doc.data();
-                            
-                            let title = data.title || '❗️ Novo Feedback';
-                            let msg = data.message;
-                            
-                            // Toast na tela do App
-                            showToast(title, msg, data.color);
-
-                            // Notificação Oficial do Sistema Operativo
-                            if (data.triggerPopup) { 
-                                let osMsg = msg.replace(/<[^>]*>?/gm, ''); 
-                                showBrowserNotification(title, osMsg);
-                            }
-                        }
-                    });
-                }
                 initialLoad = false;
             });
         }
@@ -1601,22 +1280,11 @@
         async function listenForSellerReplies(sessionId) {
             if (!sessionId) return;
             if (sellerRepliesListenerUnsubscribe) sellerRepliesListenerUnsubscribe();
-
-            const repliesRef = collection(db, "sessoes", sessionId, "notificacoesVendedor");
-            const q = query(repliesRef); 
-
-            sellerRepliesListenerUnsubscribe = onSnapshot(q, (snapshot) => {
+            sellerRepliesListenerUnsubscribe = onSnapshot(collection(db, "sessoes", sessionId, "notificacoesVendedor"), (snapshot) => {
                  allSellerReplies = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                  if(!dashboard.classList.contains('hidden')) {
                      renderObservationsFeed(allCurrentSamples);
-                     if (!feedbackSamplesModal.classList.contains('hidden') && currentFeedbackFilter) {
-                         showFeedbackSamples(currentFeedbackFilter, modalSegmentFilter.value);
-                     }
-                 }
-            }, (error) => {
-                 allSellerReplies = []; 
-                 if(!dashboard.classList.contains('hidden')) {
-                     renderObservationsFeed(allCurrentSamples); 
+                     if (!feedbackSamplesModal.classList.contains('hidden') && currentFeedbackFilter) showFeedbackSamples(currentFeedbackFilter, modalSegmentFilter.value);
                  }
             });
         }
@@ -1625,26 +1293,18 @@
             if (!sessionId) return;
             if (sellerRepliesToManagerListenerUnsubscribe) sellerRepliesToManagerListenerUnsubscribe();
 
-            const repliesRef = collection(db, "sessoes", sessionId, "respostasVendedor");
-            const q = query(repliesRef, where("readByManager", "==", false));
-
-            sellerRepliesToManagerListenerUnsubscribe = onSnapshot(q, async (snapshot) => {
-
+            sellerRepliesToManagerListenerUnsubscribe = onSnapshot(query(collection(db, "sessoes", sessionId, "respostasVendedor"), where("readByManager", "==", false)), async (snapshot) => {
                 for (const change of snapshot.docChanges()) {
                     if (change.type === "added") {
                         const replyData = change.doc.data();
                         const replyDocRef = change.doc.ref; 
-
                         try {
                             await runTransaction(db, async (transaction) => {
                                 const replyDocSnap = await transaction.get(replyDocRef);
-                                if (!replyDocSnap.exists() || replyDocSnap.data().readByManager === true) {
-                                    return; 
-                                }
+                                if (!replyDocSnap.exists() || replyDocSnap.data().readByManager === true) return; 
 
                                 const isPDReply = replyData.originalManagerName === "P&D";
                                 const senderName = isPDReply ? `${replyData.sellerName} (P&D)` : replyData.sellerName;
-                                
                                 const title = "❗️ Novo Feedback";
                                 const bodyMsg = `${senderName} respondeu: "${replyData.replyMessage}"`;
 
@@ -1652,80 +1312,45 @@
                                 showBrowserNotification(title, bodyMsg);
                                 
                                 const notifId = sanitizeForFirebaseId(`seller-reply-${replyDocRef.id}`);
-                                const notifRef = doc(db, "sessoes", currentSessionId, "notificacoes", notifId);
-
-                                transaction.set(notifRef, {
-                                    title: title,
-                                    message: bodyMsg,
-                                    produto: replyData.produto,
-                                    color: isPDReply ? 'purple' : 'orange', 
-                                    timestamp: serverTimestamp(),
-                                    triggerPopup: true 
+                                transaction.set(doc(db, "sessoes", currentSessionId, "notificacoes", notifId), {
+                                    title: title, message: bodyMsg, produto: replyData.produto, color: isPDReply ? 'purple' : 'orange', 
+                                    timestamp: serverTimestamp(), triggerPopup: true 
                                 });
 
                                 transaction.update(replyDocRef, { readByManager: true });
                             });
-                        } catch (error) {
-                            console.error(`Falha na transação ao processar a resposta:`, error);
-                        }
+                        } catch (error) {}
                     }
                 }
-
                 if(!dashboard.classList.contains('hidden')) {
-                     const fullQuery = query(collection(db, "sessoes", sessionId, "respostasVendedor"));
-                     const fullSnapshot = await getDocs(fullQuery);
+                     const fullSnapshot = await getDocs(collection(db, "sessoes", sessionId, "respostasVendedor"));
                      allSellerRepliesToManager = fullSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
                      renderObservationsFeed(allCurrentSamples);
-                     if (!feedbackSamplesModal.classList.contains('hidden') && currentFeedbackFilter) {
-                         showFeedbackSamples(currentFeedbackFilter, modalSegmentFilter.value);
-                     }
+                     if (!feedbackSamplesModal.classList.contains('hidden') && currentFeedbackFilter) showFeedbackSamples(currentFeedbackFilter, modalSegmentFilter.value);
                 }
-            }, (error) => {
-                 allSellerRepliesToManager = []; 
-                 if(!dashboard.classList.contains('hidden')) {
-                     renderObservationsFeed(allCurrentSamples); 
-                 }
             });
         }
-
 
         function listenForDestaquesAmostras(sessionId) {
             if (!sessionId) return;
             if (destaquesAmostrasListenerUnsubscribe) destaquesAmostrasListenerUnsubscribe();
-            
-            const destaquesRef = doc(db, "sessoes", sessionId, "configuracoes", "destaquesAmostras");
-
-            destaquesAmostrasListenerUnsubscribe = onSnapshot(destaquesRef, (docSnap) => {
+            destaquesAmostrasListenerUnsubscribe = onSnapshot(doc(db, "sessoes", sessionId, "configuracoes", "destaquesAmostras"), (docSnap) => {
                 highlightedSamplesCache = docSnap.exists() ? (docSnap.data().lista || []) : [];
-                if (!feedbackSamplesModal.classList.contains('hidden') && currentFeedbackFilter) {
-                    showFeedbackSamples(currentFeedbackFilter, modalSegmentFilter.value);
-                }
+                if (!feedbackSamplesModal.classList.contains('hidden') && currentFeedbackFilter) showFeedbackSamples(currentFeedbackFilter, modalSegmentFilter.value);
             });
         }
 
         function listenForHistoricalAromaData(sessionId) {
             if (!sessionId) return;
             if (historicalAromaDataUnsubscribe) historicalAromaDataUnsubscribe(); 
-
-            const historicalDocRef = doc(db, "sessoes", sessionId, "configuracoes", "dadosHistoricosAroma");
-
-            historicalAromaDataUnsubscribe = onSnapshot(historicalDocRef, (docSnap) => {
+            historicalAromaDataUnsubscribe = onSnapshot(doc(db, "sessoes", sessionId, "configuracoes", "dadosHistoricosAroma"), (docSnap) => {
                 const newData = docSnap.exists() ? (docSnap.data().data || []) : [];
-                
                 if (JSON.stringify(historicalAromaData) !== JSON.stringify(newData)) {
                      historicalAromaData = newData; 
-                     
                      if (!dashboard.classList.contains('hidden') && currentSessionId === sessionId) {
                          const sellerDocs = [...new Set(allCurrentSamples.map(s => s.sellerName))].map(name => {
-                            const sellerId = sanitizeForFirebaseId(name);
                             const sellerDoc = sellersListContainer.querySelector(`.seller-card[data-seller-name="${name}"]`);
-                            return {
-                                id: sellerId,
-                                originalName: name,
-                                amostras: allCurrentSamples.filter(s => s.sellerName === name),
-                                accessCode: sellerDoc ? sellerDoc.querySelector('.copy-code-btn')?.dataset.code : null
-                            };
+                            return { id: sanitizeForFirebaseId(name), originalName: name, amostras: allCurrentSamples.filter(s => s.sellerName === name), accessCode: sellerDoc ? sellerDoc.querySelector('.copy-code-btn')?.dataset.code : null };
                         });
                          processAndDisplayDashboard(allCurrentSamples, currentSessionId, sellerDocs); 
                      }
@@ -1736,20 +1361,11 @@
         function listenForPdPostits(sessionId) {
             if (!sessionId) return;
             if (pdPostitsListenerUnsubscribe) pdPostitsListenerUnsubscribe();
-
-            const q = query(
-                collection(db, "sessoes", sessionId, "pdPostits"),
-                orderBy("timestamp", "desc")
-            );
-
-            pdPostitsListenerUnsubscribe = onSnapshot(q, (snapshot) => {
+            pdPostitsListenerUnsubscribe = onSnapshot(query(collection(db, "sessoes", sessionId, "pdPostits"), orderBy("timestamp", "desc")), (snapshot) => {
                 allPdPostits = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                if (!dashboard.classList.contains('hidden')) {
-                    renderPdPostits(); 
-                }
+                if (!dashboard.classList.contains('hidden')) renderPdPostits(); 
             });
         }
-
 
         async function toggleDestaqueAmostra(e) {
             e.stopPropagation(); 
@@ -1759,246 +1375,112 @@
             const destaquesRef = doc(db, "sessoes", currentSessionId, "configuracoes", "destaquesAmostras");
             const button = e.currentTarget;
             button.disabled = true; 
-
             try {
                 await runTransaction(db, async (transaction) => {
                     const destaquesDoc = await transaction.get(destaquesRef);
-                    
-                    const currentList = destaquesDoc.exists() ? (destaquesDoc.data().lista || []) : [];
-                    let updatedList = [...currentList];
-
-                    if (updatedList.includes(sampleId)) {
-                        updatedList = updatedList.filter(id => id !== sampleId); 
-                    } else {
-                        updatedList.push(sampleId); 
-                    }
-
+                    let updatedList = destaquesDoc.exists() ? [...(destaquesDoc.data().lista || [])] : [];
+                    if (updatedList.includes(sampleId)) updatedList = updatedList.filter(id => id !== sampleId); 
+                    else updatedList.push(sampleId); 
                     transaction.set(destaquesRef, { lista: updatedList }); 
                 });
-                
-
             } catch (error) {
                 showAlert("Erro ao guardar destaque de amostra. Tente novamente.");
-            } finally {
-                button.disabled = false; 
-            }
+            } finally { button.disabled = false; }
         }
 
-
         // --- UI Rendering Functions ---
-
         function renderCharts(samples) {
             let pending = 0, resolved = 0, approved = 0, rejected = 0, events = 0;
-            const feedbackCounts = {}; 
-
-            const APPROVED_WITHOUT_PREFIX = ['COM PEDIDO', 'APROVADO SEM PEDIDO'];
-            const REJECTED_WITHOUT_PREFIX = ['APRESENTAÇÃO PRÓ ATIVA', 'CALIBRE', 'EXTRAVIADA', 'FORA DA ESPECIFICAÇÃO DO CLIENTE', 'FORA DO PERFIL DO CLIENTE', 'FRACA / ESTOURANDO / COM CHUVEIRO', 'PRODUTO DESCONTINUADO', 'QUANTIDADE INSUFICIENTE', 'REPRESENTAÇÃO / DISTRIBUIDOR', 'SEM RETORNO DO CLIENTE', 'EXPORTACAO'];
-            const EVENTS_WITHOUT_PREFIX = ['INNOVATION / EVENTOS', 'EVENTO'];
-
             samples.forEach(s => {
                 let isSamplePending = s.isPending;
-                if (typeof isSamplePending === 'undefined') {
-                    isSamplePending = PENDING_STATUSES.includes(normalizeText(s.originalStatus));
-                }
+                if (typeof isSamplePending === 'undefined') isSamplePending = PENDING_STATUSES.includes(normalizeText(s.originalStatus));
 
-                if (isSamplePending) {
-                    pending++;
-                } else {
+                if (isSamplePending) pending++;
+                else {
                     resolved++;
                     if (s.feedback && s.feedback.trim() !== '') {
                         const feedbackKey = s.feedback.trim();
                         const normalizedFeedback = getCanonicalFeedback(feedbackKey); 
-                        feedbackCounts[normalizedFeedback] = (feedbackCounts[normalizedFeedback] || 0) + 1; 
-
-                        if (feedbackKey.startsWith('A -') || APPROVED_WITHOUT_PREFIX.includes(normalizedFeedback)) {
-                            approved++;
-                        } else if (feedbackKey.startsWith('R -') || REJECTED_WITHOUT_PREFIX.includes(normalizedFeedback)) {
-                            rejected++;
-                        } else if (feedbackKey.startsWith('E -') || EVENTS_WITHOUT_PREFIX.includes(normalizedFeedback)) {
-                            events++;
-                        }
+                        if (feedbackKey.startsWith('A -') || ['COM PEDIDO', 'APROVADO SEM PEDIDO'].includes(normalizedFeedback)) approved++;
+                        else if (feedbackKey.startsWith('R -') || ['APRESENTAÇÃO PRÓ ATIVA', 'CALIBRE', 'EXTRAVIADA', 'FORA DA ESPECIFICAÇÃO DO CLIENTE', 'FORA DO PERFIL DO CLIENTE', 'FRACA / ESTOURANDO / COM CHUVEIRO', 'PRODUTO DESCONTINUADO', 'QUANTIDADE INSUFICIENTE', 'REPRESENTAÇÃO / DISTRIBUIDOR', 'SEM RETORNO DO CLIENTE', 'EXPORTACAO'].includes(normalizedFeedback)) rejected++;
+                        else if (feedbackKey.startsWith('E -') || ['EVENTO', 'INNOVATION / EVENTOS'].includes(normalizedFeedback)) events++;
                     }
                 }
             });
 
-            Chart.defaults.color = '#64748b'; 
-            Chart.defaults.font.family = "'Inter', sans-serif";
-
-            renderChart('session-status-chart', 'doughnut', {
-                labels: ['Pendentes', 'Resolvidos'],
-                datasets: [{ 
-                    data: [pending, resolved], 
-                    backgroundColor: ['#facc15', '#3b82f6'],
-                    borderWidth: 0,
-                    hoverOffset: 4
-                }] 
-            });
+            Chart.defaults.color = '#64748b'; Chart.defaults.font.family = "'Inter', sans-serif";
+            renderChart('session-status-chart', 'doughnut', { labels: ['Pendentes', 'Resolvidos'], datasets: [{ data: [pending, resolved], backgroundColor: ['#facc15', '#3b82f6'], borderWidth: 0, hoverOffset: 4 }] });
 
             const rejectionChartTitle = document.getElementById('rejection-chart-title');
             rejectionChartTitle.innerHTML = `<svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg> Distribuição de Feedbacks`;
-            if (approved === 0 && rejected === 0 && events === 0 && resolved > 0) { 
-                 renderChart('rejection-rate-chart', 'doughnut', { labels: ['Aguardando Detalhes'], datasets: [{ data: [resolved], backgroundColor: ['#e2e8f0'], borderWidth:0 }] });
-            } else if (approved === 0 && rejected === 0 && events === 0) { 
-                 renderChart('rejection-rate-chart', 'doughnut', { labels: ['Aguardando Respostas'], datasets: [{ data: [1], backgroundColor: ['#f1f5f9'], borderWidth:0 }] });
-            }
-             else {
-                renderChart('rejection-rate-chart', 'doughnut', {
-                    labels: ['Aprovadas', 'Reprovadas', 'Eventos'],
-                    datasets: [{
-                        data: [approved, rejected, events],
-                        backgroundColor: ['#10b981', '#ef4444', '#8b5cf6'], 
-                        borderWidth: 0,
-                        hoverOffset: 4
-                    }]
-                });
-            }
+            if (approved === 0 && rejected === 0 && events === 0 && resolved > 0) renderChart('rejection-rate-chart', 'doughnut', { labels: ['Aguardando Detalhes'], datasets: [{ data: [resolved], backgroundColor: ['#e2e8f0'], borderWidth:0 }] });
+            else if (approved === 0 && rejected === 0 && events === 0) renderChart('rejection-rate-chart', 'doughnut', { labels: ['Aguardando Respostas'], datasets: [{ data: [1], backgroundColor: ['#f1f5f9'], borderWidth:0 }] });
+            else renderChart('rejection-rate-chart', 'doughnut', { labels: ['Aprovadas', 'Reprovadas', 'Eventos'], datasets: [{ data: [approved, rejected, events], backgroundColor: ['#10b981', '#ef4444', '#8b5cf6'], borderWidth: 0, hoverOffset: 4 }] });
         }
 
         function renderChart(canvasId, type, data, options = {}) {
             const canvas = document.getElementById(canvasId);
             if (!canvas) return;
-            const ctx = canvas.getContext('2d');
-            if (!ctx) return;
-
             if (chartInstances[canvasId]) chartInstances[canvasId].destroy();
-
             Chart.register(ChartDataLabels); 
-
-            const finalOptions = {
-                responsive: true,
-                maintainAspectRatio: false,
-                ...options,
-                plugins: {
-                    legend: { display: type === 'doughnut', position: 'bottom', labels: { padding: 20, usePointStyle: true } }, 
-                    datalabels: { display: false }, 
-                    ...options.plugins 
-                },
-                cutout: type === 'doughnut' ? '70%' : undefined 
-            };
-
-            chartInstances[canvasId] = new Chart(ctx, { type, data, options: finalOptions });
-
+            const finalOptions = { responsive: true, maintainAspectRatio: false, ...options, plugins: { legend: { display: type === 'doughnut', position: 'bottom', labels: { padding: 20, usePointStyle: true } }, datalabels: { display: false }, ...options.plugins }, cutout: type === 'doughnut' ? '70%' : undefined };
+            chartInstances[canvasId] = new Chart(canvas.getContext('2d'), { type, data, options: finalOptions });
             canvas.onclick = () => openChartModal(canvasId);
         }
 
         function openChartModal(canvasId) {
             const originalChart = chartInstances[canvasId];
             if (!originalChart) return;
-
-            if (modalChartInstance) {
-                modalChartInstance.destroy(); 
-            }
-
-            const modalCtx = modalChartCanvas.getContext('2d');
-
+            if (modalChartInstance) modalChartInstance.destroy(); 
             const modalOptions = JSON.parse(JSON.stringify(originalChart.config.options));
             if (originalChart.config.type === 'bar' || (originalChart.config.type === 'doughnut' && canvasId !== 'session-status-chart')) {
-                 modalOptions.plugins.datalabels = {
-                     display: true,
-                     color: 'white',
-                     font: { weight: 'bold', family: "'Inter', sans-serif" },
-                     formatter: (value, context) => {
-                         if (originalChart.config.type === 'doughnut') {
-                             const total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
-                             const percentage = total > 0 ? (value / total * 100).toFixed(1) + '%' : '0%';
-                             return `${value}\n(${percentage})`;
-                         }
-                         return value; 
-                     }
-                 };
+                 modalOptions.plugins.datalabels = { display: true, color: 'white', font: { weight: 'bold', family: "'Inter', sans-serif" }, formatter: (value, context) => { if (originalChart.config.type === 'doughnut') { const total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0); return `${value}\\n(${(value / total * 100).toFixed(1)}%)`; } return value; } };
             }
             modalOptions.maintainAspectRatio = false; 
             modalOptions.plugins.legend.labels = { padding: 20, usePointStyle: true, font: { size: 14 }};
-
-            modalChartInstance = new Chart(modalCtx, {
-                type: originalChart.config.type,
-                data: originalChart.config.data,
-                options: modalOptions
-            });
-
-            chartModal.classList.remove('hidden'); 
+            modalChartInstance = new Chart(document.getElementById('modal-chart-canvas').getContext('2d'), { type: originalChart.config.type, data: originalChart.config.data, options: modalOptions });
+            document.getElementById('chart-modal').classList.remove('hidden'); 
         }
 
         function renderSellersList(samples, sessionId, sellerDocs) {
             sellersListContainer.innerHTML = '';
-            
             const sellers = {};
              samples.forEach(s => {
                  if (!sellers[s.sellerName]) sellers[s.sellerName] = { samples: [], totalPending: 0, finalized: 0, total: 0, systemStatus: 'pending' };
                  sellers[s.sellerName].samples.push(s);
                  let isBaixado = true;
-                 sellers[s.sellerName].samples.forEach(sample => {
-                     if (sample.systemStatus !== 'baixado') isBaixado = false;
-                 });
+                 sellers[s.sellerName].samples.forEach(sample => { if (sample.systemStatus !== 'baixado') isBaixado = false; });
                  if (isBaixado) sellers[s.sellerName].systemStatus = 'baixado';
              });
-
-             sellerDocs.forEach(doc => {
-                 if(sellers[doc.originalName]) {
-                     sellers[doc.originalName].accessCode = doc.accessCode;
-                 }
-             });
-
+             sellerDocs.forEach(doc => { if(sellers[doc.originalName]) sellers[doc.originalName].accessCode = doc.accessCode; });
 
             Object.keys(sellers).sort().forEach(sellerName => {
                 const seller = sellers[sellerName];
                 const totalPending = seller.samples.filter(s => s.isPending).length;
                 const isFinalizedByVendor = totalPending === 0; 
-
-                let statusColor = 'slate'; 
-                let badgeClass = 'bg-amber-100 text-amber-800 border-amber-200';
+                let statusColor = 'slate', badgeClass = 'bg-amber-100 text-amber-800 border-amber-200';
                 
-                if (isFinalizedByVendor && seller.systemStatus === 'pending') {
-                    statusColor = 'emerald'; 
-                    badgeClass = 'bg-emerald-100 text-emerald-800 border-emerald-200';
-                } else if (seller.systemStatus === 'baixado') {
-                    statusColor = 'indigo'; 
-                    badgeClass = 'bg-indigo-100 text-indigo-800 border-indigo-200';
-                }
+                if (isFinalizedByVendor && seller.systemStatus === 'pending') { statusColor = 'emerald'; badgeClass = 'bg-emerald-100 text-emerald-800 border-emerald-200'; } 
+                else if (seller.systemStatus === 'baixado') { statusColor = 'indigo'; badgeClass = 'bg-indigo-100 text-indigo-800 border-indigo-200'; }
 
                 const card = document.createElement('div');
                 card.className = `p-5 rounded-2xl bg-white border border-slate-200 shadow-sm relative overflow-hidden seller-card transition-all hover:shadow-md`; 
                 card.dataset.sellerName = sellerName; 
-
-                const accentLine = document.createElement('div');
-                accentLine.className = `absolute top-0 left-0 w-full h-1 bg-${statusColor}-500`;
-                card.appendChild(accentLine);
-
                 const segment = sellerSegmentsCache[normalizeText(sellerName)] || 'Sem Segmento'; 
 
                 let statusHTML = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${badgeClass}">${isFinalizedByVendor ? 'Finalizado pelo Vendedor' : `${totalPending} pendente(s)`}</span>`;
-                
                 if (isFinalizedByVendor && seller.systemStatus === 'pending') {
-                    statusHTML = `
-                         <div class="flex items-center space-x-2 mt-1">
-                             <label class="flex items-center space-x-2 cursor-pointer text-sm font-medium text-slate-700 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 transition-colors">
-                                 <input type="checkbox" class="system-check-btn rounded text-indigo-600 focus:ring-indigo-500" data-seller-name="${sellerName}">
-                                 <span>Dar Baixa no Sistema</span>
-                             </label>
-                         </div>`;
+                    statusHTML = `<div class="flex items-center space-x-2 mt-1"><label class="flex items-center space-x-2 cursor-pointer text-sm font-medium text-slate-700 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 transition-colors"><input type="checkbox" class="system-check-btn rounded text-indigo-600 focus:ring-indigo-500" data-seller-name="${sellerName}"><span>Dar Baixa no Sistema</span></label></div>`;
                 } else if (seller.systemStatus === 'baixado') {
                     statusHTML = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100"><svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Baixado</span>`;
                 }
 
-                card.innerHTML += `
-                    <div class="flex justify-between items-start mb-1">
-                        <div class="font-bold text-slate-800 flex items-center pr-2 truncate">
-                           ${sellerName}
-                        </div>
-                        <button class="config-seller-btn text-slate-400 hover:text-blue-600 transition-colors p-1 rounded-md hover:bg-blue-50" data-seller-name="${sellerName}" title="Definir Segmento">
-                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M5 4a1 1 0 00-2 0v2.28a1 1 0 00.9 1.42A7.48 7.48 0 0110 8a7.48 7.48 0 015.1 2.7.999.999 0 00.9-1.42V4a1 1 0 10-2 0v1.588A5.502 5.502 0 0010 5.03 5.502 5.502 0 005 5.588V4zM10 12a2 2 0 100 4 2 2 0 000-4z"></path></svg>
-                        </button>
-                    </div>
+                card.innerHTML = `<div class="absolute top-0 left-0 w-full h-1 bg-${statusColor}-500"></div>
+                    <div class="flex justify-between items-start mb-1"><div class="font-bold text-slate-800 flex items-center pr-2 truncate">${sellerName}</div><button class="config-seller-btn text-slate-400 hover:text-blue-600 transition-colors p-1 rounded-md hover:bg-blue-50" data-seller-name="${sellerName}" title="Definir Segmento"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M5 4a1 1 0 00-2 0v2.28a1 1 0 00.9 1.42A7.48 7.48 0 0110 8a7.48 7.48 0 015.1 2.7.999.999 0 00.9-1.42V4a1 1 0 10-2 0v1.588A5.502 5.502 0 0010 5.03 5.502 5.502 0 005 5.588V4zM10 12a2 2 0 100 4 2 2 0 000-4z"></path></svg></button></div>
                     <p class="text-xs text-slate-500 font-medium tracking-wide uppercase mb-4">${segment}</p>
-                    
-                    <div class="space-y-3">
-                         <div>${statusHTML}</div>
-                         
+                    <div class="space-y-3"><div>${statusHTML}</div>
                          <div class="flex items-center justify-between bg-slate-50 p-2 rounded-lg border border-slate-100">
-                             <div class="flex items-center gap-2">
-                                <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path></svg>
-                                <span class="text-sm font-bold font-mono text-slate-700 tracking-wider">${seller.accessCode ? seller.accessCode : '...'}</span>
-                             </div>
+                             <div class="flex items-center gap-2"><svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path></svg><span class="text-sm font-bold font-mono text-slate-700 tracking-wider">${seller.accessCode ? seller.accessCode : '...'}</span></div>
                              <div class="flex items-center gap-1">
                                  <button class="wpp-code-btn text-emerald-600 hover:text-emerald-800 text-[10px] font-semibold py-1 px-2 rounded transition-colors bg-emerald-50 hover:bg-emerald-100 border border-emerald-100" data-name="${sellerName}" data-code="${seller.accessCode}" ${!seller.accessCode ? 'disabled' : ''} title="Enviar por WhatsApp">WhatsApp</button>
                                  <button class="email-code-btn text-indigo-600 hover:text-indigo-800 text-[10px] font-semibold py-1 px-2 rounded transition-colors bg-indigo-50 hover:bg-indigo-100 border border-indigo-100" data-name="${sellerName}" data-code="${seller.accessCode}" ${!seller.accessCode ? 'disabled' : ''} title="Enviar por Email">Email</button>
@@ -2006,7 +1488,6 @@
                              </div>
                          </div>
                     </div>`;
-
                 sellersListContainer.appendChild(card);
             });
 
@@ -2014,30 +1495,18 @@
             if (emailAllBtn) {
                 emailAllBtn.onclick = () => {
                     const link = "https://thamirisbezerra-coder.github.io/Tela-do-Vendedor/";
-                    let emailBody = `Olá equipe,\n\nO nosso Painel de Gestão de Feedbacks está atualizado.\nPara registrar os seus feedbacks pendentes, acessem o link abaixo:\n${link}\n\n⚠️ ATENÇÃO: O prazo para respostas é até o dia 08/06.\n\nAbaixo está a lista com o Código PIN de acesso individual para controle:\n\n`;
-
-                    Object.keys(sellers).sort().forEach(name => {
-                        const code = sellers[name].accessCode || '...';
-                        emailBody += `- ${name}: ${code}\n`;
-                    });
-
+                    let emailBody = `Olá equipa,\n\nO nosso Painel de Gestão de Feedbacks está atualizado.\nPara registar os seus feedbacks pendentes, aceda ao link abaixo:\n${link}\n\n⚠️ ATENÇÃO: O prazo para respostas é até ao dia 08/06.\n\nAbaixo está a lista com o Código PIN de acesso individual para controlo:\n\n`;
+                    Object.keys(sellers).sort().forEach(name => { emailBody += `- ${name}: ${sellers[name].accessCode || '...'}\n`; });
                     emailBody += "\nQualquer dúvida, estou à disposição!";
-                    const emailSubject = "Acessos à Gestão de Feedbacks - Prazo: 08/06";
-                    
-                    window.location.href = `mailto:?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
+                    window.location.href = `mailto:?subject=${encodeURIComponent("Acessos à Gestão de Feedbacks - Prazo: 08/06")}&body=${encodeURIComponent(emailBody)}`;
                 };
             }
 
             document.querySelectorAll('.wpp-code-btn').forEach(btn => {
                 btn.onclick = (e) => {
                     e.stopPropagation();
-                    const name = e.currentTarget.dataset.name;
-                    const code = e.currentTarget.dataset.code;
-                    if (!code) return;
-                    
-                    const link = "https://thamirisbezerra-coder.github.io/Tela-do-Vendedor/";
-                    const text = `Olá ${name}! Acesse o link abaixo para visualizar as suas pendências de feedback:\n${link}\n\nO seu Código PIN de acesso é: *${code}*\n\n⚠️ *O prazo para respostas é até o dia 08/06.*`;
-                    
+                    if (!e.currentTarget.dataset.code) return;
+                    const text = `Olá ${e.currentTarget.dataset.name}! Aceda ao link abaixo para visualizar as suas pendências de feedback:\nhttps://thamirisbezerra-coder.github.io/Tela-do-Vendedor/\n\nO seu Código PIN de acesso é: *${e.currentTarget.dataset.code}*\n\n⚠️ *O prazo para respostas é até ao dia 08/06.*`;
                     window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
                 };
             });
@@ -2045,40 +1514,18 @@
             document.querySelectorAll('.email-code-btn').forEach(btn => {
                 btn.onclick = (e) => {
                     e.stopPropagation();
-                    const name = e.currentTarget.dataset.name;
-                    const code = e.currentTarget.dataset.code;
-                    if (!code) return;
-                    
-                    const link = "https://thamirisbezerra-coder.github.io/Tela-do-Vendedor/";
-                    const subject = `Seu Acesso à Gestão de Feedbacks - Prazo: 08/06`;
-                    const body = `Olá ${name},\n\nPara registrar os seus feedbacks pendentes, acesse o link abaixo:\n${link}\n\nO seu Código PIN de acesso é: ${code}\n\n⚠️ ATENÇÃO: O prazo para respostas é até o dia 08/06.\n\nQualquer dúvida, estou à disposição!`;
-                    
-                    window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+                    if (!e.currentTarget.dataset.code) return;
+                    const body = `Olá ${e.currentTarget.dataset.name},\n\nPara registar os seus feedbacks pendentes, aceda ao link abaixo:\nhttps://thamirisbezerra-coder.github.io/Tela-do-Vendedor/\n\nO seu Código PIN de acesso é: ${e.currentTarget.dataset.code}\n\n⚠️ ATENÇÃO: O prazo para respostas é até ao dia 08/06.\n\nQualquer dúvida, estou à disposição!`;
+                    window.location.href = `mailto:?subject=${encodeURIComponent("Seu Acesso à Gestão de Feedbacks - Prazo: 08/06")}&body=${encodeURIComponent(body)}`;
                 };
             });
 
             document.querySelectorAll('.copy-code-btn').forEach(btn => {
                 btn.onclick = (e) => {
                     e.stopPropagation(); 
-                    const textToCopy = e.currentTarget.dataset.code;
-                    if (!textToCopy) return;
-
-                    const textarea = document.createElement('textarea');
-                    textarea.value = textToCopy;
-                    document.body.appendChild(textarea);
-                    textarea.select();
-                    try {
-                        document.execCommand('copy'); 
-                         const button = e.currentTarget;
-                         button.textContent = 'Copiado!';
-                         button.classList.add('text-emerald-600');
-                         setTimeout(() => { 
-                             button.textContent = 'Copiar'; 
-                             button.classList.remove('text-emerald-600');
-                         }, 2000);
-                    } catch (err) {
-                        console.error('Falha ao copiar código:', err);
-                    }
+                    if (!e.currentTarget.dataset.code) return;
+                    const textarea = document.createElement('textarea'); textarea.value = e.currentTarget.dataset.code; document.body.appendChild(textarea); textarea.select();
+                    try { document.execCommand('copy'); e.currentTarget.textContent = 'Copiado!'; e.currentTarget.classList.add('text-emerald-600'); setTimeout(() => { e.currentTarget.textContent = 'Copiar'; e.currentTarget.classList.remove('text-emerald-600'); }, 2000); } catch (err) {}
                     document.body.removeChild(textarea);
                 };
             });
@@ -2088,81 +1535,44 @@
                     const checkboxEl = e.target;
                     if (checkboxEl.checked) {
                         checkboxEl.disabled = true; 
-                        
-                        const sellerName = checkboxEl.dataset.sellerName;
-                        const sellerId = sanitizeForFirebaseId(sellerName);
+                        const sellerId = sanitizeForFirebaseId(checkboxEl.dataset.sellerName);
                         const docRef = doc(db, "sessoes", currentSessionId, "vendedores", sellerId);
-                        
                         const label = checkboxEl.closest('label');
                         const originalLabelText = label ? label.querySelector('span').textContent : 'Dar Baixa';
-                        
-                        if (label) {
-                            label.querySelector('span').textContent = 'Guardando...';
-                            label.classList.add('opacity-70');
-                        }
+                        if (label) { label.querySelector('span').textContent = 'Guardando...'; label.classList.add('opacity-70'); }
 
                         try {
                             await runTransaction(db, async (transaction) => {
                                 const sellerDocSnap = await transaction.get(docRef);
-                                if (!sellerDocSnap.exists()) {
-                                    throw new Error("Documento do vendedor não encontrado!");
-                                }
-
-                                const sellerData = sellerDocSnap.data();
-                                const updatedSamples = sellerData.amostras.map(s => ({ ...s, systemStatus: 'baixado' }));
-                                
+                                if (!sellerDocSnap.exists()) throw new Error("Documento não encontrado!");
+                                const updatedSamples = sellerDocSnap.data().amostras.map(s => ({ ...s, systemStatus: 'baixado' }));
                                 transaction.update(docRef, { amostras: updatedSamples });
                             });
-                            
                         } catch (error) {
-                            console.error("Erro na transação:", error);
-                            showAlert(`Falha ao dar baixa para ${sellerName}. Tente novamente.`);
-                            
-                            checkboxEl.checked = false; 
-                            checkboxEl.disabled = false;
-                            if (label) {
-                                label.querySelector('span').textContent = originalLabelText;
-                                label.classList.remove('opacity-70');
-                            }
+                            showAlert(`Falha ao dar baixa para ${checkboxEl.dataset.sellerName}. Tente novamente.`);
+                            checkboxEl.checked = false; checkboxEl.disabled = false;
+                            if (label) { label.querySelector('span').textContent = originalLabelText; label.classList.remove('opacity-70'); }
                         }
                     }
                 });
             });
 
-             document.querySelectorAll('.config-seller-btn').forEach(btn => {
-                 btn.addEventListener('click', (e) => {
-                     e.stopPropagation(); 
-                     openSegmentModal(e.currentTarget.dataset.sellerName);
-                 });
-             });
+            document.querySelectorAll('.config-seller-btn').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); openSegmentModal(e.currentTarget.dataset.sellerName); }));
         }
 
         function renderObservationsFeed(samples) {
             const feedContainer = document.getElementById('observations-feed-list');
             const segmentFilter = observationSegmentFilter.value; 
             const searchTerm = normalizeText(observationSearchInput.value);
-
             let filteredSamples = samples.filter(s => s.observation && s.observation.trim() !== '');
 
             if (segmentFilter) {
-                if (segmentFilter === AROMA_FILTER_VALUE) {
-                    filteredSamples = filteredSamples.filter(sample => isAroma(sample.produto, sample.descricao));
-                } else {
-                    filteredSamples = filteredSamples.filter(sample => sellerSegmentsCache[normalizeText(sample.sellerName)] === segmentFilter);
-                }
+                if (segmentFilter === AROMA_FILTER_VALUE) filteredSamples = filteredSamples.filter(sample => isAroma(sample.produto, sample.descricao));
+                else filteredSamples = filteredSamples.filter(sample => sellerSegmentsCache[normalizeText(sample.sellerName)] === segmentFilter);
             }
+            if (searchTerm) filteredSamples = filteredSamples.filter(sample => normalizeText(sample.sellerName).includes(searchTerm));
 
-            if (searchTerm) {
-                filteredSamples = filteredSamples.filter(sample =>
-                    normalizeText(sample.sellerName).includes(searchTerm)
-                );
-            }
-
-            filteredSamples.sort((a, b) => {
-                const timeA = a.lastUpdate?.toDate ? a.lastUpdate.toDate().getTime() : 0;
-                const timeB = b.lastUpdate?.toDate ? b.lastUpdate.toDate().getTime() : 0;
-                return timeB - timeA;
-            });
+            filteredSamples.sort((a, b) => (b.lastUpdate?.toDate?.()?.getTime() || 0) - (a.lastUpdate?.toDate?.()?.getTime() || 0));
 
             if (filteredSamples.length === 0) {
                 feedContainer.innerHTML = '<div class="flex flex-col items-center justify-center h-full text-slate-400 space-y-3 pt-10"><svg class="w-12 h-12 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg><p class="text-sm">Nenhuma observação no momento.</p></div>';
@@ -2170,111 +1580,61 @@
             }
 
             feedContainer.innerHTML = ''; 
-
             filteredSamples.forEach(sample => {
                 const card = document.createElement('div');
                 card.className = 'p-4 rounded-xl border border-slate-200 bg-white shadow-sm hover:shadow-md transition-shadow';
-
-                const managerReply = allSellerReplies
-                    .filter(r => r.sellerName === sample.sellerName && r.pedido === sample.pedido && r.produto === sample.produto && r.originalObservation === sample.observation)
-                    .sort((a, b) => (b.timestamp?.toDate() ?? 0) - (a.timestamp?.toDate() ?? 0))[0]; 
+                const managerReply = allSellerReplies.filter(r => r.sellerName === sample.sellerName && r.pedido === sample.pedido && r.produto === sample.produto && r.originalObservation === sample.observation).sort((a, b) => (b.timestamp?.toDate?.() ?? 0) - (a.timestamp?.toDate?.() ?? 0))[0]; 
 
                  let repliesHtml = '';
                  if (managerReply) {
-                     const managerTime = managerReply.timestamp?.toDate() ? managerReply.timestamp.toDate().toLocaleString('pt-BR') : '';
-                     repliesHtml += `
-                         <div class="manager-reply bg-slate-50/80 p-3 mt-3">
-                             <p class="text-slate-700"><strong>${managerReply.managerName}:</strong> ${managerReply.replyMessage}</p>
-                             <p class="text-[11px] text-slate-400 mt-1">${managerTime}</p>
-                         </div>
-                     `;
-
-                     const sellerOrPdReply = allSellerRepliesToManager
-                         .filter(r => r.originalManagerMessage === managerReply.replyMessage && r.pedido === sample.pedido && r.produto === sample.produto)
-                         .sort((a, b) => (b.timestamp?.toDate() ?? 0) - (a.timestamp?.toDate() ?? 0))[0];
-
+                     repliesHtml += `<div class="manager-reply bg-slate-50/80 p-3 mt-3"><p class="text-slate-700"><strong>${managerReply.managerName}:</strong> ${managerReply.replyMessage}</p><p class="text-[11px] text-slate-400 mt-1">${managerReply.timestamp?.toDate ? managerReply.timestamp.toDate().toLocaleString('pt-BR') : ''}</p></div>`;
+                     const sellerOrPdReply = allSellerRepliesToManager.filter(r => r.originalManagerMessage === managerReply.replyMessage && r.pedido === sample.pedido && r.produto === sample.produto).sort((a, b) => (b.timestamp?.toDate?.() ?? 0) - (a.timestamp?.toDate?.() ?? 0))[0];
                      if (sellerOrPdReply) {
-                         const time = sellerOrPdReply.timestamp?.toDate() ? sellerOrPdReply.timestamp.toDate().toLocaleString('pt-BR') : '';
                          const isPDReply = sellerOrPdReply.originalManagerName === "P&D";
                          const senderName = isPDReply ? `${sellerOrPdReply.sellerName} <span class="bg-purple-100 text-purple-600 text-[10px] px-1.5 py-0.5 rounded font-bold ml-1">P&D</span>` : sellerOrPdReply.sellerName;
-                         
-                         repliesHtml += `
-                             <div class="seller-reply">
-                                 <p class="text-slate-800"><strong>${senderName}:</strong> ${sellerOrPdReply.replyMessage}</p>
-                                 <p class="text-[11px] text-slate-400 mt-1">${time}</p>
-                             </div>
-                         `;
+                         repliesHtml += `<div class="seller-reply"><p class="text-slate-800"><strong>${senderName}:</strong> ${sellerOrPdReply.replyMessage}</p><p class="text-[11px] text-slate-400 mt-1">${sellerOrPdReply.timestamp?.toDate ? sellerOrPdReply.timestamp.toDate().toLocaleString('pt-BR') : ''}</p></div>`;
                      }
                  }
 
-                const observationTime = sample.lastUpdate?.toDate() ? sample.lastUpdate.toDate().toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }) : '';
                 card.innerHTML = `
-                    <div class="flex justify-between items-start mb-2 gap-2">
-                        <p class="font-bold text-slate-800 text-sm leading-tight">${sample.produto} <span class="font-normal text-slate-500">${sample.descricao ? `- ${sample.descricao}` : ''}</span></p>
-                    </div>
-                    <div class="bg-slate-50 rounded-lg p-3 border-l-2 border-blue-400 text-slate-700 text-sm italic mb-3">
-                        "${sample.observation}"
-                    </div>
+                    <div class="flex justify-between items-start mb-2 gap-2"><p class="font-bold text-slate-800 text-sm leading-tight">${sample.produto} <span class="font-normal text-slate-500">${sample.descricao ? `- ${sample.descricao}` : ''}</span></p></div>
+                    <div class="bg-slate-50 rounded-lg p-3 border-l-2 border-blue-400 text-slate-700 text-sm italic mb-3">"${sample.observation}"</div>
                     ${repliesHtml}
                     <div class="flex justify-between items-center text-xs mt-3 pt-3 border-t border-slate-100">
                          <div class="text-slate-500">
-                             <p class="font-medium flex items-center gap-1 text-slate-700">
-                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                                 ${sample.sellerName} <span class="font-normal opacity-70">(Ped: ${sample.pedido})</span>
-                             </p>
-                             <p class="text-[11px] mt-0.5">${observationTime}</p>
+                             <p class="font-medium flex items-center gap-1 text-slate-700"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg> ${sample.sellerName} <span class="font-normal opacity-70">(Ped: ${sample.pedido})</span></p>
+                             <p class="text-[11px] mt-0.5">${sample.lastUpdate?.toDate ? sample.lastUpdate.toDate().toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }) : ''}</p>
                          </div>
-                        <button class="reply-observation-btn bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-blue-600 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors shadow-sm" data-sample-id="${sample.id}">
-                            ${managerReply ? 'Nova Resposta' : 'Responder'}
-                        </button>
+                        <button class="reply-observation-btn bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-blue-600 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors shadow-sm" data-sample-id="${sample.id}">${managerReply ? 'Nova Resposta' : 'Responder'}</button>
                     </div>
                 `;
                 feedContainer.appendChild(card);
             });
-
-              feedContainer.querySelectorAll('.reply-observation-btn').forEach(btn => {
-                  btn.addEventListener('click', openReplyModal);
-              });
+            feedContainer.querySelectorAll('.reply-observation-btn').forEach(btn => btn.addEventListener('click', openReplyModal));
         }
 
         function openReplyModal(event) {
              const sampleId = event.target.dataset.sampleId;
              const sample = allCurrentSamples.find(s => s.id === sampleId);
-             if (!sample || !sample.observation) {
-                 showAlert("Não é possível responder a uma amostra sem observação.");
-                 return;
-             }
+             if (!sample || !sample.observation) { showAlert("Não é possível responder a uma amostra sem observação."); return; }
              currentSampleForReply = sample; 
-
              replyModalProduct.textContent = `${sample.produto} (${sample.pedido})`;
              replyModalSeller.textContent = `Vendedor: ${sample.sellerName}`;
              replyModalObservation.textContent = `"${sample.observation}"`;
              replyMessageInput.value = ''; 
              managerNameInput.value = localStorage.getItem('managerName') || ''; 
-
              replyModal.classList.remove('hidden'); 
         }
         
         function renderPdPostits() {
             const feedContainer = document.getElementById('pd-postits-list');
             if (!feedContainer) return;
-            
             const segmentFilter = pdPostitSegmentFilter ? pdPostitSegmentFilter.value : ''; 
-
             let filteredNotes = allPdPostits;
+
             if (segmentFilter) {
-                if (segmentFilter === AROMA_FILTER_VALUE) {
-                    filteredNotes = allPdPostits.filter(note => {
-                        const contextProduct = note.context ? note.context.split('(')[0].trim() : '';
-                        return isAroma(contextProduct, ''); 
-                    });
-                } else {
-                    filteredNotes = allPdPostits.filter(note => {
-                        const sellerName = getSellerNameFromPdContext(note.context);
-                        if (!sellerName) return false;
-                        return sellerSegmentsCache[sellerName] === segmentFilter;
-                    });
-                }
+                if (segmentFilter === AROMA_FILTER_VALUE) filteredNotes = allPdPostits.filter(note => isAroma(note.context ? note.context.split('(')[0].trim() : '', ''));
+                else filteredNotes = allPdPostits.filter(note => sellerSegmentsCache[getSellerNameFromPdContext(note.context)] === segmentFilter);
             }
             
             if (filteredNotes.length === 0) {
@@ -2286,25 +1646,10 @@
             filteredNotes.forEach(note => {
                 const card = document.createElement('div');
                 card.className = 'pd-postit-card'; 
-
-                const time = note.timestamp?.toDate() ? note.timestamp.toDate().toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '';
-                
                 card.innerHTML = `
                     <p class="text-sm text-slate-800 font-medium">${note.message}</p>
-                    <div class="mt-3 pt-3 border-t border-amber-200/50 flex gap-4">
-                        <p class="text-xs text-amber-800 font-semibold bg-white/50 px-2 py-1 rounded">Ped: <span class="font-normal font-mono">${note.pedido || 'N/A'}</span></p>
-                        <p class="text-xs text-amber-800 font-semibold bg-white/50 px-2 py-1 rounded">Fat: <span class="font-normal">${note.dataFaturamento || 'N/A'}</span></p>
-                    </div>
-                    <div class="flex justify-between items-end mt-3 text-xs">
-                        <div>
-                            <p class="font-bold text-purple-700 flex items-center gap-1">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                                ${note.pdManagerName || 'P&D'}
-                            </p>
-                            <p class="text-slate-600 mt-0.5 truncate max-w-[150px]" title="${note.context || ''}">${note.context || ''}</p>
-                        </div>
-                        <span class="text-[11px] text-amber-700/60 font-medium">${time}</span>
-                    </div>
+                    <div class="mt-3 pt-3 border-t border-amber-200/50 flex gap-4"><p class="text-xs text-amber-800 font-semibold bg-white/50 px-2 py-1 rounded">Ped: <span class="font-normal font-mono">${note.pedido || 'N/A'}</span></p><p class="text-xs text-amber-800 font-semibold bg-white/50 px-2 py-1 rounded">Fat: <span class="font-normal">${note.dataFaturamento || 'N/A'}</span></p></div>
+                    <div class="flex justify-between items-end mt-3 text-xs"><div><p class="font-bold text-purple-700 flex items-center gap-1"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg> ${note.pdManagerName || 'P&D'}</p><p class="text-slate-600 mt-0.5 truncate max-w-[150px]" title="${note.context || ''}">${note.context || ''}</p></div><span class="text-[11px] text-amber-700/60 font-medium">${note.timestamp?.toDate ? note.timestamp.toDate().toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : ''}</span></div>
                 `;
                 feedContainer.appendChild(card);
             });
@@ -2312,116 +1657,70 @@
 
        async function sendReplyToSeller() {
            if (!currentSampleForReply || !currentSessionId) return;
-
            const managerName = managerNameInput.value.trim();
            const replyMessage = replyMessageInput.value.trim();
-
-           if (!managerName || !replyMessage) {
-               showAlert("Por favor, preencha o seu nome e a mensagem de resposta.");
-               return;
-           }
+           if (!managerName || !replyMessage) { showAlert("Por favor, preencha o seu nome e a mensagem de resposta."); return; }
 
            sendReplyBtn.disabled = true;
-           sendReplyBtn.innerHTML = '<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Enviando...';
+           sendReplyBtn.innerHTML = '<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> A enviar...';
 
            try {
                localStorage.setItem('managerName', managerName); 
-
-               const notificationData = {
-                   managerName: managerName,
-                   replyMessage: replyMessage,
-                   originalObservation: currentSampleForReply.observation, 
-                   sellerName: currentSampleForReply.sellerName,
-                   pedido: currentSampleForReply.pedido,
-                   produto: currentSampleForReply.produto,
-                   timestamp: serverTimestamp(),
-                   read: false, 
-                   readByPd: false 
-               };
-
-               const sellerNotifsRef = collection(db, "sessoes", currentSessionId, "notificacoesVendedor");
-               await addDoc(sellerNotifsRef, notificationData);
-
+               await addDoc(collection(db, "sessoes", currentSessionId, "notificacoesVendedor"), {
+                   managerName: managerName, replyMessage: replyMessage, originalObservation: currentSampleForReply.observation, sellerName: currentSampleForReply.sellerName, pedido: currentSampleForReply.pedido, produto: currentSampleForReply.produto, timestamp: serverTimestamp(), read: false, readByPd: false 
+               });
                replyModal.classList.add('hidden'); 
-               
            } catch (error) {
-               console.error("Erro ao enviar resposta:", error);
                showAlert("Ocorreu um erro ao enviar a resposta. Tente novamente.");
            } finally {
-               sendReplyBtn.disabled = false;
-               sendReplyBtn.innerHTML = 'Enviar <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>';
+               sendReplyBtn.disabled = false; sendReplyBtn.innerHTML = 'Enviar <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>';
                currentSampleForReply = null; 
            }
        }
 
         function updateNotificationDisplay() {
             notificationsList.innerHTML = '';
-
             if (allNotifications.length === 0) {
                 notificationsList.innerHTML = '<p class="text-slate-400 text-sm py-2 placeholder-notification text-center">Nenhuma notificação no momento.</p>';
                 return;
             }
-
-            allNotifications.sort((a, b) => {
-                 const timeA = a.timestamp?.toDate ? a.timestamp.toDate().getTime() : 0;
-                 const timeB = b.timestamp?.toDate ? b.timestamp.toDate().getTime() : 0;
-                return timeB - timeA;
-            });
-
+            allNotifications.sort((a, b) => (b.timestamp?.toDate?.()?.getTime() || 0) - (a.timestamp?.toDate?.()?.getTime() || 0));
             const notificationsToDisplay = areAllNotificationsVisible ? allNotifications : allNotifications.slice(0, 3);
 
             notificationsToDisplay.forEach(notification => {
                 const card = document.createElement('div');
-                let colorClass = notification.color === 'orange' ? 'border-l-orange-500 bg-orange-50/50' : 
-                                 notification.color === 'purple' ? 'border-l-purple-500 bg-purple-50/50' : 
-                                 'border-l-blue-500 bg-blue-50/50';
-
+                let colorClass = notification.color === 'orange' ? 'border-l-orange-500 bg-orange-50/50' : notification.color === 'purple' ? 'border-l-purple-500 bg-purple-50/50' : 'border-l-blue-500 bg-blue-50/50';
                 card.className = `notification-card p-3 rounded-r-lg border border-l-4 border-slate-100 ${colorClass} flex justify-between items-center text-sm text-slate-700 shadow-sm`;
                 card.innerHTML = `<p>${notification.message}</p>`;
                 notificationsList.appendChild(card);
             });
 
             if (allNotifications.length > 3 && !areAllNotificationsVisible) {
-                const showMoreCard = document.createElement('button');
-                showMoreCard.className = 'w-full text-center py-2 text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition-colors bg-slate-50 rounded-lg mt-2';
-                showMoreCard.innerHTML = `Ver mais ${allNotifications.length - 3} notificações <svg class="w-3 h-3 inline-block ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>`;
-                showMoreCard.onclick = () => {
-                    areAllNotificationsVisible = true;
-                    updateNotificationDisplay(); 
-                };
-                notificationsList.appendChild(showMoreCard);
+                const btn = document.createElement('button');
+                btn.className = 'w-full text-center py-2 text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition-colors bg-slate-50 rounded-lg mt-2';
+                btn.innerHTML = `Ver mais ${allNotifications.length - 3} notificações <svg class="w-3 h-3 inline-block ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>`;
+                btn.onclick = () => { areAllNotificationsVisible = true; updateNotificationDisplay(); };
+                notificationsList.appendChild(btn);
             } else if (areAllNotificationsVisible && allNotifications.length > 3) {
-                 const showLessCard = document.createElement('button');
-                 showLessCard.className = 'w-full text-center py-2 text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition-colors bg-slate-50 rounded-lg mt-2';
-                 showLessCard.innerHTML = `Mostrar menos <svg class="w-3 h-3 inline-block ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>`;
-                 showLessCard.onclick = () => {
-                     areAllNotificationsVisible = false;
-                     updateNotificationDisplay(); 
-                 };
-                 notificationsList.appendChild(showLessCard);
+                 const btn = document.createElement('button');
+                 btn.className = 'w-full text-center py-2 text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition-colors bg-slate-50 rounded-lg mt-2';
+                 btn.innerHTML = `Mostrar menos <svg class="w-3 h-3 inline-block ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>`;
+                 btn.onclick = () => { areAllNotificationsVisible = false; updateNotificationDisplay(); };
+                 notificationsList.appendChild(btn);
             }
         }
 
         function renderNotificationHistory() {
             historyList.innerHTML = '';
-            const sortedNotifications = [...allNotifications].sort((a, b) => {
-                 const timeA = a.timestamp?.toDate ? a.timestamp.toDate().getTime() : 0;
-                 const timeB = b.timestamp?.toDate ? b.timestamp.toDate().getTime() : 0;
-                 return timeB - timeA;
-            });
+            const sortedNotifications = [...allNotifications].sort((a, b) => (b.timestamp?.toDate?.()?.getTime() || 0) - (a.timestamp?.toDate?.()?.getTime() || 0));
 
             if (sortedNotifications.length === 0) {
-                 const message = "Nenhum histórico para mostrar."; 
-                historyList.innerHTML = `<div class="flex items-center justify-center h-32 text-slate-400 text-sm">${message}</div>`;
+                historyList.innerHTML = `<div class="flex items-center justify-center h-32 text-slate-400 text-sm">Nenhum histórico para mostrar.</div>`;
             } else {
                 sortedNotifications.forEach(notification => {
                     const item = document.createElement('div');
                     item.className = 'p-3 hover:bg-slate-50 rounded-lg transition-colors border-b border-slate-100 last:border-0';
-                    const timestampDate = notification.timestamp?.toDate ? notification.timestamp.toDate() : null;
-                    item.innerHTML = `
-                         <p class="text-sm text-slate-700">${notification.message}</p>
-                         <p class="text-xs text-slate-400 mt-1 font-medium">${timestampDate ? timestampDate.toLocaleString('pt-BR') : 'Data indisponível'}</p>
-                    `;
+                    item.innerHTML = `<p class="text-sm text-slate-700">${notification.message}</p><p class="text-xs text-slate-400 mt-1 font-medium">${notification.timestamp?.toDate ? notification.timestamp.toDate().toLocaleString('pt-BR') : 'Data indisponível'}</p>`;
                     historyList.appendChild(item);
                 });
             }
@@ -2438,29 +1737,17 @@
 
         async function loadAllSellerSegments(sellerNames) {
             const uniqueSellers = [...new Set(sellerNames.map(name => normalizeText(name)))]; 
-            
             const sellersToFetch = uniqueSellers.filter(normalizedName => !sellerSegmentsCache.hasOwnProperty(normalizedName));
             
-            if (sellersToFetch.length === 0) {
-                 populateSegmentFilters(); 
-                 return; 
-            }
+            if (sellersToFetch.length === 0) { populateSegmentFilters(); return; }
 
             const fetchedConfigs = {};
             try {
-                const q = collection(db, "vendedorConfig");
-                const snapshot = await getDocs(q);
-                snapshot.forEach(doc => {
-                    fetchedConfigs[doc.id] = doc.data().segmento;
-                });
-            } catch (error) {
-                console.error("Erro ao carregar configurações de segmento:", error);
-            }
+                const snapshot = await getDocs(collection(db, "vendedorConfig"));
+                snapshot.forEach(doc => { fetchedConfigs[doc.id] = doc.data().segmento; });
+            } catch (error) { console.error("Erro configurações:", error); }
 
-            uniqueSellers.forEach(normalizedName => {
-                sellerSegmentsCache[normalizedName] = fetchedConfigs[normalizedName] || null; 
-            });
-
+            uniqueSellers.forEach(normalizedName => { sellerSegmentsCache[normalizedName] = fetchedConfigs[normalizedName] || null; });
             populateSegmentFilters(); 
         }
 
@@ -2473,45 +1760,33 @@
             };
 
             Object.values(lists).forEach(list => { if(list) list.innerHTML = ''; });
-
             const counts = { approved: {}, rejected: {}, events: {}, pending: {} };
-
-            const CANONICAL_APPROVED = ['COM PEDIDO', 'APROVADO SEM PEDIDO'];
-            const CANONICAL_REJECTED = ['APRESENTAÇÃO PRÓ ATIVA', 'CALIBRE', 'EXTRAVIADA', 'FORA DA ESPECIFICAÇÃO DO CLIENTE', 'FORA DO PERFIL DO CLIENTE', 'FRACA / ESTOURANDO / COM CHUVEIRO', 'PRODUTO DESCONTINUADO', 'QUANTIDADE INSUFICIENTE', 'REPRESENTAÇÃO / DISTRIBUIDOR', 'SEM RETORNO DO CLIENTE', 'EXPORTACAO'];
-            const CANONICAL_EVENTS = ['EVENTO'];
-            const CANONICAL_PENDING = ['AMOSTRA NÃO TESTADA', 'EM ANÁLISE', 'AMOSTRA SEM FEEDBACK'];
 
             samples.forEach(sample => {
                  const feedback = sample.feedback ? sample.feedback.trim() : '';
                  if (feedback === '') {
                      let isSamplePending = sample.isPending;
-                     if (typeof isSamplePending === 'undefined') {
-                         isSamplePending = PENDING_STATUSES.includes(normalizeText(sample.originalStatus));
-                     }
-                     if(isSamplePending) {
-                          counts.pending['PENDENTE (SISTEMA)'] = (counts.pending['PENDENTE (SISTEMA)'] || 0) + 1;
-                     }
+                     if (typeof isSamplePending === 'undefined') isSamplePending = PENDING_STATUSES.includes(normalizeText(sample.originalStatus));
+                     if(isSamplePending) counts.pending['PENDENTE (SISTEMA)'] = (counts.pending['PENDENTE (SISTEMA)'] || 0) + 1;
                      return;
                  }
 
                 const canonicalFeedback = getCanonicalFeedback(feedback);
                 let category = null;
 
-                if (feedback.startsWith('A -') || CANONICAL_APPROVED.includes(canonicalFeedback)) category = 'approved';
-                else if (feedback.startsWith('R -') || CANONICAL_REJECTED.includes(canonicalFeedback)) category = 'rejected';
-                else if (feedback.startsWith('E -') || CANONICAL_EVENTS.includes(canonicalFeedback)) category = 'events';
-                else if (feedback.startsWith('P -') || CANONICAL_PENDING.includes(canonicalFeedback)) category = 'pending';
+                if (feedback.startsWith('A -') || ['COM PEDIDO', 'APROVADO SEM PEDIDO'].includes(canonicalFeedback)) category = 'approved';
+                else if (feedback.startsWith('R -') || ['APRESENTAÇÃO PRÓ ATIVA', 'CALIBRE', 'EXTRAVIADA', 'FORA DA ESPECIFICAÇÃO DO CLIENTE', 'FORA DO PERFIL DO CLIENTE', 'FRACA / ESTOURANDO / COM CHUVEIRO', 'PRODUTO DESCONTINUADO', 'QUANTIDADE INSUFICIENTE', 'REPRESENTAÇÃO / DISTRIBUIDOR', 'SEM RETORNO DO CLIENTE', 'EXPORTACAO'].includes(canonicalFeedback)) category = 'rejected';
+                else if (feedback.startsWith('E -') || ['EVENTO'].includes(canonicalFeedback)) category = 'events';
+                else if (feedback.startsWith('P -') || ['AMOSTRA NÃO TESTADA', 'EM ANÁLISE', 'AMOSTRA SEM FEEDBACK'].includes(canonicalFeedback)) category = 'pending';
 
-                if (category) {
-                    counts[category][canonicalFeedback] = (counts[category][canonicalFeedback] || 0) + 1;
-                }
+                if (category) counts[category][canonicalFeedback] = (counts[category][canonicalFeedback] || 0) + 1;
             });
 
             const renderList = (listElement, data) => {
                  if (!listElement) return;
                  const sortedData = Object.entries(data).sort(([, a], [, b]) => b - a);
                 if (sortedData.length === 0) {
-                     listElement.innerHTML = '<li class="text-slate-400 italic text-xs py-2">Nenhum registro.</li>';
+                     listElement.innerHTML = '<li class="text-slate-400 italic text-xs py-2">Nenhum registo.</li>';
                      return;
                 }
                 listElement.innerHTML = sortedData.map(([text, count]) => `
@@ -2522,9 +1797,7 @@
                          </button>
                     </li>
                 `).join('');
-                 listElement.querySelectorAll('.feedback-item-btn').forEach(btn => {
-                     btn.addEventListener('click', () => showFeedbackSamples(btn.dataset.feedback));
-                 });
+                 listElement.querySelectorAll('.feedback-item-btn').forEach(btn => btn.addEventListener('click', () => showFeedbackSamples(btn.dataset.feedback)));
             };
 
             renderList(lists.approved, counts.approved);
@@ -2541,36 +1814,25 @@
             let filteredSamples = dataSource.filter(sample => {
                  if (feedbackText === 'PENDENTE (SISTEMA)') {
                      let isSamplePending = sample.isPending;
-                     if (typeof isSamplePending === 'undefined') {
-                         isSamplePending = PENDING_STATUSES.includes(normalizeText(sample.originalStatus));
-                     }
+                     if (typeof isSamplePending === 'undefined') isSamplePending = PENDING_STATUSES.includes(normalizeText(sample.originalStatus));
                      return isSamplePending && (!sample.feedback || sample.feedback.trim() === '');
                  }
                 return getCanonicalFeedback(sample.feedback) === feedbackText;
             });
 
             if (segmentFilter) {
-                if (segmentFilter === AROMA_FILTER_VALUE) {
-                    filteredSamples = filteredSamples.filter(sample => isAroma(sample.produto, sample.descricao));
-                } else {
-                    filteredSamples = filteredSamples.filter(sample => sellerSegmentsCache[normalizeText(sample.sellerName)] === segmentFilter);
-                }
+                if (segmentFilter === AROMA_FILTER_VALUE) filteredSamples = filteredSamples.filter(sample => isAroma(sample.produto, sample.descricao));
+                else filteredSamples = filteredSamples.filter(sample => sellerSegmentsCache[normalizeText(sample.sellerName)] === segmentFilter);
             }
-
 
             filteredSamples.sort((a, b) => {
                 const isAHighlighted = !a.isHistorical && highlightedSamplesCache.includes(a.id);
                 const isBHighlighted = !b.isHistorical && highlightedSamplesCache.includes(b.id);
-
                 if (isAHighlighted && !isBHighlighted) return -1;
                 if (!isAHighlighted && isBHighlighted) return 1;
-
                 const nameCompare = a.sellerName.localeCompare(b.sellerName);
                 if (nameCompare !== 0) return nameCompare;
-
-                const secondaryA = a.pedido || a.produto || '';
-                const secondaryB = b.pedido || b.produto || '';
-                return secondaryA.localeCompare(secondaryB);
+                return (a.pedido || a.produto || '').localeCompare(b.pedido || b.produto || '');
             });
 
             feedbackSamplesTitle.innerHTML = `Detalhes: <span class="text-blue-600 font-normal">"${feedbackText}"</span> <span class="bg-slate-200 text-slate-700 text-xs px-2 py-1 rounded-full ml-2">${filteredSamples.length}</span>`;
@@ -2585,25 +1847,18 @@
                     const highlightClass = isHighlighted ? 'highlight' : '';
                     itemDiv.className = `feedback-sample-item bg-white p-4 rounded-xl border border-slate-100 shadow-sm ${highlightClass}`;
 
-                     const managerReply = !sample.isHistorical ? allSellerReplies
-                         .filter(r => r.sellerName === sample.sellerName && r.pedido === sample.pedido && r.produto === sample.produto && r.originalObservation === sample.observation)
-                         .sort((a, b) => (b.timestamp?.toDate() ?? 0) - (a.timestamp?.toDate() ?? 0))[0] : null;
+                     const managerReply = !sample.isHistorical ? allSellerReplies.filter(r => r.sellerName === sample.sellerName && r.pedido === sample.pedido && r.produto === sample.produto && r.originalObservation === sample.observation).sort((a, b) => (b.timestamp?.toDate?.() ?? 0) - (a.timestamp?.toDate?.() ?? 0))[0] : null;
 
                      let repliesHtml = '';
                      if (managerReply) {
-                         const managerTime = managerReply.timestamp?.toDate() ? managerReply.timestamp.toDate().toLocaleString('pt-BR') : '';
-                         repliesHtml += `<div class="manager-reply bg-slate-50 p-2"><p class="text-slate-800 font-medium">${managerReply.managerName}: <span class="font-normal text-slate-600">${managerReply.replyMessage}</span></p><p class="text-[10px] text-slate-400">${managerTime}</p></div>`;
+                         repliesHtml += `<div class="manager-reply bg-slate-50 p-2"><p class="text-slate-800 font-medium">${managerReply.managerName}: <span class="font-normal text-slate-600">${managerReply.replyMessage}</span></p><p class="text-[10px] text-slate-400">${managerReply.timestamp?.toDate ? managerReply.timestamp.toDate().toLocaleString('pt-BR') : ''}</p></div>`;
                          
-                         const sellerOrPdReply = !sample.isHistorical ? allSellerRepliesToManager
-                             .filter(r => r.originalManagerMessage === managerReply.replyMessage && r.pedido === sample.pedido && r.produto === sample.produto)
-                             .sort((a, b) => (b.timestamp?.toDate() ?? 0) - (a.timestamp?.toDate() ?? 0))[0] : null;
+                         const sellerOrPdReply = !sample.isHistorical ? allSellerRepliesToManager.filter(r => r.originalManagerMessage === managerReply.replyMessage && r.pedido === sample.pedido && r.produto === sample.produto).sort((a, b) => (b.timestamp?.toDate?.() ?? 0) - (a.timestamp?.toDate?.() ?? 0))[0] : null;
                          
                          if (sellerOrPdReply) {
-                             const time = sellerOrPdReply.timestamp?.toDate() ? sellerOrPdReply.timestamp.toDate().toLocaleString('pt-BR') : '';
                              const isPDReply = sellerOrPdReply.originalManagerName === "P&D";
                              const senderName = isPDReply ? `${sellerOrPdReply.sellerName} <span class="bg-purple-100 text-purple-600 text-[10px] px-1.5 py-0.5 rounded font-bold ml-1">P&D</span>` : sellerOrPdReply.sellerName;
-                             
-                             repliesHtml += `<div class="seller-reply"><p class="text-slate-800 font-medium">${senderName}: <span class="font-normal text-slate-600">${sellerOrPdReply.replyMessage}</span></p><p class="text-[10px] text-slate-400">${time}</p></div>`;
+                             repliesHtml += `<div class="seller-reply"><p class="text-slate-800 font-medium">${senderName}: <span class="font-normal text-slate-600">${sellerOrPdReply.replyMessage}</span></p><p class="text-[10px] text-slate-400">${sellerOrPdReply.timestamp?.toDate ? sellerOrPdReply.timestamp.toDate().toLocaleString('pt-BR') : ''}</p></div>`;
                          }
                      }
                      const replyButtonHtml = (sample.observation && !sample.isHistorical) ? `<button class="reply-observation-btn bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-1.5 rounded-lg text-xs font-semibold ml-2 transition-colors border border-blue-100" data-sample-id="${sample.id}">${managerReply ? 'Nova Resposta' : 'Responder'}</button>` : '';
@@ -2620,12 +1875,8 @@
                                  ${sample.descricao ? `<p class="text-xs text-slate-500 mt-0.5">${sample.descricao}</p>` : ''}
                                  
                                  <div class="flex flex-wrap gap-2 mt-2 mb-2">
-                                     <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600">
-                                         Ped: ${sample.pedido || 'N/A'}
-                                     </span>
-                                     <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600 truncate max-w-[150px]" title="${sample.razaoSocial || 'N/A'}">
-                                         ${sample.razaoSocial || 'Cliente N/A'}
-                                     </span>
+                                     <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600">Ped: ${sample.pedido || 'N/A'}</span>
+                                     <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600 truncate max-w-[150px]" title="${sample.razaoSocial || 'N/A'}">${sample.razaoSocial || 'Cliente N/A'}</span>
                                  </div>
                                  
                                  <p class="text-[11px] text-slate-500 flex items-center flex-wrap gap-x-3 gap-y-1">
@@ -2635,22 +1886,15 @@
                                      ${sample.isHistorical ? '<span class="bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-bold">Histórico</span>' : ''}
                                  </p>
                              </div>
-                             <div class="flex items-center gap-1 flex-shrink-0 ml-4">
-                                 ${replyButtonHtml}
-                                 ${highlightButtonHtml}
-                             </div>
+                             <div class="flex items-center gap-1 flex-shrink-0 ml-4">${replyButtonHtml}${highlightButtonHtml}</div>
                          </div>
                          ${sample.observation ? `<div class="bg-slate-50 p-2.5 rounded-lg border border-slate-100 text-sm text-slate-600 mt-3 italic">"${sample.observation}"</div>` : ''}
                          ${repliesHtml}
                      `;
                     feedbackSamplesList.appendChild(itemDiv);
                 });
-                 feedbackSamplesList.querySelectorAll('.reply-observation-btn').forEach(btn => {
-                     btn.addEventListener('click', openReplyModal);
-                 });
-                 feedbackSamplesList.querySelectorAll('.highlight-sample-btn').forEach(btn => {
-                     btn.addEventListener('click', toggleDestaqueAmostra);
-                 });
+                 feedbackSamplesList.querySelectorAll('.reply-observation-btn').forEach(btn => btn.addEventListener('click', openReplyModal));
+                 feedbackSamplesList.querySelectorAll('.highlight-sample-btn').forEach(btn => btn.addEventListener('click', toggleDestaqueAmostra));
             }
              if (feedbackSamplesModal.classList.contains('hidden')) {
                  populateModalSegmentFilter(); 
@@ -2681,13 +1925,9 @@
                 modalSegmentFilter.appendChild(option);
             });
 
-            if (modalSegmentFilter.querySelector(`option[value="${currentValue}"]`)) {
-                modalSegmentFilter.value = currentValue;
-            } else {
-                modalSegmentFilter.value = ""; 
-            }
+            if (modalSegmentFilter.querySelector(`option[value="${currentValue}"]`)) modalSegmentFilter.value = currentValue;
+            else modalSegmentFilter.value = ""; 
         }
-
 
         function renderSegmentCharts(samples) {
             segmentChartsGrid.innerHTML = '';
@@ -2697,12 +1937,8 @@
                 const segment = sellerSegmentsCache[normalizeText(sample.sellerName)]; 
                 if (segment && !sample.isPending && sample.feedback && sample.feedback.trim() !== '') {
                      const canonicalFeedback = getCanonicalFeedback(sample.feedback);
-                     const CANONICAL_PENDING = ['AMOSTRA NÃO TESTADA', 'EM ANÁLISE', 'AMOSTRA SEM FEEDBACK', 'PENDENTE (SISTEMA)'];
-                     if (CANONICAL_PENDING.includes(canonicalFeedback)) return;
-
-                    if (!samplesBySegment[segment]) {
-                        samplesBySegment[segment] = {};
-                    }
+                     if (['AMOSTRA NÃO TESTADA', 'EM ANÁLISE', 'AMOSTRA SEM FEEDBACK', 'PENDENTE (SISTEMA)'].includes(canonicalFeedback)) return;
+                    if (!samplesBySegment[segment]) samplesBySegment[segment] = {};
                     samplesBySegment[segment][canonicalFeedback] = (samplesBySegment[segment][canonicalFeedback] || 0) + 1;
                 }
             });
@@ -2712,7 +1948,7 @@
                 return;
             }
 
-            const segmentColors = generateColorPalette(Object.keys(SEGMENTS).length);
+            const segmentColors = ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#ef4444', '#6366f1', '#d946ef', '#f97316', '#22c55e', '#dc2626', '#38bdf8'];
 
             Object.keys(samplesBySegment).sort().forEach(segment => {
                 const chartId = `segment-chart-${segment.replace(/[\s/]+/g, '-')}`;
@@ -2726,33 +1962,13 @@
                 const color = segmentColors[SEGMENTS.indexOf(segment) % segmentColors.length];
 
                 renderChart(chartId, 'bar', {
-                    labels,
-                    datasets: [{ data, backgroundColor: color, borderRadius: 4 }]
+                    labels, datasets: [{ data, backgroundColor: color, borderRadius: 4 }]
                 }, {
                     indexAxis: 'y',
-                    scales: {
-                         x: { beginAtZero: true, grid: { display: false } },
-                         y: {
-                             ticks: { autoSkip: false, font: { size: 10 } },
-                             grid: { color: '#f1f5f9' },
-                             afterFit: function(scaleInstance) { scaleInstance.width = 180; }
-                         }
-                    },
+                    scales: { x: { beginAtZero: true, grid: { display: false } }, y: { ticks: { autoSkip: false, font: { size: 10 } }, grid: { color: '#f1f5f9' }, afterFit: function(scaleInstance) { scaleInstance.width = 180; } } },
                     plugins: { legend: { display: false } }
                 });
             });
-        }
-
-        function generateColorPalette(numColors) {
-            const colors = [
-                '#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#ef4444',
-                '#6366f1', '#d946ef', '#f97316', '#22c55e', '#dc2626', '#38bdf8'
-            ];
-            let palette = [];
-            for (let i = 0; i < numColors; i++) {
-                palette.push(colors[i % colors.length]);
-            }
-            return palette;
         }
 
         // --- Initial Setup ---
@@ -2760,17 +1976,13 @@
              try {
                  await signInAnonymously(auth); 
                  listenForActiveSession(); 
-                 
-                 // Pede permissão de notificação automaticamente se ainda não tiver respondido
                  if ("Notification" in window && Notification.permission === "default") {
                      Notification.requestPermission().then(setupNotificationButton);
                  } else {
                      setupNotificationButton(); 
                  }
-                 
              } catch (error) {
                  infoMessage.textContent = "Não foi possível conectar ao serviço.";
-                 console.error("Firebase Auth Error:", error);
                  resetToInitialState(true); 
              }
         })();
