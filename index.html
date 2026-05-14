@@ -101,6 +101,13 @@
         .modern-card:hover {
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
         }
+
+        /* Modal Overlay fix */
+        .modal-overlay {
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            background-color: rgba(15, 23, 42, 0.6); /* slate-900 / 60% */
+        }
     </style>
 </head>
 <body class="text-slate-800 relative">
@@ -111,21 +118,19 @@
                 <div class="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-sm text-white">
                     <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
                 </div>
-                <h1 class="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-slate-600 hidden md:block">Gestão de Feedbacks</h1>
+                <h1 class="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-slate-600 hidden sm:block">Gestão de Feedbacks</h1>
             </div>
-            <div class="flex items-center space-x-2 sm:space-x-4">
-                 <div class="hidden lg:flex px-3 py-1 bg-slate-100 rounded-full border border-slate-200">
+            <div class="flex items-center space-x-3 sm:space-x-4">
+                 <div class="hidden md:flex px-3 py-1 bg-slate-100 rounded-full border border-slate-200">
                      <p id="session-id-text" class="text-xs font-medium text-slate-500">Nenhuma sessão</p>
                  </div>
                  
-                 <!-- NOVO BOTÃO: Exportar para Excel -->
                  <button id="header-export-btn" class="hidden flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-lg hover:bg-emerald-100 hover:text-emerald-800 transition-all text-xs font-bold shadow-sm">
                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                      <span class="hidden sm:inline">Exportar Excel</span>
                      <span class="sm:hidden">Excel</span>
                  </button>
 
-                 <!-- BOTÃO: Iniciar Nova Sessão no Topo -->
                  <button id="header-new-session-btn" class="hidden flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 hover:text-blue-600 transition-all text-xs font-bold shadow-sm">
                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                      <span class="hidden sm:inline">Nova Sessão</span>
@@ -143,7 +148,6 @@
         
         <!-- Input Section (Welcome Landing) -->
         <div id="input-section" class="max-w-3xl mx-auto mt-10 mb-16 modern-card p-8 sm:p-10 text-center relative overflow-hidden hidden">
-            <!-- Decorative background elements -->
             <div class="absolute top-0 right-0 -mr-16 -mt-16 w-32 h-32 rounded-full bg-blue-50 opacity-50"></div>
             <div class="absolute bottom-0 left-0 -ml-16 -mb-16 w-40 h-40 rounded-full bg-indigo-50 opacity-50"></div>
             
@@ -154,7 +158,6 @@
                 <h2 class="text-3xl font-bold text-slate-800 mb-2">Iniciar Nova Sessão</h2>
                 <p class="text-slate-500 mb-6 max-w-lg mx-auto">Faça o upload do seu ficheiro .CSV ou cole os dados abaixo para gerar um novo painel dinâmico.</p>
                 
-                <!-- Nova Área de Upload de Arquivos -->
                 <div class="mb-4">
                     <label for="csv-file-upload" class="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-300 border-dashed rounded-xl cursor-pointer bg-slate-50 hover:bg-slate-100 hover:border-blue-400 transition-colors relative overflow-hidden group">
                         <div class="flex flex-col items-center justify-center pt-5 pb-6">
@@ -433,9 +436,15 @@
                          <div class="p-1.5 bg-indigo-50 rounded-lg text-indigo-500"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg></div>
                          <h2 class="text-2xl font-bold text-slate-800 tracking-tight">Acompanhamento de Equipe</h2>
                      </div>
-                     <div class="relative w-full sm:w-64">
-                         <svg class="w-4 h-4 absolute left-3 top-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                         <input id="seller-search-input" type="text" placeholder="Procurar vendedor..." class="w-full pl-9 pr-4 py-2 border border-slate-200 bg-slate-50 rounded-xl shadow-sm text-sm focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-colors">
+                     <div class="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+                         <button id="email-all-btn" class="w-full sm:w-auto flex items-center justify-center gap-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 px-4 py-2 rounded-xl text-sm font-semibold transition-colors border border-indigo-100 shadow-sm whitespace-nowrap">
+                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                             Email p/ Todos
+                         </button>
+                         <div class="relative w-full sm:w-64">
+                             <svg class="w-4 h-4 absolute left-3 top-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                             <input id="seller-search-input" type="text" placeholder="Procurar vendedor..." class="w-full pl-9 pr-4 py-2 border border-slate-200 bg-slate-50 rounded-xl shadow-sm text-sm focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-colors">
+                         </div>
                      </div>
                  </div>
                  <div id="sellers-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -617,7 +626,8 @@
                         <tr class="hover:bg-slate-50/50"><td class="px-5 py-3.5 text-sm font-medium text-slate-800">Panificação</td><td class="px-5 py-3.5 text-sm font-mono text-slate-500 text-right">pd_adriana5</td></tr>
                         <tr class="hover:bg-slate-50/50"><td class="px-5 py-3.5 text-sm font-medium text-slate-800">Cárneos</td><td class="px-5 py-3.5 text-sm font-mono text-slate-500 text-right">pd_anderson3</td></tr>
                         <tr class="hover:bg-slate-50/50"><td class="px-5 py-3.5 text-sm font-medium text-slate-800">Aromas Doces, Salgados e Molhos</td><td class="px-5 py-3.5 text-sm font-mono text-slate-500 text-right">pd_carlos1</td></tr>
-                        <tr class="hover:bg-slate-50/50"><td class="px-5 py-3.5 text-sm font-medium text-slate-800">Nutracêuticos</td><td class="px-5 py-3.5 text-sm font-mono text-slate-500 text-right">pd_daise4</td></tr>
+                        <tr class="hover:bg-slate-50/50"><td class="px-5 py-3.5 text-sm font-medium text-slate-800">Farma</td><td class="px-5 py-3.5 text-sm font-mono text-slate-500 text-right">pd_farma4</td></tr>
+                        <tr class="hover:bg-slate-50/50"><td class="px-5 py-3.5 text-sm font-medium text-slate-800">Nutrição Esportiva</td><td class="px-5 py-3.5 text-sm font-mono text-slate-500 text-right">pd_esportiva8</td></tr>
                         <tr class="hover:bg-slate-50/50"><td class="px-5 py-3.5 text-sm font-medium text-slate-800">Lácteos</td><td class="px-5 py-3.5 text-sm font-mono text-slate-500 text-right">pd_flavia2</td></tr>
                         <tr class="hover:bg-slate-50/50"><td class="px-5 py-3.5 text-sm font-medium text-slate-800">Sorvetes</td><td class="px-5 py-3.5 text-sm font-mono text-slate-500 text-right">pd_margarida7</td></tr>
                         <tr class="hover:bg-slate-50/50"><td class="px-5 py-3.5 text-sm font-medium text-slate-800">Nutrição Animal</td><td class="px-5 py-3.5 text-sm font-mono text-slate-500 text-right">pd_rebeca6</td></tr>
@@ -672,14 +682,15 @@
         const auth = getAuth(app);
 
         const PENDING_STATUSES = ['EM ANÁLISE', 'AMOSTRA SEM FEEDBACK', 'SEM RETORNO DO CLIENTE', 'AMOSTRA NÃO TESTADA', 'PENDENTE'];
-        const SEGMENTS = ['CÁRNEOS', 'EXPORTACAO', 'FOOD SERVICE', 'LACTEOS', 'NUTRACEUTICOS', 'NUTRICAO ANIMAL', 'PANIFICACAO', 'SMB', 'SORVETES', 'SUPPLY/FIS'];
+        
+        // NOVO ARRAY DE SEGMENTOS
+        const SEGMENTS = ['CÁRNEOS', 'EXPORTACAO', 'FARMA', 'FOOD SERVICE', 'LACTEOS', 'NUTRICAO ANIMAL', 'NUTRICAO ESPORTIVA', 'PANIFICACAO', 'SMB', 'SORVETES', 'SUPPLY/FIS'];
         const AROMA_FILTER_VALUE = 'AROMAS_FILTER';
 
         // --- DOM Elements ---
         const processBtn = document.getElementById('process-btn');
         const dataInput = document.getElementById('data-input');
         
-        // Elementos de Arquivo
         const fileUploadInput = document.getElementById('csv-file-upload');
         const fileNameDisplay = document.getElementById('file-name-display');
 
@@ -691,7 +702,7 @@
         const newSessionBtn = document.getElementById('new-session-btn');
         
         const headerNewSessionBtn = document.getElementById('header-new-session-btn');
-        const headerExportBtn = document.getElementById('header-export-btn'); // Novo Botão Exportar
+        const headerExportBtn = document.getElementById('header-export-btn');
 
         const manualSessionInput = document.getElementById('manual-session-id');
         const connectSessionBtn = document.getElementById('connect-session-btn');
@@ -745,7 +756,6 @@
         const pdPostitsList = document.getElementById('pd-postits-list');
         const pdPostitSegmentFilter = document.getElementById('pd-postit-segment-filter');
 
-        // Dynamic visual update for Generate button based on Input
         if (fileUploadInput) {
             fileUploadInput.addEventListener('change', (event) => {
                 const file = event.target.files[0];
@@ -754,7 +764,7 @@
                     fileNameDisplay.classList.add('text-blue-600', 'font-bold');
                     fileNameDisplay.classList.remove('text-slate-400');
                     processBtn.disabled = false;
-                    dataInput.value = ''; // Limpa a caixa de texto
+                    dataInput.value = '';
                 } else {
                     fileNameDisplay.textContent = 'Nenhum arquivo selecionado';
                     fileNameDisplay.classList.remove('text-blue-600', 'font-bold');
@@ -767,7 +777,6 @@
         dataInput.addEventListener('input', () => {
             if(dataInput.value.trim().length > 0) {
                 processBtn.disabled = false;
-                // Se colar algo, remove o arquivo do input
                 if (fileUploadInput && fileUploadInput.value) {
                     fileUploadInput.value = '';
                     fileNameDisplay.textContent = 'Nenhum arquivo selecionado';
@@ -806,8 +815,6 @@
         let areAllNotificationsVisible = false;
         let historicalAromaData = []; 
 
-
-        // --- Utility Functions ---
         const normalizeText = (text = '') => text ? text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim() : '';
         const sanitizeForFirebaseId = (text) => normalizeText(text).replace(/\//g, "-"); 
 
@@ -815,7 +822,97 @@
             customAlertMessage.textContent = message;
             customAlert.classList.remove('hidden');
         }
-        customAlertOkBtn.addEventListener('click', () => customAlert.classList.add('hidden'));
+
+        // --- SISTEMA DE TOAST (Pop-ups em Tempo Real) ---
+        function showToast(title, message, colorType) {
+            const container = document.getElementById('toast-container');
+            if(!container) return;
+            const toast = document.createElement('div');
+            
+            let bgClass = colorType === 'orange' ? 'bg-amber-50 border-amber-200 text-amber-800' :
+                          colorType === 'purple' ? 'bg-purple-50 border-purple-200 text-purple-800' :
+                          colorType === 'green' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' :
+                          'bg-blue-50 border-blue-200 text-blue-800';
+                          
+            toast.className = `p-4 rounded-xl shadow-lg border ${bgClass} w-80 sm:w-96 transform transition-all duration-500 translate-y-10 opacity-0 flex flex-col pointer-events-auto`;
+            
+            toast.innerHTML = `
+                <div class="flex justify-between items-start mb-2 gap-2">
+                    <strong class="text-sm font-bold leading-tight flex items-center gap-1">
+                        <div class="w-2 h-2 rounded-full ${colorType === 'orange'?'bg-amber-500':colorType==='green'?'bg-emerald-500':colorType==='purple'?'bg-purple-500':'bg-blue-500'}"></div>
+                        ${title}
+                    </strong>
+                    <button class="opacity-50 hover:opacity-100 transition-opacity focus:outline-none flex-shrink-0" onclick="this.parentElement.parentElement.remove()">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+                <p class="text-xs font-medium opacity-90 leading-relaxed">${message}</p>
+            `;
+            
+            container.appendChild(toast);
+            
+            setTimeout(() => toast.classList.remove('translate-y-10', 'opacity-0'), 10);
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-x-10');
+                setTimeout(() => toast.remove(), 500);
+            }, 8000);
+        }
+
+        // --- EXPORTAR PARA EXCEL ---
+        if(headerExportBtn) {
+            headerExportBtn.addEventListener('click', () => {
+                if(!allCurrentSamples || allCurrentSamples.length === 0) {
+                    showAlert("Não há dados na sessão atual para exportar.");
+                    return;
+                }
+                
+                headerExportBtn.innerHTML = '<svg class="animate-spin h-4 w-4 text-emerald-700 inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> <span class="hidden sm:inline">Aguarde...</span>';
+                
+                try {
+                    const dataToExport = allCurrentSamples.map(s => {
+                        let isPendente = s.isPending;
+                        if (typeof isPendente === 'undefined') isPendente = PENDING_STATUSES.includes(normalizeText(s.originalStatus));
+                        
+                        return {
+                            'Vendedor': s.sellerName,
+                            'Segmento': sellerSegmentsCache[normalizeText(s.sellerName)] || 'Sem Segmento',
+                            'Nº Pedido': s.pedido,
+                            'Cliente (Razão Social)': s.razaoSocial,
+                            'Produto': s.produto,
+                            'Descrição': s.descricao,
+                            'Quantidade': s.qtde,
+                            'Nota Fiscal': s.notaFiscal,
+                            'Emissão NF': s.emissaoNF,
+                            'Status Original': s.originalStatus,
+                            'Status Sistema': s.systemStatus === 'baixado' ? 'Baixado' : 'Pendente',
+                            'Situação Atual': isPendente ? 'Pendente de Ação' : 'Finalizado',
+                            'Feedback Registado': s.feedback || '',
+                            'Observação do Vendedor': s.observation || '',
+                            'Última Atualização': s.lastUpdate?.toDate ? s.lastUpdate.toDate().toLocaleString('pt-BR') : ''
+                        };
+                    });
+
+                    const csv = Papa.unparse(dataToExport, { delimiter: ";" });
+                    const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
+                    const link = document.createElement("a");
+                    const url = URL.createObjectURL(blob);
+                    
+                    link.setAttribute("href", url);
+                    link.setAttribute("download", `Exportacao_Gestao_Feedbacks_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.csv`);
+                    link.style.visibility = 'hidden';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    
+                } catch(e) {
+                    console.error("Erro na exportação", e);
+                    showAlert("Ocorreu um erro ao tentar exportar o arquivo.");
+                } finally {
+                    headerExportBtn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg> <span class="hidden sm:inline">Exportar Excel</span><span class="sm:hidden">Excel</span>';
+                }
+            });
+        }
+
 
         function isAroma(produto, descricao) {
             const normalizedProduto = normalizeText(produto);
@@ -844,114 +941,15 @@
                 let name = context.split('(').pop(); 
                 return normalizeText(name.replace(')', '')); 
             } catch (e) {
-                console.warn("Could not parse seller name from context:", context, e);
                 return null;
             }
         }
 
-        // --- SISTEMA DE TOAST (Pop-ups em Tempo Real) ---
-        function showToast(title, message, colorType) {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            
-            let bgClass = colorType === 'orange' ? 'bg-amber-50 border-amber-200 text-amber-800' :
-                          colorType === 'purple' ? 'bg-purple-50 border-purple-200 text-purple-800' :
-                          colorType === 'green' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' :
-                          'bg-blue-50 border-blue-200 text-blue-800';
-                          
-            toast.className = `p-4 rounded-xl shadow-lg border ${bgClass} w-80 sm:w-96 transform transition-all duration-500 translate-y-10 opacity-0 flex flex-col pointer-events-auto`;
-            
-            toast.innerHTML = `
-                <div class="flex justify-between items-start mb-2 gap-2">
-                    <strong class="text-sm font-bold leading-tight">${title}</strong>
-                    <button class="opacity-50 hover:opacity-100 transition-opacity focus:outline-none flex-shrink-0" onclick="this.parentElement.parentElement.remove()">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                    </button>
-                </div>
-                <p class="text-xs font-medium opacity-90 leading-relaxed">${message}</p>
-            `;
-            
-            container.appendChild(toast);
-            
-            // Animacao de entrada
-            setTimeout(() => {
-                toast.classList.remove('translate-y-10', 'opacity-0');
-            }, 10);
-            
-            // Auto remover depois de 8 segundos
-            setTimeout(() => {
-                toast.classList.add('opacity-0', 'translate-x-10');
-                setTimeout(() => toast.remove(), 500);
-            }, 8000);
-        }
-
-        // --- LÓGICA DE EXPORTAÇÃO PARA EXCEL ---
-        if(headerExportBtn) {
-            headerExportBtn.addEventListener('click', () => {
-                if(!allCurrentSamples || allCurrentSamples.length === 0) {
-                    showAlert("Não há dados na sessão atual para exportar.");
-                    return;
-                }
-                
-                headerExportBtn.innerHTML = '<svg class="animate-spin h-4 w-4 text-emerald-700 inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> <span class="hidden sm:inline">Aguarde...</span>';
-                
-                try {
-                    // Formatar dados para as colunas do CSV
-                    const dataToExport = allCurrentSamples.map(s => {
-                        let isPendente = s.isPending;
-                        if (typeof isPendente === 'undefined') isPendente = PENDING_STATUSES.includes(normalizeText(s.originalStatus));
-                        
-                        return {
-                            'Vendedor': s.sellerName,
-                            'Segmento': sellerSegmentsCache[normalizeText(s.sellerName)] || 'Sem Segmento',
-                            'Nº Pedido': s.pedido,
-                            'Cliente (Razão Social)': s.razaoSocial,
-                            'Produto': s.produto,
-                            'Descrição': s.descricao,
-                            'Quantidade': s.qtde,
-                            'Nota Fiscal': s.notaFiscal,
-                            'Emissão NF': s.emissaoNF,
-                            'Status Original': s.originalStatus,
-                            'Status Sistema': s.systemStatus === 'baixado' ? 'Baixado' : 'Pendente',
-                            'Situação Atual': isPendente ? 'Pendente de Ação' : 'Finalizado',
-                            'Feedback Registado': s.feedback || '',
-                            'Observação do Vendedor': s.observation || '',
-                            'Última Atualização': s.lastUpdate?.toDate ? s.lastUpdate.toDate().toLocaleString('pt-BR') : ''
-                        };
-                    });
-
-                    // Gerar CSV com o PapaParse configurado para formato europeu/brasileiro (;)
-                    const csv = Papa.unparse(dataToExport, { delimiter: ";" });
-                    
-                    // Adicionar BOM (\uFEFF) para garantir que o Excel abra com UTF-8 e mantenha acentos (é, á, ç)
-                    const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
-                    const link = document.createElement("a");
-                    const url = URL.createObjectURL(blob);
-                    
-                    link.setAttribute("href", url);
-                    link.setAttribute("download", `Exportacao_Gestao_Feedbacks_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.csv`);
-                    link.style.visibility = 'hidden';
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    
-                } catch(e) {
-                    console.error("Erro na exportação", e);
-                    showAlert("Ocorreu um erro ao tentar exportar o arquivo.");
-                } finally {
-                    headerExportBtn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg> <span class="hidden sm:inline">Exportar Excel</span><span class="sm:hidden">Excel</span>';
-                }
-            });
-        }
-
-
-        // --- Main Dashboard Rendering Function ---
         function processAndDisplayDashboard(samples, sessionId, sellerDocs = []) {
             dashboard.classList.remove('hidden');
             inputSection.classList.add('hidden');
             connectionSection.classList.add('hidden');
             
-            // Mostrar os botões no cabeçalho quando entrar no dashboard
             if (headerNewSessionBtn) {
                 headerNewSessionBtn.classList.remove('hidden');
                 headerNewSessionBtn.classList.add('flex');
@@ -975,7 +973,6 @@
             populateSegmentFilters(); 
         }
 
-        // --- Event Listeners ---
         processBtn.addEventListener('click', () => {
             const file = fileUploadInput && fileUploadInput.files ? fileUploadInput.files[0] : null;
             const dataText = dataInput.value.trim();
@@ -998,7 +995,6 @@
                         connectionSection.classList.add('hidden');
                         infoMessage.textContent = '';
                     } catch (error) {
-                        console.error("Não foi possível limpar a sessão:", error);
                         showAlert("Erro ao tentar iniciar nova sessão global.");
                     }
                 }
@@ -1009,9 +1005,7 @@
             try {
                 const activeSessionRef = doc(db, "configuracoes", "sessaoAtiva");
                 await setDoc(activeSessionRef, { current: null }); 
-                console.log("Sessão ativa global limpa.");
             } catch (error) {
-                console.error("Não foi possível limpar a sessão ativa global:", error);
                 infoMessage.textContent = "Erro ao tentar iniciar nova sessão global.";
                 return;
             }
@@ -1026,7 +1020,6 @@
             if (manualId && manualId.startsWith('sessao_')) {
                  const originalBtnText = connectSessionBtn.innerHTML;
                  connectSessionBtn.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Conectando...`;
-                 
                  inputSection.classList.add('hidden');
 
                  try {
@@ -1043,8 +1036,7 @@
 
                      const activeSessionRef = doc(db, "configuracoes", "sessaoAtiva");
                      await setDoc(activeSessionRef, { current: manualId });
-                     console.log(`Sessão ${manualId} definida como ativa globalmente.`);
-
+                     
                      listenForDataUpdates(manualId);
                      listenForNotifications(manualId);
                      listenForSellerReplies(manualId);
@@ -1055,7 +1047,6 @@
 
                  } catch (error) {
                       connectSessionBtn.innerHTML = originalBtnText;
-                      console.error(`Erro ao verificar ou definir sessão ativa ${manualId}:`, error);
                       showAlert(`Erro ao conectar à sessão ${manualId}. Verifique o ID.`);
                       resetToInitialState(true);
                       manualSessionInput.value = manualId;
@@ -1065,7 +1056,6 @@
                  showAlert('ID de sessão inválido. Deve começar com "sessao_".');
             }
         });
-
 
         cancelModalBtn.addEventListener('click', () => segmentModal.classList.add('hidden'));
         historyBtn.addEventListener('click', () => renderNotificationHistory());
@@ -1126,7 +1116,6 @@
                 
                 const sellerDocs = [...new Set(allCurrentSamples.map(s => s.sellerName))].map(name => {
                     const sellerId = sanitizeForFirebaseId(name);
-                    const docData = allCurrentSamples.find(s => s.sellerName === name); 
                     const sellerDoc = sellersListContainer.querySelector(`.seller-card[data-seller-name="${name}"]`); 
                     return {
                         id: sellerId,
@@ -1161,9 +1150,6 @@
         if (pdPostitSegmentFilter) {
             pdPostitSegmentFilter.addEventListener('change', () => renderPdPostits());
         }
-
-
-        // --- Core Functions ---
 
         function parseAndCreateNewSession(inputData) {
             processBtn.innerHTML = `<svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Processando...`;
@@ -1244,7 +1230,7 @@
                     }).filter(Boolean); 
 
                     if (allSamplesData.length === 0) {
-                        showAlert("Nenhum dado válido encontrado para processar. Verifique se o arquivo ou texto possui o cabeçalho correto.");
+                        showAlert("Nenhum dado válido encontrado para processar.");
                         processBtn.disabled = false;
                         processBtn.innerHTML = 'Gerar Painel';
                         return;
@@ -1305,7 +1291,6 @@
 
             dataListenerUnsubscribe = onSnapshot(q, async (snapshot) => {
                  if (snapshot.empty && isInitialDataLoad) {
-                     console.warn(`Sessão ${sessionId} não encontrada ou vazia.`);
                      showAlert(`Sessão não encontrada ou vazia. Inicie uma nova sessão global.`);
                      resetToInitialState(true); 
                      manualSessionInput.value = sessionId;
@@ -1328,22 +1313,41 @@
                     if (headerExportBtn) headerExportBtn.classList.remove('hidden');
                     if (headerExportBtn) headerExportBtn.classList.add('flex');
 
+                    // --- SISTEMA DE TOASTS E NOTIFICAÇÕES GERAIS ---
                     if (!isInitialDataLoad) {
                         const batch = writeBatch(db);
                         let notificationAdded = false;
 
-                        const newFeedbacks = allSamples.filter(currentSample => {
+                        // Verifica os itens que mudaram o feedback ou observacao
+                        const modifiedSamples = allSamples.filter(currentSample => {
                             const prevSample = previousSamples.find(p => p.id === currentSample.id);
-                            return prevSample && (prevSample.isPending === true) && (currentSample.isPending === false);
+                            if (!prevSample) return false;
+                            
+                            const feedbackChanged = prevSample.feedback !== currentSample.feedback;
+                            const obsChanged = prevSample.observation !== currentSample.observation;
+                            return feedbackChanged || obsChanged;
                         });
 
-                        if (newFeedbacks.length > 0) {
-                            newFeedbacks.forEach(sample => {
-                                const message = `<strong>${sample.sellerName}</strong> deu feedback para <strong>${sample.produto}</strong>: ${sample.feedback} (Ped: ${sample.pedido})`;
+                        if (modifiedSamples.length > 0) {
+                            modifiedSamples.forEach(sample => {
+                                // SE O FEEDBACK FOR VAZIO OU PENDENTE DE ACORDO COM O CÓDIGO
+                                let statusText = sample.feedback;
+                                if (!statusText || PENDING_STATUSES.includes(normalizeText(statusText))) {
+                                    statusText = "Sem retorno";
+                                }
+
+                                const title = "❗️ Novo Feedback";
+                                const bodyMsg = `${sample.sellerName} respondeu: ${statusText}`;
+                                
+                                // TOAST na aplicação
+                                showToast(title, bodyMsg, 'blue');
+                                // POPUP do Windows/Mac (Notificação Oficial)
+                                showBrowserNotification(title, bodyMsg);
+                                
                                 const notifId = sanitizeForFirebaseId(`notif-${sample.id}-${Date.now()}`);
                                 const notifRef = doc(db, "sessoes", currentSessionId, "notificacoes", notifId);
                                 batch.set(notifRef, {
-                                    message,
+                                    message: `<strong>${sample.sellerName}</strong> atualizou <strong>${sample.produto}</strong>: ${statusText}`,
                                     color: 'blue', 
                                     timestamp: serverTimestamp(),
                                     triggerPopup: false 
@@ -1352,34 +1356,8 @@
                             });
                         }
 
-                        const editedSamples = allSamples.filter(currentSample => {
-                            const prevSample = previousSamples.find(p => p.id === currentSample.id);
-                            return prevSample && 
-                                   (prevSample.editedAfterCompletion !== true) && 
-                                   (currentSample.editedAfterCompletion === true);
-                        });
-
-                        if (editedSamples.length > 0) {
-                             editedSamples.forEach(sample => {
-                                const message = `<strong>${sample.sellerName}</strong> <i>editou</i> o feedback para <strong>${sample.produto}</strong> (Ped: ${sample.pedido}): ${sample.feedback}`;
-                                const notifId = sanitizeForFirebaseId(`edit-notif-${sample.id}-${Date.now()}`);
-                                const notifRef = doc(db, "sessoes", currentSessionId, "notificacoes", notifId);
-                                batch.set(notifRef, {
-                                    message,
-                                    color: 'orange', 
-                                    timestamp: serverTimestamp(),
-                                    triggerPopup: true 
-                                });
-                                notificationAdded = true;
-                             });
-                        }
-
                         if (notificationAdded) {
-                            try {
-                                await batch.commit();
-                            } catch (commitError) {
-                                console.error("Erro ao guardar notificações:", commitError);
-                            }
+                            try { await batch.commit(); } catch (error) { console.error("Erro batch:", error); }
                         }
                     } 
 
@@ -1412,7 +1390,6 @@
 
                 isInitialDataLoad = false; 
             }, (error) => {
-                 console.error("Erro ao escutar dados da sessão:", error);
                  showAlert(`Erro ao carregar dados da sessão. Verifique a conexão.`);
                  resetToInitialState(true);
                  manualSessionInput.value = sessionId;
@@ -1443,11 +1420,9 @@
             currentFeedbackFilter = '';
             historicalAromaData = [];
 
-
             dashboard.classList.add('hidden');
             sessionIdText.textContent = 'Nenhuma sessão';
             
-            // Ocultar os botões do cabeçalho
             if (headerNewSessionBtn) {
                 headerNewSessionBtn.classList.add('hidden');
                 headerNewSessionBtn.classList.remove('flex');
@@ -1496,7 +1471,6 @@
                     } 
                 }
             }, (error) => {
-                console.error("Active session listener error:", error);
                  resetToInitialState(true); 
             });
         }
@@ -1513,32 +1487,7 @@
                     timestamp: doc.data().timestamp 
                 }));
                 updateNotificationDisplay(); 
-
-                if (!initialLoad) {
-                    snapshot.docChanges().forEach((change) => {
-                        if (change.type === "added" && !change.doc.metadata.fromCache) { 
-                            const notificationData = change.doc.data();
-                            
-                            // Determinar o título do TOAST
-                            let title = 'Nova Notificação';
-                            if(notificationData.message.includes('deu feedback')) title = 'Novo Feedback Registado!';
-                            if(notificationData.message.includes('editou o feedback')) title = 'Feedback Editado';
-                            if(notificationData.message.includes('respondeu')) title = 'Nova Resposta da Equipa';
-                            
-                            // *** MOSTRAR TOAST DENTRO DA APLICAÇÃO (POP-UP) ***
-                            showToast(title, notificationData.message, notificationData.color);
-
-                            // Mostrar notificação do Browser se autorizado
-                            if (notificationData.triggerPopup === true) { 
-                                const cleanMessage = notificationData.message.replace(/<[^>]*>?/gm, ''); 
-                                showBrowserNotification(title, cleanMessage);
-                            }
-                        }
-                    });
-                }
                 initialLoad = false;
-            }, (error) => {
-                 console.error(`Erro ao escutar notificações para a sessão ${sessionId}:`, error);
             });
         }
 
@@ -1558,7 +1507,6 @@
                      }
                  }
             }, (error) => {
-                 console.error(`Erro ao escutar respostas para vendedores:`, error);
                  allSellerReplies = []; 
                  if(!dashboard.classList.contains('hidden')) {
                      renderObservationsFeed(allCurrentSamples); 
@@ -1589,16 +1537,21 @@
 
                                 const isPDReply = replyData.originalManagerName === "P&D";
                                 const senderName = isPDReply ? `${replyData.sellerName} (P&D)` : replyData.sellerName;
-                                const message = `<strong>${senderName}</strong> respondeu à sua observação sobre <strong>${replyData.produto}</strong>: "${replyData.replyMessage}"`;
+                                
+                                const title = "❗️ Novo Feedback";
+                                const bodyMsg = `${senderName} respondeu: "${replyData.replyMessage}"`;
+
+                                showToast(title, bodyMsg, isPDReply ? 'purple' : 'orange');
+                                showBrowserNotification(title, bodyMsg);
                                 
                                 const notifId = sanitizeForFirebaseId(`seller-reply-${replyDocRef.id}`);
                                 const notifRef = doc(db, "sessoes", currentSessionId, "notificacoes", notifId);
 
                                 transaction.set(notifRef, {
-                                    message,
+                                    message: `<strong>${senderName}</strong> respondeu à sua observação sobre <strong>${replyData.produto}</strong>: "${replyData.replyMessage}"`,
                                     color: isPDReply ? 'purple' : 'orange', 
                                     timestamp: serverTimestamp(),
-                                    triggerPopup: true 
+                                    triggerPopup: false 
                                 });
 
                                 transaction.update(replyDocRef, { readByManager: true });
@@ -1620,7 +1573,6 @@
                      }
                 }
             }, (error) => {
-                 console.error(`Erro ao escutar respostas de vendedores:`, error);
                  allSellerRepliesToManager = []; 
                  if(!dashboard.classList.contains('hidden')) {
                      renderObservationsFeed(allCurrentSamples); 
@@ -1640,9 +1592,6 @@
                 if (!feedbackSamplesModal.classList.contains('hidden') && currentFeedbackFilter) {
                     showFeedbackSamples(currentFeedbackFilter, modalSegmentFilter.value);
                 }
-            }, (error) => {
-                console.error("Erro ao escutar destaques:", error);
-                highlightedSamplesCache = []; 
             });
         }
 
@@ -1672,10 +1621,6 @@
                          processAndDisplayDashboard(allCurrentSamples, currentSessionId, sellerDocs); 
                      }
                 }
-
-            }, (error) => {
-                console.error("Erro ao escutar dados históricos:", error);
-                historicalAromaData = []; 
             });
         }
         
@@ -1690,12 +1635,6 @@
 
             pdPostitsListenerUnsubscribe = onSnapshot(q, (snapshot) => {
                 allPdPostits = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                if (!dashboard.classList.contains('hidden')) {
-                    renderPdPostits(); 
-                }
-            }, (error) => {
-                console.error("Erro ao carregar post-its P&D:", error);
-                allPdPostits = [];
                 if (!dashboard.classList.contains('hidden')) {
                     renderPdPostits(); 
                 }
@@ -1730,7 +1669,6 @@
                 
 
             } catch (error) {
-                console.error("Erro na transação:", error);
                 showAlert("Erro ao guardar destaque de amostra. Tente novamente.");
             } finally {
                 button.disabled = false; 
@@ -1913,7 +1851,6 @@
                 card.className = `p-5 rounded-2xl bg-white border border-slate-200 shadow-sm relative overflow-hidden seller-card transition-all hover:shadow-md`; 
                 card.dataset.sellerName = sellerName; 
 
-                // Accent top border
                 const accentLine = document.createElement('div');
                 accentLine.className = `absolute top-0 left-0 w-full h-1 bg-${statusColor}-500`;
                 card.appendChild(accentLine);
@@ -1953,11 +1890,62 @@
                                 <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path></svg>
                                 <span class="text-sm font-bold font-mono text-slate-700 tracking-wider">${seller.accessCode ? seller.accessCode : '...'}</span>
                              </div>
-                             <button class="copy-code-btn text-blue-600 hover:text-blue-800 text-xs font-semibold py-1 px-2 rounded transition-colors" data-code="${seller.accessCode}" ${!seller.accessCode ? 'disabled' : ''}>Copiar</button>
+                             <div class="flex items-center gap-1">
+                                 <button class="wpp-code-btn text-emerald-600 hover:text-emerald-800 text-[10px] font-semibold py-1 px-2 rounded transition-colors bg-emerald-50 hover:bg-emerald-100 border border-emerald-100" data-name="${sellerName}" data-code="${seller.accessCode}" ${!seller.accessCode ? 'disabled' : ''} title="Enviar por WhatsApp">WhatsApp</button>
+                                 <button class="email-code-btn text-indigo-600 hover:text-indigo-800 text-[10px] font-semibold py-1 px-2 rounded transition-colors bg-indigo-50 hover:bg-indigo-100 border border-indigo-100" data-name="${sellerName}" data-code="${seller.accessCode}" ${!seller.accessCode ? 'disabled' : ''} title="Enviar por Email">Email</button>
+                                 <button class="copy-code-btn text-blue-600 hover:text-blue-800 text-xs font-semibold py-1 px-2 rounded transition-colors" data-code="${seller.accessCode}" ${!seller.accessCode ? 'disabled' : ''}>Copiar</button>
+                             </div>
                          </div>
                     </div>`;
 
                 sellersListContainer.appendChild(card);
+            });
+
+            const emailAllBtn = document.getElementById('email-all-btn');
+            if (emailAllBtn) {
+                emailAllBtn.onclick = () => {
+                    const link = "https://thamirisbezerra-coder.github.io/Tela-do-Vendedor/";
+                    let emailBody = `Olá equipe,\n\nO nosso Painel de Gestão de Feedbacks está atualizado.\nPara registrar os seus feedbacks pendentes, acessem o link abaixo:\n${link}\n\n⚠️ ATENÇÃO: O prazo para respostas é até o dia 08/06.\n\nAbaixo está a lista com o Código PIN de acesso individual para controle:\n\n`;
+
+                    Object.keys(sellers).sort().forEach(name => {
+                        const code = sellers[name].accessCode || '...';
+                        emailBody += `- ${name}: ${code}\n`;
+                    });
+
+                    emailBody += "\nQualquer dúvida, estou à disposição!";
+                    const emailSubject = "Acessos à Gestão de Feedbacks - Prazo: 08/06";
+                    
+                    window.location.href = `mailto:?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
+                };
+            }
+
+            document.querySelectorAll('.wpp-code-btn').forEach(btn => {
+                btn.onclick = (e) => {
+                    e.stopPropagation();
+                    const name = e.currentTarget.dataset.name;
+                    const code = e.currentTarget.dataset.code;
+                    if (!code) return;
+                    
+                    const link = "https://thamirisbezerra-coder.github.io/Tela-do-Vendedor/";
+                    const text = `Olá ${name}! Acesse o link abaixo para visualizar as suas pendências de feedback:\n${link}\n\nO seu Código PIN de acesso é: *${code}*\n\n⚠️ *O prazo para respostas é até o dia 08/06.*`;
+                    
+                    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+                };
+            });
+
+            document.querySelectorAll('.email-code-btn').forEach(btn => {
+                btn.onclick = (e) => {
+                    e.stopPropagation();
+                    const name = e.currentTarget.dataset.name;
+                    const code = e.currentTarget.dataset.code;
+                    if (!code) return;
+                    
+                    const link = "https://thamirisbezerra-coder.github.io/Tela-do-Vendedor/";
+                    const subject = `Seu Acesso à Gestão de Feedbacks - Prazo: 08/06`;
+                    const body = `Olá ${name},\n\nPara registrar os seus feedbacks pendentes, acesse o link abaixo:\n${link}\n\nO seu Código PIN de acesso é: ${code}\n\n⚠️ ATENÇÃO: O prazo para respostas é até o dia 08/06.\n\nQualquer dúvida, estou à disposição!`;
+                    
+                    window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+                };
             });
 
             document.querySelectorAll('.copy-code-btn').forEach(btn => {
@@ -2504,7 +2492,7 @@
                          if (sellerOrPdReply) {
                              const time = sellerOrPdReply.timestamp?.toDate() ? sellerOrPdReply.timestamp.toDate().toLocaleString('pt-BR') : '';
                              const isPDReply = sellerOrPdReply.originalManagerName === "P&D";
-                             const senderName = isPDReply ? `${sellerOrPdReply.sellerName} (P&D)` : sellerOrPdReply.sellerName;
+                             const senderName = isPDReply ? `${sellerOrPdReply.sellerName} <span class="bg-purple-100 text-purple-600 text-[10px] px-1.5 py-0.5 rounded font-bold ml-1">P&D</span>` : sellerOrPdReply.sellerName;
                              
                              repliesHtml += `<div class="seller-reply"><p class="text-slate-800 font-medium">${senderName}: <span class="font-normal text-slate-600">${sellerOrPdReply.replyMessage}</span></p><p class="text-[10px] text-slate-400">${time}</p></div>`;
                          }
@@ -2683,10 +2671,8 @@
         }
 
         function showBrowserNotification(title, body) {
+            if (!("Notification" in window)) return;
             if (Notification.permission === 'granted') {
-                 if(document.visibilityState === 'visible') {
-                      return;
-                 }
                 new Notification(title, {
                     body: body,
                     icon: 'https://img.icons8.com/color/96/000000/appointment-reminders--v1.png'
@@ -2746,7 +2732,14 @@
              try {
                  await signInAnonymously(auth); 
                  listenForActiveSession(); 
-                 setupNotificationButton(); 
+                 
+                 // Pede permissão de notificação automaticamente se ainda não tiver respondido
+                 if ("Notification" in window && Notification.permission === "default") {
+                     Notification.requestPermission().then(setupNotificationButton);
+                 } else {
+                     setupNotificationButton(); 
+                 }
+                 
              } catch (error) {
                  infoMessage.textContent = "Não foi possível conectar ao serviço.";
                  console.error("Firebase Auth Error:", error);
