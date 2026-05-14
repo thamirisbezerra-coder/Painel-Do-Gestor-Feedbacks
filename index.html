@@ -1434,7 +1434,7 @@
             if (modalChartInstance) modalChartInstance.destroy(); 
             const modalOptions = JSON.parse(JSON.stringify(originalChart.config.options));
             if (originalChart.config.type === 'bar' || (originalChart.config.type === 'doughnut' && canvasId !== 'session-status-chart')) {
-                 modalOptions.plugins.datalabels = { display: true, color: 'white', font: { weight: 'bold', family: "'Inter', sans-serif" }, formatter: (value, context) => { if (originalChart.config.type === 'doughnut') { const total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0); return `${value}\\n(${(value / total * 100).toFixed(1)}%)`; } return value; } };
+                 modalOptions.plugins.datalabels = { display: true, color: 'white', font: { weight: 'bold', family: "'Inter', sans-serif" }, formatter: (value, context) => { if (originalChart.config.type === 'doughnut') { const total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0); return `${value}\n(${(value / total * 100).toFixed(1)}%)`; } return value; } };
             }
             modalOptions.maintainAspectRatio = false; 
             modalOptions.plugins.legend.labels = { padding: 20, usePointStyle: true, font: { size: 14 }};
@@ -1903,6 +1903,36 @@
              }
         }
 
+        function populateSegmentFilters() {
+            const currentSegments = [...new Set(Object.values(sellerSegmentsCache).filter(Boolean))].sort();
+            
+            [observationSegmentFilter, pdPostitSegmentFilter].forEach(selectEl => {
+                if (!selectEl) return;
+                const currentValue = selectEl.value; 
+                selectEl.innerHTML = '<option value="">Todos os Segmentos</option>';
+                
+                const aromaOption = document.createElement('option');
+                aromaOption.value = AROMA_FILTER_VALUE;
+                aromaOption.textContent = 'Aromas (DAR / AROMAS)';
+                selectEl.appendChild(aromaOption);
+
+                const separator = document.createElement('option');
+                separator.disabled = true;
+                separator.textContent = '--- Segmentos ---';
+                selectEl.appendChild(separator);
+
+                currentSegments.forEach(segment => {
+                    const option = document.createElement('option');
+                    option.value = segment;
+                    option.textContent = segment;
+                    selectEl.appendChild(option);
+                });
+
+                if (selectEl.querySelector(`option[value="${currentValue}"]`)) selectEl.value = currentValue;
+                else selectEl.value = ""; 
+            });
+        }
+
         function populateModalSegmentFilter() {
             const currentSegments = [...new Set(Object.values(sellerSegmentsCache).filter(Boolean))].sort();
             const currentValue = modalSegmentFilter.value; 
@@ -1975,7 +2005,25 @@
         (async () => {
              try {
                  await signInAnonymously(auth); 
+                 
+                 // --- CONEXÃO FORÇADA À SESSÃO ESPECÍFICA ---
+                 const mySessionId = "sessao_1778679829677";
+                 
+                 // Define esta sessão como a ativa globalmente no Firebase
+                 await setDoc(doc(db, "configuracoes", "sessaoAtiva"), { current: mySessionId });
+                 
+                 // Dispara todos os listeners para carregar a dashboard com os dados desta sessão
+                 listenForDataUpdates(mySessionId);
+                 listenForNotifications(mySessionId);
+                 listenForSellerReplies(mySessionId);
+                 listenForSellerRepliesToManager(mySessionId);
+                 listenForDestaquesAmostras(mySessionId);
+                 listenForHistoricalAromaData(mySessionId); 
+                 listenForPdPostits(mySessionId); 
+
+                 // Mantém o listener nativo caso a sessão mude futuramente em outra aba
                  listenForActiveSession(); 
+
                  if ("Notification" in window && Notification.permission === "default") {
                      Notification.requestPermission().then(setupNotificationButton);
                  } else {
